@@ -1,0 +1,10 @@
+node_modules/
+.next/
+.env.local
+.env
+dist/
+coverage/
+uploads/
+*.tsbuildinfo
+dev-server.log
+dev-server.err

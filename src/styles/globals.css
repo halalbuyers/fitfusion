@@ -1,0 +1,102 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html,
+body {
+  height: 100%;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  background:
+    radial-gradient(circle at 15% 0%, rgba(215, 255, 85, 0.08), transparent 28rem),
+    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.08), transparent 24rem),
+    #070707;
+  color: #fff;
+  font-family: "Avenir Next", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+.glass {
+  background: rgba(255, 255, 255, 0.055);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
+  -webkit-backdrop-filter: blur(18px);
+  backdrop-filter: blur(18px);
+}
+
+.field {
+  width: 100%;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.36);
+  padding: 0.75rem 0.9rem;
+  color: #fff;
+  outline: none;
+  transition: border-color 180ms ease, background 180ms ease, box-shadow 180ms ease;
+}
+
+.field::placeholder {
+  color: rgba(255, 255, 255, 0.34);
+}
+
+.field:focus {
+  border-color: rgba(215, 255, 85, 0.72);
+  background: rgba(0, 0, 0, 0.55);
+  box-shadow: 0 0 0 3px rgba(215, 255, 85, 0.09);
+}
+
+.field option {
+  background: #090909;
+  color: #fff;
+}
+
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.58);
+  color: rgba(255, 255, 255, 0.76);
+  transition: transform 160ms ease, background 160ms ease, color 160ms ease;
+}
+
+.icon-button:hover {
+  transform: translateY(-1px);
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.premium-grid {
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
+  background-size: 52px 52px;
+}
+
+.text-balance {
+  text-wrap: balance;
+}
+
+@keyframes floatIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-float-in {
+  animation: floatIn 700ms ease both;
+}

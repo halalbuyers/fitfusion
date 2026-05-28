@@ -1,0 +1,14 @@
+
+> fitfusion@0.1.0 dev
+> next dev -p 3001
+
+   ▲ Next.js 15.5.18
+   - Local:        http://localhost:3001
+   - Network:      http://192.168.1.10:3001
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 8s
+ ○ Compiling /middleware ...
+ ✓ Compiled /middleware in 1231ms (222 modules)
+ ○ Compiling /_not-found ...
