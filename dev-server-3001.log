@@ -12,3 +12,10 @@
  ○ Compiling /middleware ...
  ✓ Compiled /middleware in 1231ms (222 modules)
  ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 10.5s (1082 modules)
+ GET /stylist 404 in 11288ms
+ ✓ Compiled in 910ms (392 modules)
+ ○ Compiling / ...
+ ✓ Compiled / in 2.6s (1684 modules)
+ GET / 200 in 7535ms
+ GET /dashboard 404 in 112ms
