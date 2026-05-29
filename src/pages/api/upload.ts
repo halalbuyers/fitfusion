@@ -6,8 +6,10 @@ import { analyzeImage } from '../../ai/openai'
 import { connectToDatabase } from '../../lib/mongodb'
 import Clothing from '../../models/Clothing'
 import { getAuth } from '@clerk/nextjs/server'
-import { analyzeClothingText, detectCategoryFromFilename, mergeFashionAnalysis, normalizeCategory } from '../../lib/fashion-analysis'
+import { analyzeClothingText, mergeFashionAnalysis } from '../../lib/fashion-analysis'
 import { parseTags } from '../../lib/api'
+import { extractImageColors } from '../../lib/image-color-extraction'
+import { classifyClothingCategory } from '../../lib/local-category-classifier'
 
 export const config = {
   api: { bodyParser: false }
@@ -47,6 +49,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const file = Array.isArray(files.file) ? files.file[0] : files.file
     if (!file) return res.status(400).json({ error: 'No file provided' })
 
+      const extractedColors = await extractImageColors(file.filepath).catch(() => ({
+        primaryColor: 'unknown',
+        secondaryColors: [],
+        colors: [],
+        rawHex: []
+      }))
       const result: any = await uploadToCloudinary(file.filepath)
       try { fs.unlinkSync(file.filepath) } catch {}
 
@@ -64,27 +72,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const fallbackAnalysis = analyzeClothingText(manualText)
       const aiAnalysis = await analyzeImage(result.secure_url).catch(() => fallbackAnalysis)
       const analysis = mergeFashionAnalysis(fallbackAnalysis, aiAnalysis)
-      const filenameCategory = detectCategoryFromFilename(file.originalFilename || '')
 
       const tags = parseTags(fieldValue(fields, 'tags'))
       const occasions = parseTags(fieldValue(fields, 'occasion'))
       const colors = parseTags(fieldValue(fields, 'colors'))
       const secondaryColors = parseTags(fieldValue(fields, 'secondaryColors'))
-      const primaryColor = fieldValue(fields, 'primaryColor') || fieldValue(fields, 'color') || colors[0] || analysis.primaryColor || 'unknown'
-      const category = fieldValue(fields, 'category')
-        ? normalizeCategory(fieldValue(fields, 'category'))
-        : analysis.category && analysis.category !== 'accessories' && analysis.category !== 'unknown'
-          ? normalizeCategory(analysis.category)
-          : filenameCategory
+      const detectedColors = extractedColors.colors.length ? extractedColors.colors : analysis.colors
+      const primaryColor = fieldValue(fields, 'primaryColor') || fieldValue(fields, 'color') || colors[0] || extractedColors.primaryColor || analysis.primaryColor || 'unknown'
+      const resolvedSecondaryColors = secondaryColors.length
+        ? secondaryColors
+        : colors.length
+          ? colors.slice(1)
+          : extractedColors.secondaryColors.length
+            ? extractedColors.secondaryColors
+            : analysis.secondaryColors || []
+      const categoryClassification = await classifyClothingCategory({
+        manualCategory: fieldValue(fields, 'category'),
+        filename: file.originalFilename || '',
+        text: manualText,
+        aiCategory: analysis.category
+      })
 
       const payload = {
         userId,
         image: result.secure_url,
-        category,
+        category: categoryClassification.category,
         primaryColor,
-        secondaryColors: secondaryColors.length ? secondaryColors : (colors.length ? colors.slice(1) : analysis.secondaryColors || []),
+        secondaryColors: resolvedSecondaryColors,
         color: primaryColor,
-        colors: colors.length ? colors : (primaryColor === 'unknown' ? [] : [primaryColor, ...(secondaryColors.length ? secondaryColors : analysis.secondaryColors || [])]),
+        colors: colors.length ? colors : (detectedColors.length ? detectedColors : (primaryColor === 'unknown' ? [] : [primaryColor, ...resolvedSecondaryColors])),
         style: fieldValue(fields, 'style') || analysis.style || 'casual',
         season: fieldValue(fields, 'season') || analysis.season || 'all-season',
         occasion: occasions.length ? occasions : analysis.occasion || [],
@@ -100,13 +116,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       try {
         await connectToDatabase()
         const clothing = await Clothing.create(payload)
-        return res.status(201).json({ clothing, analysis, persisted: true })
+        return res.status(201).json({ clothing, analysis: { ...analysis, extractedColors, categoryClassification }, persisted: true })
       } catch (dbError: any) {
         const message = String(dbError?.message || '')
         if (message.includes('ECONNREFUSED') || message.includes('querySrv') || message.includes('MONGODB_URI')) {
           return res.status(201).json({
             clothing: { ...payload, _id: `temp-${Date.now()}` },
-            analysis,
+            analysis: { ...analysis, extractedColors, categoryClassification },
             persisted: false,
             warning: 'Saved to cloud image storage, but database is currently unavailable.'
           })

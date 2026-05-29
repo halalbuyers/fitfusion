@@ -55,6 +55,24 @@ const colorAliases: Record<string, ColorFamily> = {
   gold: 'metallic'
 }
 
+const colorCentroids: Record<Exclude<ColorFamily, 'unknown'>, [number, number, number]> = {
+  black: [20, 20, 20],
+  white: [238, 238, 230],
+  gray: [128, 128, 128],
+  navy: [18, 32, 72],
+  blue: [48, 112, 190],
+  brown: [104, 68, 42],
+  beige: [198, 176, 132],
+  green: [42, 130, 76],
+  olive: [100, 112, 52],
+  red: [180, 42, 48],
+  pink: [214, 108, 146],
+  yellow: [218, 184, 52],
+  orange: [206, 108, 42],
+  purple: [112, 70, 152],
+  metallic: [174, 164, 142]
+}
+
 export const neutralColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige'])
 const luxuryColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige', 'metallic'])
 const warmColors = new Set<ColorFamily>(['brown', 'beige', 'red', 'pink', 'yellow', 'orange'])
@@ -106,6 +124,30 @@ export function normalizeColor(value?: string): ColorFamily {
 export function normalizeColors(values: Array<string | undefined> = []): ColorFamily[] {
   const colors = values.map(normalizeColor).filter((color) => color !== 'unknown')
   return [...new Set(colors.length ? colors : (['black'] as ColorFamily[]))]
+}
+
+export function hexToColorFamily(hex?: string): ColorFamily {
+  const value = String(hex || '').replace('#', '').trim()
+  if (!/^[0-9a-f]{6}$/i.test(value)) return 'unknown'
+
+  const rgb: [number, number, number] = [
+    parseInt(value.slice(0, 2), 16),
+    parseInt(value.slice(2, 4), 16),
+    parseInt(value.slice(4, 6), 16)
+  ]
+
+  const [family] = Object.entries(colorCentroids)
+    .map(([name, centroid]) => {
+      const distance = Math.sqrt(
+        (rgb[0] - centroid[0]) ** 2 +
+        (rgb[1] - centroid[1]) ** 2 +
+        (rgb[2] - centroid[2]) ** 2
+      )
+      return [name as ColorFamily, distance] as const
+    })
+    .sort((a, b) => a[1] - b[1])[0]
+
+  return family
 }
 
 export function areComplementary(a: string, b: string) {
