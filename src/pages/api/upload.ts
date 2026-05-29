@@ -10,6 +10,7 @@ import { analyzeClothingText, mergeFashionAnalysis } from '../../lib/fashion-ana
 import { parseTags } from '../../lib/api'
 import { extractImageColors } from '../../lib/image-color-extraction'
 import { classifyClothingCategory } from '../../lib/local-category-classifier'
+import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../lib/embedding-engine'
 
 export const config = {
   api: { bodyParser: false }
@@ -112,16 +113,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         warmthScore: analysis.warmthScore,
         material: fieldValue(fields, 'material') || analysis.material
       }
+      const payloadWithEmbedding = {
+        ...payload,
+        embedding: generateClothingEmbedding(payload),
+        embeddingVersion: EMBEDDING_VERSION
+      }
 
       try {
         await connectToDatabase()
-        const clothing = await Clothing.create(payload)
+        const clothing = await Clothing.create(payloadWithEmbedding)
         return res.status(201).json({ clothing, analysis: { ...analysis, extractedColors, categoryClassification }, persisted: true })
       } catch (dbError: any) {
         const message = String(dbError?.message || '')
         if (message.includes('ECONNREFUSED') || message.includes('querySrv') || message.includes('MONGODB_URI')) {
           return res.status(201).json({
-            clothing: { ...payload, _id: `temp-${Date.now()}` },
+            clothing: { ...payloadWithEmbedding, _id: `temp-${Date.now()}` },
             analysis: { ...analysis, extractedColors, categoryClassification },
             persisted: false,
             warning: 'Saved to cloud image storage, but database is currently unavailable.'

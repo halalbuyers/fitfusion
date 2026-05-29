@@ -3,6 +3,7 @@ import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
 import { normalizeCategory, normalizeFit, normalizeSeason, normalizeStyle } from '../../../lib/fashion-analysis'
+import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../../lib/embedding-engine'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -51,6 +52,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       delete update.markWorn
     }
     Object.assign(item, update)
+    item.embedding = generateClothingEmbedding(item)
+    item.embeddingVersion = EMBEDDING_VERSION
     await item.save()
     return res.status(200).json(item)
   }

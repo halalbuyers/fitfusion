@@ -24,6 +24,8 @@ export interface IClothing extends Document {
   wearCount: number
   usageCount: number
   lastWornAt: Date | null
+  embedding?: number[]
+  embeddingVersion?: number
   createdAt: Date
 }
 
@@ -49,7 +51,9 @@ const ClothingSchema: Schema = new Schema({
   isFavorite: { type: Boolean, default: false, index: true },
   wearCount: { type: Number, default: 0 },
   usageCount: { type: Number, default: 0 },
-  lastWornAt: { type: Date, default: null }
+  lastWornAt: { type: Date, default: null },
+  embedding: { type: [Number], default: undefined },
+  embeddingVersion: { type: Number, default: 0, index: true }
 }, { timestamps: true })
 
 ClothingSchema.index({ userId: 1, category: 1 })

@@ -4,6 +4,7 @@ import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
 import { analyzeClothingText, mergeFashionAnalysis, normalizeCategory } from '../../../lib/fashion-analysis'
 import { parseTags } from '../../../lib/api'
+import { EMBEDDING_VERSION, generateClothingEmbedding, needsEmbedding } from '../../../lib/embedding-engine'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -37,6 +38,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ]
     }
     const items = await Clothing.find(query).sort({ isFavorite: -1, createdAt: -1 })
+    const staleItems = items.filter((item: any) => needsEmbedding(item)).slice(0, 12)
+    if (staleItems.length) {
+      await Promise.all(staleItems.map((item: any) => Clothing.updateOne(
+        { _id: item._id, userId },
+        { $set: { embedding: generateClothingEmbedding(item), embeddingVersion: EMBEDDING_VERSION } }
+      ).catch(() => undefined)))
+    }
     return res.status(200).json(items)
   }
 
@@ -61,7 +69,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       occasion: parsedOccasion,
       material
     })
-    const item = await Clothing.create({
+    const payload = {
       userId,
       image,
       category: normalizeCategory(category || analysis.category),
@@ -79,6 +87,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       formalityScore: analysis.formalityScore,
       warmthScore: analysis.warmthScore,
       material: material || analysis.material
+    }
+    const item = await Clothing.create({
+      ...payload,
+      embedding: generateClothingEmbedding(payload),
+      embeddingVersion: EMBEDDING_VERSION
     })
     return res.status(201).json(item)
   }
