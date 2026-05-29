@@ -2,7 +2,7 @@ import type { ClothingCategory } from './fashion-analysis'
 
 export type WeatherContext = {
   temperature?: number
-  condition?: string
+  condition?: 'hot' | 'warm' | 'cool' | 'cold' | 'rainy' | string
   season?: string
 }
 
@@ -22,6 +22,8 @@ export function analyzeWeather(input: WeatherContext = {}): WeatherRecommendatio
   const condition = normalizedCondition(input.condition)
   const temp = typeof input.temperature === 'number' ? input.temperature : undefined
   const cold = condition.includes('cold') || condition.includes('winter') || (temp !== undefined && temp <= 14)
+  const cool = condition.includes('cool') || (temp !== undefined && temp > 14 && temp <= 20)
+  const warm = condition.includes('warm') || (temp !== undefined && temp > 20 && temp < 27)
   const hot = condition.includes('hot') || condition.includes('sun') || condition.includes('summer') || (temp !== undefined && temp >= 27)
   const rain = condition.includes('rain') || condition.includes('storm') || condition.includes('drizzle')
 
@@ -45,6 +47,16 @@ export function analyzeWeather(input: WeatherContext = {}): WeatherRecommendatio
     }
   }
 
+  if (cool || warm) {
+    return {
+      targetWarmth: cool ? 56 : 42,
+      needsLayer: cool || rain,
+      avoidHeavyLayers: warm,
+      suggestedCategories: cool ? ['shirt', 'hoodie', 'jacket', 'jeans', 'sneakers'] : ['tshirt', 'shirt', 'jeans', 'shorts', 'sneakers'],
+      tip: cool ? 'Cool weather benefits from one flexible layer without going full winter.' : 'Warm weather favors breathable pieces and restrained layering.'
+    }
+  }
+
   return {
     targetWarmth: rain ? 58 : 48,
     needsLayer: rain,
@@ -64,4 +76,3 @@ export function scoreWeatherFit(items: Array<{ category?: string; warmthScore?: 
   if (recommendation.avoidHeavyLayers && categories.some((category) => ['hoodie', 'jacket', 'boots'].includes(category))) score -= 18
   return Math.max(0, Math.min(100, Math.round(score)))
 }
-

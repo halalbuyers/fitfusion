@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import { motion } from 'framer-motion'
-import { Heart, Loader2, RefreshCw, Save, Sparkles, Wand2 } from 'lucide-react'
+import { Heart, Loader2, RefreshCw, Save, Sparkles, ThumbsDown, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type Clothing = { _id: string; image: string; category: string; colors?: string[]; primaryColor?: string; style?: string }
@@ -16,6 +16,8 @@ type Outfit = {
   colorAnalysis?: string
   tags?: string[]
   breakdown?: Record<string, number>
+  outfitKey?: string
+  confidence?: number
   method?: string
 }
 
@@ -78,6 +80,21 @@ export default function OutfitGeneratorPage() {
       if (!res.ok) throw new Error('Save failed')
     } finally {
       setSaving(null)
+    }
+  }
+
+  async function rememberOutfit(outfit: Outfit, action: 'favorite' | 'reject') {
+    if (!outfit.outfitKey) return
+    await fetch('/api/user/preferences', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(action === 'favorite'
+        ? { favoriteOutfitKey: outfit.outfitKey }
+        : { rejectOutfitKey: outfit.outfitKey })
+    }).catch(() => undefined)
+
+    if (action === 'reject') {
+      setOutfits((current) => current.filter((item) => item.outfitKey !== outfit.outfitKey))
     }
   }
 
@@ -154,7 +171,10 @@ export default function OutfitGeneratorPage() {
                           <p className="text-xs uppercase tracking-[0.25em] text-white/35">{outfit.method || 'local'}</p>
                           <h2 className="mt-2 text-2xl font-semibold capitalize">{outfit.title || `${occasion} fit ${index + 1}`}</h2>
                         </div>
-                        <span className="rounded-[8px] bg-white px-3 py-2 text-lg font-black text-black">{outfit.score}</span>
+                        <div className="grid gap-1 text-right">
+                          <span className="rounded-[8px] bg-white px-3 py-2 text-lg font-black text-black">{outfit.score}</span>
+                          <span className="text-[11px] text-white/38">{outfit.confidence ?? 0}% confidence</span>
+                        </div>
                       </div>
                       <p className="mt-4 text-sm leading-6 text-white/55">{outfit.explanation}</p>
                       {outfit.colorAnalysis && <p className="mt-2 text-xs text-white/38">{outfit.colorAnalysis}</p>}
@@ -174,8 +194,11 @@ export default function OutfitGeneratorPage() {
                           {saving === String(index) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                           Save
                         </button>
-                        <button className="icon-button h-10 w-10">
+                        <button title="Favorite signal" onClick={() => rememberOutfit(outfit, 'favorite')} className="icon-button h-10 w-10">
                           <Heart className="h-4 w-4" />
+                        </button>
+                        <button title="Reject outfit" onClick={() => rememberOutfit(outfit, 'reject')} className="icon-button h-10 w-10">
+                          <ThumbsDown className="h-4 w-4" />
                         </button>
                       </div>
                     </div>

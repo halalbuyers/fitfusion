@@ -40,6 +40,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       breakdown: outfit.breakdown || {},
       tags: outfit.tags || [],
       outfitKey: outfit.outfitKey,
+      confidence: outfit.confidence,
       method: outfit.method || 'local',
       isFavorite: true,
       plannedFor: plannedFor ? new Date(plannedFor) : undefined

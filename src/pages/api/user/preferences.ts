@@ -29,7 +29,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (Array.isArray(req.body?.[key])) acc[key] = req.body[key].map(String)
       return acc
     }, {})
-    const preferences = await UserPreference.findOneAndUpdate({ userId }, { $set: update }, { upsert: true, new: true })
+    const addToSet: Record<string, any> = {}
+    if (typeof req.body?.rejectOutfitKey === 'string') addToSet.rejectedOutfitKeys = req.body.rejectOutfitKey
+    if (typeof req.body?.favoriteOutfitKey === 'string') addToSet.favoriteOutfitKeys = req.body.favoriteOutfitKey
+    const preferences = await UserPreference.findOneAndUpdate(
+      { userId },
+      { ...(Object.keys(update).length ? { $set: update } : {}), ...(Object.keys(addToSet).length ? { $addToSet: addToSet } : {}) },
+      { upsert: true, new: true }
+    )
     return res.status(200).json(preferences)
   }
 

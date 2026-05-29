@@ -106,9 +106,11 @@ const pairOverrides: Record<string, number> = {
   'black:beige': 92,
   'brown:green': 30,
   'green:brown': 30,
+  'green:orange': 32,
+  'orange:green': 32,
   'brown:yellow': 42,
   'orange:purple': 38,
-  'orange:green': 36
+  'purple:orange': 38
 }
 
 function key(a: ColorFamily, b: ColorFamily) {
@@ -171,6 +173,12 @@ export function isLuxuryPalette(colors: string[]) {
   return normalized.length > 0 && normalized.every((color) => luxuryColors.has(color)) && normalized.some((color) => ['black', 'navy', 'brown', 'beige'].includes(color))
 }
 
+export function isMonochromePalette(colors: string[]) {
+  const normalized = normalizeColors(colors)
+  if (normalized.length <= 1) return true
+  return normalized.every((color) => ['black', 'white', 'gray'].includes(color)) || new Set(normalized).size === 1
+}
+
 export function getColorCompatibilityScore(a: string, b: string) {
   const first = normalizeColor(a)
   const second = normalizeColor(b)
@@ -199,6 +207,7 @@ export function getPaletteCompatibilityScore(colors: string[]) {
   let score = pairs.reduce((sum, value) => sum + value, 0) / Math.max(1, pairs.length)
   const neutralCount = normalized.filter((color) => neutralColors.has(color)).length
   if (neutralCount >= 2) score += 8
+  if (isMonochromePalette(normalized)) score += 6
   if (isLuxuryPalette(normalized)) score += 7
   if (normalized.length > 4) score -= 12
 

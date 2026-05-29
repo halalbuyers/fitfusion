@@ -11,6 +11,7 @@ export interface IOutfit extends Document {
   breakdown?: Record<string, number>
   tags: string[]
   outfitKey?: string
+  confidence?: number
   method?: string
   isFavorite: boolean
   plannedFor?: Date
@@ -28,6 +29,7 @@ const OutfitSchema: Schema = new Schema({
   breakdown: { type: Schema.Types.Mixed, default: {} },
   tags: { type: [String], default: [] },
   outfitKey: { type: String, index: true },
+  confidence: { type: Number, default: 0 },
   method: { type: String, default: 'local' },
   isFavorite: { type: Boolean, default: false, index: true },
   plannedFor: { type: Date }

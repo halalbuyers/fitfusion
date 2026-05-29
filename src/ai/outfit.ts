@@ -1,4 +1,5 @@
 import Clothing from '../models/Clothing'
+import Outfit from '../models/Outfit'
 import UserPreference from '../models/UserPreference'
 import { connectToDatabase } from '../lib/mongodb'
 import { buildPreferenceProfile } from '../lib/preference-engine'
@@ -13,6 +14,7 @@ export type GeneratedOutfit = {
   colorAnalysis?: string
   breakdown?: Record<string, number>
   outfitKey?: string
+  confidence?: number
   method?: 'local' | 'hybrid'
 }
 
@@ -34,6 +36,7 @@ function toApiOutfits(items: any[], request: OutfitRequest): GeneratedOutfit[] {
     colorAnalysis: outfit.colorAnalysis,
     breakdown: outfit.breakdown,
     outfitKey: outfit.outfitKey || outfitKey(outfit.items),
+    confidence: outfit.confidence,
     method: 'local'
   }))
 }
@@ -89,6 +92,13 @@ export async function generateOutfitsForUser(
   ])
   if (!items.length) return []
 
+  const recentOutfits = await Outfit.find({ userId, outfitKey: { $exists: true, $ne: '' } })
+    .sort({ createdAt: -1 })
+    .limit(20)
+    .select('outfitKey')
+    .lean()
+    .catch(() => [])
+
   const profile = buildPreferenceProfile(items as any, storedPreferences || undefined)
   const request: OutfitRequest = {
     occasion: options.occasion || 'casual',
@@ -96,6 +106,7 @@ export async function generateOutfitsForUser(
     temperature: options.temperature,
     stylePreference: options.preferences?.[0] || profile.preferredStyles[0],
     preferences: profile,
+    previousOutfitKeys: recentOutfits.map((outfit: any) => String(outfit.outfitKey)).filter(Boolean),
     limit: options.limit || 12
   }
 
@@ -105,4 +116,3 @@ export async function generateOutfitsForUser(
 }
 
 export default generateOutfitsForUser
-

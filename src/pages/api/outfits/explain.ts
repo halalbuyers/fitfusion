@@ -1,11 +1,18 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { generateGeminiText, hasGemini } from '../../../ai/gemini'
+import { explainOutfitLocally } from '../../../lib/outfit-explainer'
 
 function localExplanation(outfit: any) {
-  const tags = Array.isArray(outfit?.tags) ? outfit.tags.slice(0, 3).join(', ') : 'balanced styling'
-  const score = outfit?.score ? ` It scored ${outfit.score}/100 in the local engine.` : ''
-  return `This outfit works because its pieces keep a coherent ${tags} direction while balancing color, occasion, and weather.${score}`
+  if (Array.isArray(outfit?.items)) {
+    return explainOutfitLocally({
+      items: outfit.items.map((item: any) => item.clothing || item),
+      occasion: outfit.occasion || 'casual',
+      score: outfit.score || 0,
+      breakdown: outfit.breakdown || {}
+    })
+  }
+  return `This outfit works because its pieces keep a coherent styling direction while balancing color, occasion, and weather.`
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -31,4 +38,3 @@ Return one concise paragraph.`
     return res.status(200).json({ explanation: localExplanation(outfit), method: 'local' })
   }
 }
-

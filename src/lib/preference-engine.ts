@@ -4,6 +4,7 @@ export type UserPreferenceProfile = {
   avoidedColors: string[]
   favoriteCategories: string[]
   rejectedOutfitKeys: string[]
+  favoriteOutfitKeys: string[]
 }
 
 export const emptyPreferenceProfile: UserPreferenceProfile = {
@@ -11,7 +12,8 @@ export const emptyPreferenceProfile: UserPreferenceProfile = {
   preferredColors: [],
   avoidedColors: [],
   favoriteCategories: [],
-  rejectedOutfitKeys: []
+  rejectedOutfitKeys: [],
+  favoriteOutfitKeys: []
 }
 
 function topValues(values: string[], limit = 4) {
@@ -36,7 +38,8 @@ export function buildPreferenceProfile(items: Array<{ style?: string; primaryCol
     preferredColors,
     avoidedColors: [...new Set((stored?.avoidedColors || []).map((color) => color.toLowerCase()))],
     favoriteCategories,
-    rejectedOutfitKeys: [...new Set((stored?.rejectedOutfitKeys || []).map(String))]
+    rejectedOutfitKeys: [...new Set((stored?.rejectedOutfitKeys || []).map(String))],
+    favoriteOutfitKeys: [...new Set((stored?.favoriteOutfitKeys || []).map(String))]
   }
 }
 
@@ -54,4 +57,3 @@ export function preferenceBoost(items: Array<{ style?: string; primaryColor?: st
 
   return Math.max(-20, Math.min(20, boost))
 }
-

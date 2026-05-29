@@ -55,6 +55,7 @@ const ClothingSchema: Schema = new Schema({
 ClothingSchema.index({ userId: 1, category: 1 })
 ClothingSchema.index({ userId: 1, style: 1 })
 ClothingSchema.index({ userId: 1, primaryColor: 1 })
+ClothingSchema.index({ userId: 1, season: 1 })
 ClothingSchema.index({ userId: 1, createdAt: -1 })
 
 ClothingSchema.pre('save', function syncLegacyFields(next) {
