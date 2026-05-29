@@ -5,9 +5,10 @@ import Image from 'next/image'
 import { Cloud, Loader2, Sparkles, Upload } from 'lucide-react'
 import Toast from './Toast'
 
-const categories = ['t-shirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargos', 'pants', 'shorts', 'sneakers', 'shoes', 'accessories']
-const styles = ['minimal', 'streetwear', 'formal', 'athleisure', 'vintage', 'luxury']
+const categories = ['unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories']
+const styles = ['streetwear', 'minimal', 'formal', 'casual', 'techwear', 'old-money', 'vintage', 'sporty', 'y2k']
 const seasons = ['all-season', 'summer', 'winter', 'spring', 'autumn']
+const fits = ['regular', 'oversized', 'slim', 'baggy']
 
 export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any) => void }) {
   const [loading, setLoading] = useState(false)
@@ -16,12 +17,13 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null)
   const [form, setForm] = useState({
     category: '',
-    color: '',
+    primaryColor: '',
+    secondaryColors: '',
     style: '',
-    season: 'all-season',
+    season: '',
     occasion: '',
     brand: '',
-    fitType: '',
+    fit: '',
     material: '',
     tags: ''
   })
@@ -89,17 +91,22 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
           <option value="">Auto category</option>
           {categories.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
-        <input value={form.color} onChange={(e) => update('color', e.target.value)} placeholder="primary color" className="field" />
+        <input value={form.primaryColor} onChange={(e) => update('primaryColor', e.target.value)} placeholder="primary color" className="field" />
+        <input value={form.secondaryColors} onChange={(e) => update('secondaryColors', e.target.value)} placeholder="secondary colors" className="field" />
         <select value={form.style} onChange={(e) => update('style', e.target.value)} className="field">
           <option value="">Auto style</option>
           {styles.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
         <select value={form.season} onChange={(e) => update('season', e.target.value)} className="field">
+          <option value="">Auto season</option>
           {seasons.map((item) => <option key={item} value={item}>{item}</option>)}
         </select>
         <input value={form.occasion} onChange={(e) => update('occasion', e.target.value)} placeholder="casual, college, date night" className="field" />
         <input value={form.brand} onChange={(e) => update('brand', e.target.value)} placeholder="brand" className="field" />
-        <input value={form.fitType} onChange={(e) => update('fitType', e.target.value)} placeholder="oversized, slim, relaxed" className="field" />
+        <select value={form.fit} onChange={(e) => update('fit', e.target.value)} className="field">
+          <option value="">Auto fit</option>
+          {fits.map((item) => <option key={item} value={item}>{item}</option>)}
+        </select>
         <input value={form.material} onChange={(e) => update('material', e.target.value)} placeholder="cotton, denim, fleece" className="field" />
       </div>
 

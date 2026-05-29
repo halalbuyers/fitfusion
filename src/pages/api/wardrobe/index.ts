@@ -2,7 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
-import { analyzeClothing } from '../../../lib/fashion'
+import { analyzeClothingText, mergeFashionAnalysis, normalizeCategory } from '../../../lib/fashion-analysis'
 import { parseTags } from '../../../lib/api'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -22,11 +22,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     const query: Record<string, any> = { userId }
     const { category, color, style, season, occasion, favorite, q } = req.query
-    if (typeof category === 'string' && category) query.category = category
+    if (typeof category === 'string' && category) query.category = normalizeCategory(category)
     if (typeof style === 'string' && style) query.style = style
     if (typeof season === 'string' && season) query.season = season
-    if (typeof favorite === 'string') query.isFavorite = favorite === 'true'
-    if (typeof color === 'string' && color) query.colors = color
+    if (typeof favorite === 'string') query.$or = [{ isFavorite: favorite === 'true' }, { favorite: favorite === 'true' }]
+    if (typeof color === 'string' && color) query.$or = [{ colors: color }, { primaryColor: color }]
     if (typeof occasion === 'string' && occasion) query.$or = [{ occasion }, { tags: occasion }]
     if (typeof q === 'string' && q) {
       query.$or = [
@@ -41,23 +41,43 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   if (req.method === 'POST') {
-    const { image, category, color, colors, style, season, tags, brand, fitType, material, occasion } = req.body
+    const { image, category, primaryColor, secondaryColors, color, colors, style, season, tags, brand, fit, fitType, material, occasion } = req.body
     if (!image) return res.status(400).json({ error: 'Image is required' })
     const parsedTags = parseTags(tags)
     const parsedOccasion = parseTags(occasion)
-    const analysis = analyzeClothing(`${category || ''} ${color || ''} ${parsedTags.join(' ')} ${brand || ''} ${fitType || ''} ${material || ''}`)
+    const parsedColors = parseTags(colors)
+    const parsedSecondaryColors = parseTags(secondaryColors)
+    const fallback = analyzeClothingText(`${category || ''} ${primaryColor || color || ''} ${parsedTags.join(' ')} ${brand || ''} ${fit || fitType || ''} ${material || ''}`)
+    const analysis = mergeFashionAnalysis(fallback, {
+      category,
+      primaryColor: primaryColor || color,
+      secondaryColors: parsedSecondaryColors.length ? parsedSecondaryColors : parsedColors.slice(1),
+      colors: parsedColors,
+      style,
+      season,
+      fit: fit || fitType,
+      fitType: fitType || fit,
+      tags: parsedTags,
+      occasion: parsedOccasion,
+      material
+    })
     const item = await Clothing.create({
       userId,
       image,
-      category: category || analysis.category,
-      color: color || analysis.color,
-      colors: colors?.length ? colors : analysis.colors,
-      style: style || analysis.style,
-      season: season || analysis.season,
+      category: normalizeCategory(category || analysis.category),
+      primaryColor: analysis.primaryColor,
+      secondaryColors: analysis.secondaryColors,
+      color: analysis.primaryColor,
+      colors: analysis.colors,
+      style: analysis.style,
+      season: analysis.season,
       occasion: parsedOccasion.length ? parsedOccasion : analysis.occasion,
       tags: parsedTags.length ? parsedTags : analysis.tags,
       brand,
-      fitType: fitType || analysis.fitType,
+      fit: analysis.fit,
+      fitType: analysis.fitType,
+      formalityScore: analysis.formalityScore,
+      warmthScore: analysis.warmthScore,
       material: material || analysis.material
     })
     return res.status(201).json(item)

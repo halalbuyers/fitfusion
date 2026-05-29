@@ -2,32 +2,38 @@
 
 import Link from 'next/link'
 import { useEffect, useMemo, useState } from 'react'
-import { CloudSun, Palette, Shirt, Sparkles, TrendingUp } from 'lucide-react'
+import { CloudSun, Heart, Palette, Shirt, Sparkles, TrendingUp } from 'lucide-react'
 import { AppFrame, MetricCard } from '../../components/AppFrame'
 
-type Clothing = { _id: string; category: string; colors?: string[]; style?: string; createdAt?: string }
-type Outfit = { _id?: string; title?: string; score: number; explanation?: string; tags?: string[] }
+type Clothing = { _id: string; category: string; primaryColor?: string; colors?: string[]; style?: string; wearCount?: number; createdAt?: string }
+type Outfit = { _id?: string; title?: string; score: number; explanation?: string; tags?: string[]; breakdown?: Record<string, number> }
 type Weather = { temperature: number; condition: string; suggestion: string; source: string }
+type Preferences = { preferredStyles: string[]; preferredColors: string[]; favoriteCategories: string[] }
 
 export default function DashboardPage() {
   const [wardrobe, setWardrobe] = useState<Clothing[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
   const [weather, setWeather] = useState<Weather | null>(null)
+  const [preferences, setPreferences] = useState<Preferences | null>(null)
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     let active = true
     async function load() {
       setLoading(true)
-      const [wardrobeRes, outfitsRes, weatherRes] = await Promise.allSettled([
+      const [wardrobeRes, outfitsRes, weatherRes, preferencesRes, recommendRes] = await Promise.allSettled([
         fetch('/api/wardrobe').then((res) => res.json()),
         fetch('/api/outfits').then((res) => res.json()),
-        fetch('/api/weather').then((res) => res.json())
+        fetch('/api/weather').then((res) => res.json()),
+        fetch('/api/user/preferences').then((res) => res.json()),
+        fetch('/api/outfits/recommend?occasion=casual&limit=3').then((res) => res.json())
       ])
       if (!active) return
       if (wardrobeRes.status === 'fulfilled' && Array.isArray(wardrobeRes.value)) setWardrobe(wardrobeRes.value)
       if (outfitsRes.status === 'fulfilled' && Array.isArray(outfitsRes.value)) setOutfits(outfitsRes.value)
+      if (recommendRes.status === 'fulfilled' && Array.isArray(recommendRes.value?.outfits) && recommendRes.value.outfits.length) setOutfits((current) => current.length ? current : recommendRes.value.outfits)
       if (weatherRes.status === 'fulfilled') setWeather(weatherRes.value)
+      if (preferencesRes.status === 'fulfilled' && preferencesRes.value?.preferredStyles) setPreferences(preferencesRes.value)
       setLoading(false)
     }
     load()
@@ -35,12 +41,13 @@ export default function DashboardPage() {
   }, [])
 
   const analytics = useMemo(() => {
-    const colors = wardrobe.flatMap((item) => item.colors || [])
+    const colors = wardrobe.flatMap((item) => item.colors?.length ? item.colors : [item.primaryColor || 'black'])
     const topColor = colors.sort((a, b) => colors.filter((x) => x === b).length - colors.filter((x) => x === a).length)[0] || 'black'
     const styles = wardrobe.map((item) => item.style).filter(Boolean) as string[]
     const favoriteStyle = styles.sort((a, b) => styles.filter((x) => x === b).length - styles.filter((x) => x === a).length)[0] || 'minimal'
     const score = outfits[0]?.score ? `${outfits[0].score}%` : wardrobe.length >= 3 ? 'Ready' : 'Setup'
-    return { topColor, favoriteStyle, score }
+    const worn = wardrobe.reduce((sum, item) => sum + Number(item.wearCount || 0), 0)
+    return { topColor, favoriteStyle, score, worn }
   }, [outfits, wardrobe])
 
   return (
@@ -61,7 +68,7 @@ export default function DashboardPage() {
           <div className="flex items-center justify-between gap-4">
             <div>
               <h2 className="text-xl font-semibold">Recommended today</h2>
-              <p className="mt-1 text-sm text-white/45">Local engine first, optional AI second.</p>
+              <p className="mt-1 text-sm text-white/45">Ranked by color, style, weather, occasion, and balance.</p>
             </div>
             <span className="flex items-center gap-2 rounded-[8px] bg-white/8 px-3 py-2 text-xs text-white/60">
               <CloudSun className="h-4 w-4" />
@@ -81,6 +88,13 @@ export default function DashboardPage() {
                   </div>
                   <span className="rounded-[8px] bg-white px-3 py-1 text-sm font-bold text-black">{outfit.score}</span>
                 </div>
+                {outfit.breakdown && (
+                  <div className="mt-3 grid grid-cols-3 gap-2 text-[11px] text-white/45">
+                    {Object.entries(outfit.breakdown).slice(0, 3).map(([key, value]) => (
+                      <span key={key} className="rounded-[8px] bg-white/7 px-2 py-1 capitalize">{key.replace('Score', '')}: {value}</span>
+                    ))}
+                  </div>
+                )}
               </div>
             ))}
           </div>
@@ -92,7 +106,7 @@ export default function DashboardPage() {
               <Palette className="h-5 w-5 text-white/70" />
               <h2 className="font-semibold">Color intelligence</h2>
             </div>
-            <p className="mt-4 text-sm leading-6 text-white/52">Your strongest palette is currently {analytics.topColor}. Neutral anchors increase outfit scores across streetwear, minimal, and travel fits.</p>
+            <p className="mt-4 text-sm leading-6 text-white/52">Your strongest palette is currently {analytics.topColor}. Preferred colors: {preferences?.preferredColors?.slice(0, 3).join(', ') || 'learning from favorites'}.</p>
           </div>
           <div className="grid grid-cols-2 gap-4">
             <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
@@ -101,10 +115,14 @@ export default function DashboardPage() {
               <p className="text-sm text-white/45">Categories</p>
             </div>
             <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
-              <TrendingUp className="h-5 w-5 text-white/65" />
-              <p className="mt-4 text-2xl font-semibold">{outfits.length}</p>
-              <p className="text-sm text-white/45">Saved fits</p>
+              <Heart className="h-5 w-5 text-white/65" />
+              <p className="mt-4 text-2xl font-semibold">{preferences?.preferredStyles?.[0] || analytics.favoriteStyle}</p>
+              <p className="text-sm text-white/45">Preference profile</p>
             </div>
+          </div>
+          <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
+            <TrendingUp className="h-5 w-5 text-white/65" />
+            <p className="mt-4 text-sm leading-6 text-white/52">{weather?.suggestion || 'AI stylist tip: save and reject outfits to sharpen personalization over time.'} Wear tracking has logged {analytics.worn} total wears.</p>
           </div>
           <Link href="/outfit-generator" className="flex items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] px-5 py-4 text-sm font-semibold text-black">
             <Sparkles className="h-4 w-4" />

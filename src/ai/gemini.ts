@@ -103,3 +103,76 @@ export async function generateGeminiText(
     ])
   }
 }
+
+export async function generateGeminiImageText(
+  imageUrl: string,
+  prompt: string,
+  systemInstruction = ''
+): Promise<string> {
+  const apiKey = getGeminiApiKey()
+
+  if (!apiKey) {
+    throw new Error('GEMINI_API_KEY is not configured')
+  }
+
+  const imageResponse = await fetch(imageUrl)
+  if (!imageResponse.ok) {
+    throw new Error(`Image fetch failed (${imageResponse.status})`)
+  }
+
+  const contentType = imageResponse.headers.get('content-type') || 'image/jpeg'
+  const imageBuffer = Buffer.from(await imageResponse.arrayBuffer())
+  const imageData = imageBuffer.toString('base64')
+
+  const url =
+    `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${apiKey}`
+
+  const response = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      systemInstruction: systemInstruction
+        ? {
+            parts: [{ text: systemInstruction }]
+          }
+        : undefined,
+      contents: [
+        {
+          role: 'user',
+          parts: [
+            { text: prompt },
+            {
+              inline_data: {
+                mime_type: contentType,
+                data: imageData
+              }
+            }
+          ]
+        }
+      ],
+      generationConfig: {
+        temperature: 0.15,
+        maxOutputTokens: 700
+      }
+    })
+  })
+
+  if (!response.ok) {
+    const text = await response.text()
+    throw new Error(`Gemini image request failed (${response.status}): ${text}`)
+  }
+
+  const data: any = await response.json()
+  const output =
+    data?.candidates?.[0]?.content?.parts
+      ?.map((p: any) => p?.text || '')
+      .join('') || ''
+
+  if (!output) {
+    throw new Error('Gemini returned empty image analysis')
+  }
+
+  return output
+}

@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
+import { normalizeCategory, normalizeFit, normalizeSeason, normalizeStyle } from '../../../lib/fashion-analysis'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -27,7 +28,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') return res.status(200).json(item)
 
   if (req.method === 'PATCH') {
-    Object.assign(item, req.body)
+    const update = { ...req.body }
+    if (update.category) update.category = normalizeCategory(update.category)
+    if (update.style) update.style = normalizeStyle(update.style)
+    if (update.season) update.season = normalizeSeason(update.season)
+    if (update.fit || update.fitType) {
+      update.fit = normalizeFit(update.fit || update.fitType)
+      update.fitType = update.fit
+    }
+    if (update.primaryColor || update.color) {
+      update.primaryColor = update.primaryColor || update.color
+      update.color = update.primaryColor
+    }
+    if (update.favorite !== undefined || update.isFavorite !== undefined) {
+      update.favorite = Boolean(update.favorite ?? update.isFavorite)
+      update.isFavorite = update.favorite
+    }
+    if (update.markWorn) {
+      update.wearCount = Number(item.wearCount || item.usageCount || 0) + 1
+      update.usageCount = update.wearCount
+      update.lastWornAt = new Date()
+      delete update.markWorn
+    }
+    Object.assign(item, update)
     await item.save()
     return res.status(200).json(item)
   }

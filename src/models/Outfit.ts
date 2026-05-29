@@ -10,6 +10,8 @@ export interface IOutfit extends Document {
   colorAnalysis?: string
   breakdown?: Record<string, number>
   tags: string[]
+  outfitKey?: string
+  method?: string
   isFavorite: boolean
   plannedFor?: Date
   createdAt: Date
@@ -25,8 +27,13 @@ const OutfitSchema: Schema = new Schema({
   colorAnalysis: { type: String },
   breakdown: { type: Schema.Types.Mixed, default: {} },
   tags: { type: [String], default: [] },
+  outfitKey: { type: String, index: true },
+  method: { type: String, default: 'local' },
   isFavorite: { type: Boolean, default: false, index: true },
   plannedFor: { type: Date }
 }, { timestamps: true })
+
+OutfitSchema.index({ userId: 1, outfitKey: 1 })
+OutfitSchema.index({ userId: 1, score: -1 })
 
 export default (mongoose.models.Outfit as mongoose.Model<IOutfit>) || mongoose.model<IOutfit>('Outfit', OutfitSchema)

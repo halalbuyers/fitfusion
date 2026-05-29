@@ -6,7 +6,7 @@ import { analyzeImage } from '../../ai/openai'
 import { connectToDatabase } from '../../lib/mongodb'
 import Clothing from '../../models/Clothing'
 import { getAuth } from '@clerk/nextjs/server'
-import { analyzeClothing } from '../../lib/fashion'
+import { analyzeClothingText, detectCategoryFromFilename, mergeFashionAnalysis, normalizeCategory } from '../../lib/fashion-analysis'
 import { parseTags } from '../../lib/api'
 
 export const config = {
@@ -52,40 +52,48 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       const manualText = [
         fieldValue(fields, 'category'),
-        fieldValue(fields, 'color'),
+        fieldValue(fields, 'primaryColor') || fieldValue(fields, 'color'),
         fieldValue(fields, 'style'),
         fieldValue(fields, 'season'),
         fieldValue(fields, 'brand'),
-        fieldValue(fields, 'fitType'),
+        fieldValue(fields, 'fit') || fieldValue(fields, 'fitType'),
         fieldValue(fields, 'material'),
         fieldValue(fields, 'tags')
       ].filter(Boolean).join(' ')
 
-      const fallbackAnalysis = analyzeClothing(manualText)
+      const fallbackAnalysis = analyzeClothingText(manualText)
       const aiAnalysis = await analyzeImage(result.secure_url).catch(() => fallbackAnalysis)
-      const analysis = {
-        ...fallbackAnalysis,
-        ...aiAnalysis,
-        colors: aiAnalysis.colors?.length ? aiAnalysis.colors : fallbackAnalysis.colors,
-        tags: aiAnalysis.tags?.length ? aiAnalysis.tags : fallbackAnalysis.tags
-      }
+      const analysis = mergeFashionAnalysis(fallbackAnalysis, aiAnalysis)
+      const filenameCategory = detectCategoryFromFilename(file.originalFilename || '')
 
       const tags = parseTags(fieldValue(fields, 'tags'))
       const occasions = parseTags(fieldValue(fields, 'occasion'))
       const colors = parseTags(fieldValue(fields, 'colors'))
+      const secondaryColors = parseTags(fieldValue(fields, 'secondaryColors'))
+      const primaryColor = fieldValue(fields, 'primaryColor') || fieldValue(fields, 'color') || colors[0] || analysis.primaryColor || 'unknown'
+      const category = fieldValue(fields, 'category')
+        ? normalizeCategory(fieldValue(fields, 'category'))
+        : analysis.category && analysis.category !== 'accessories' && analysis.category !== 'unknown'
+          ? normalizeCategory(analysis.category)
+          : filenameCategory
 
       const payload = {
         userId,
         image: result.secure_url,
-        category: fieldValue(fields, 'category') || analysis.category || 'accessories',
-        color: fieldValue(fields, 'color') || colors[0] || analysis.colors?.[0] || 'black',
-        colors: colors.length ? colors : analysis.colors || ['black'],
-        style: fieldValue(fields, 'style') || analysis.style || 'minimal',
+        category,
+        primaryColor,
+        secondaryColors: secondaryColors.length ? secondaryColors : (colors.length ? colors.slice(1) : analysis.secondaryColors || []),
+        color: primaryColor,
+        colors: colors.length ? colors : (primaryColor === 'unknown' ? [] : [primaryColor, ...(secondaryColors.length ? secondaryColors : analysis.secondaryColors || [])]),
+        style: fieldValue(fields, 'style') || analysis.style || 'casual',
         season: fieldValue(fields, 'season') || analysis.season || 'all-season',
         occasion: occasions.length ? occasions : analysis.occasion || [],
         tags: tags.length ? tags : analysis.tags || [],
         brand: fieldValue(fields, 'brand'),
-        fitType: fieldValue(fields, 'fitType') || analysis.fitType,
+        fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || analysis.fit,
+        fitType: fieldValue(fields, 'fitType') || fieldValue(fields, 'fit') || analysis.fitType,
+        formalityScore: analysis.formalityScore,
+        warmthScore: analysis.warmthScore,
         material: fieldValue(fields, 'material') || analysis.material
       }
 

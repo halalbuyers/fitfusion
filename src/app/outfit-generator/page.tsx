@@ -2,10 +2,11 @@
 
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
+import { motion } from 'framer-motion'
 import { Heart, Loader2, RefreshCw, Save, Sparkles, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
-type Clothing = { _id: string; image: string; category: string; colors?: string[]; style?: string }
+type Clothing = { _id: string; image: string; category: string; colors?: string[]; primaryColor?: string; style?: string }
 type Outfit = {
   title?: string
   occasion?: string
@@ -18,7 +19,8 @@ type Outfit = {
   method?: string
 }
 
-const occasions = ['casual', 'college', 'party', 'formal', 'gym', 'travel', 'date night']
+const occasions = ['casual', 'college', 'date', 'party', 'gym', 'formal', 'travel', 'winter', 'summer', 'monochrome', 'luxury', 'streetwear']
+const MotionArticle = motion.article as any
 
 export default function OutfitGeneratorPage() {
   const [occasion, setOccasion] = useState('casual')
@@ -28,6 +30,7 @@ export default function OutfitGeneratorPage() {
   const [saving, setSaving] = useState<string | null>(null)
   const [wardrobe, setWardrobe] = useState<Clothing[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
+  const [preferences, setPreferences] = useState<string[]>([])
   const [error, setError] = useState('')
 
   useEffect(() => {
@@ -37,6 +40,9 @@ export default function OutfitGeneratorPage() {
     fetch('/api/weather').then((res) => res.json()).then((data) => {
       if (data?.condition) setWeather(data.condition)
     }).catch(() => undefined)
+    fetch('/api/user/preferences').then((res) => res.json()).then((data) => {
+      if (Array.isArray(data?.preferredStyles)) setPreferences(data.preferredStyles)
+    }).catch(() => undefined)
   }, [])
 
   const wardrobeById = useMemo(() => new Map(wardrobe.map((item) => [item._id, item])), [wardrobe])
@@ -45,10 +51,10 @@ export default function OutfitGeneratorPage() {
     setError('')
     setLoading(true)
     try {
-      const res = await fetch('/api/ai/generate-outfit', {
+      const res = await fetch('/api/outfits/generate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ occasion, weather, mode })
+        body: JSON.stringify({ occasion, weather, mode, preferences, limit: 8 })
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Could not generate outfits')
@@ -112,6 +118,7 @@ export default function OutfitGeneratorPage() {
             <div className="flex justify-between rounded-[8px] bg-white/7 px-3 py-2"><span>Wardrobe pieces</span><span>{wardrobe.length}</span></div>
             <div className="flex justify-between rounded-[8px] bg-white/7 px-3 py-2"><span>Mode</span><span>{mode}</span></div>
             <div className="flex justify-between rounded-[8px] bg-white/7 px-3 py-2"><span>Weather</span><span>{weather}</span></div>
+            <div className="flex justify-between rounded-[8px] bg-white/7 px-3 py-2"><span>Preference</span><span>{preferences[0] || 'learning'}</span></div>
           </div>
           <button onClick={generate} disabled={loading} className="mt-5 flex w-full items-center justify-center gap-2 rounded-[8px] border border-white/10 px-4 py-3 text-sm text-white/70 transition hover:bg-white/8">
             <RefreshCw className="h-4 w-4" />
@@ -126,7 +133,13 @@ export default function OutfitGeneratorPage() {
             outfits.map((outfit, index) => {
               const visualItems = outfit.items.map((item) => item.clothing || wardrobeById.get(item.id)).filter(Boolean) as Clothing[]
               return (
-                <article key={`${outfit.score}-${index}`} className="overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.04]">
+                <MotionArticle
+                  key={`${outfit.score}-${index}`}
+                  initial={{ opacity: 0, y: 12 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.25, delay: index * 0.04 }}
+                  className="overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.04]"
+                >
                   <div className="grid gap-0 sm:grid-cols-[0.9fr_1.1fr]">
                     <div className="grid grid-cols-2 gap-px bg-white/10">
                       {visualItems.slice(0, 4).map((item) => (
@@ -151,7 +164,7 @@ export default function OutfitGeneratorPage() {
                       <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-white/50">
                         {Object.entries(outfit.breakdown || {}).slice(0, 6).map(([key, value]) => (
                           <div key={key} className="rounded-[8px] bg-black/25 p-2">
-                            <div className="capitalize">{key}</div>
+                            <div className="capitalize">{key.replace('Score', '')}</div>
                             <div className="mt-1 font-semibold text-white">{value}</div>
                           </div>
                         ))}
@@ -167,7 +180,7 @@ export default function OutfitGeneratorPage() {
                       </div>
                     </div>
                   </div>
-                </article>
+                </MotionArticle>
               )
             })
           ) : (

@@ -39,6 +39,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       colorAnalysis: outfit.colorAnalysis,
       breakdown: outfit.breakdown || {},
       tags: outfit.tags || [],
+      outfitKey: outfit.outfitKey,
+      method: outfit.method || 'local',
       isFavorite: true,
       plannedFor: plannedFor ? new Date(plannedFor) : undefined
     })

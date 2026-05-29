@@ -1,70 +1,78 @@
-import { analyzeClothing } from '../lib/fashion'
-import { generateGeminiText, hasGemini } from './gemini'
+import { analyzeClothingText, mergeFashionAnalysis } from '../lib/fashion-analysis'
+import { generateGeminiImageText, hasGemini } from './gemini'
 
 export type ImageAnalysis = {
   category: string
+  primaryColor?: string
+  secondaryColors?: string[]
   colors: string[]
   style: string
   season: string
   occasion?: string[]
   tags: string[]
+  fit?: string
   fitType?: string
+  formalityScore?: number
+  warmthScore?: number
   material?: string
 }
 
 export async function analyzeImage(imageUrl: string): Promise<ImageAnalysis> {
   const fallback = () => {
-    const analysis = analyzeClothing('')
+    const analysis = analyzeClothingText('')
     return {
       category: analysis.category,
+      primaryColor: analysis.primaryColor,
+      secondaryColors: analysis.secondaryColors,
       colors: analysis.colors,
       style: analysis.style,
       season: analysis.season,
       occasion: analysis.occasion,
       tags: analysis.tags,
+      fit: analysis.fit,
       fitType: analysis.fitType,
+      formalityScore: analysis.formalityScore,
+      warmthScore: analysis.warmthScore,
       material: analysis.material
     }
   }
 
-  if (!hasGemini()) {
-    return fallback()
-  }
+  if (!hasGemini()) return fallback()
 
-  const system = `You are a fashion image analysis assistant. Given an image URL, return EXACTLY one JSON object (no commentary) with keys: category (one-word string: e.g., hoodie, shirt, pants), colors (array of dominant color names), style (single-word or short phrase), season (one of spring, summer, autumn, winter, all-season, or empty), occasion (array), fitType, material, tags (array of short tags). Respond only with valid JSON.`
-
-  const user = `Image URL: ${imageUrl}\n\nReturn only JSON.`
+  const system = `You are a fashion image analysis assistant. Analyze only the visible clothing item, not the background or model. Return EXACTLY one JSON object with keys: category (one of tshirt, shirt, hoodie, jacket, jeans, cargo, shorts, sneakers, boots, accessories), primaryColor, secondaryColors, colors, style (one of streetwear, minimal, formal, casual, techwear, old-money, vintage, sporty, y2k), season (spring, summer, autumn, winter, all-season), occasion, fit, fitType, material, formalityScore, warmthScore, tags. Use ordinary color names. Respond only with valid JSON.`
+  const user = `Analyze this clothing image for a wardrobe recommendation engine. Return only JSON.`
 
   let raw = ''
   try {
-    raw = await generateGeminiText(user, system)
+    raw = await generateGeminiImageText(imageUrl, user, system)
   } catch {
     return fallback()
   }
 
-  // Find first JSON object in the response
   const jsonMatch = raw.match(/\{[\s\S]*\}/)
-  if (jsonMatch) {
-    try {
-      const parsed = JSON.parse(jsonMatch[0])
-      // Normalize fields
-      const out: ImageAnalysis = {
-        category: String(parsed.category || 'unknown'),
-        colors: Array.isArray(parsed.colors) ? parsed.colors.map((c: any) => String(c).toLowerCase()) : [],
-        style: String(parsed.style || ''),
-        season: String(parsed.season || ''),
-        occasion: Array.isArray(parsed.occasion) ? parsed.occasion.map((t: any) => String(t).toLowerCase()) : [],
-        tags: Array.isArray(parsed.tags) ? parsed.tags.map((t: any) => String(t)) : [],
-        fitType: String(parsed.fitType || ''),
-        material: String(parsed.material || '')
-      }
-      return out
-    } catch (e) {
-      // fallthrough to fallback
-    }
-  }
+  if (!jsonMatch) return fallback()
 
-  return fallback()
+  try {
+    const parsed = JSON.parse(jsonMatch[0])
+    const base = analyzeClothingText('')
+    return mergeFashionAnalysis(base, {
+      category: String(parsed.category || ''),
+      primaryColor: String(parsed.primaryColor || ''),
+      secondaryColors: Array.isArray(parsed.secondaryColors) ? parsed.secondaryColors.map((c: any) => String(c).toLowerCase()) : [],
+      colors: Array.isArray(parsed.colors) ? parsed.colors.map((c: any) => String(c).toLowerCase()) : [],
+      style: String(parsed.style || ''),
+      season: String(parsed.season || ''),
+      occasion: Array.isArray(parsed.occasion) ? parsed.occasion.map((t: any) => String(t).toLowerCase()) : [],
+      tags: Array.isArray(parsed.tags) ? parsed.tags.map((t: any) => String(t)) : [],
+      fit: String(parsed.fit || parsed.fitType || ''),
+      fitType: String(parsed.fitType || parsed.fit || ''),
+      formalityScore: Number(parsed.formalityScore),
+      warmthScore: Number(parsed.warmthScore),
+      material: String(parsed.material || '')
+    })
+  } catch {
+    return fallback()
+  }
 }
 
 const openAiImageAnalysis = null

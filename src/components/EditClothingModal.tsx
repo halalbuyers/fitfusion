@@ -18,6 +18,8 @@ function split(value: string) {
   return value.split(',').map((part) => part.trim()).filter(Boolean)
 }
 
+const categories = ['unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories']
+
 export default function EditClothingModal({ item, onClose, onSaved }: Props) {
   const [form, setForm] = useState({
     category: item.category || '',
@@ -45,7 +47,7 @@ export default function EditClothingModal({ item, onClose, onSaved }: Props) {
       const colors = split(form.colors)
       const body = {
         category: form.category,
-        color: colors[0] || item.color || 'black',
+        color: colors[0] || item.color || 'unknown',
         colors,
         style: form.style,
         season: form.season,
@@ -87,7 +89,9 @@ export default function EditClothingModal({ item, onClose, onSaved }: Props) {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <input className="field" value={form.category} onChange={(e) => update('category', e.target.value)} placeholder="category" />
+          <select className="field" value={form.category || 'unknown'} onChange={(e) => update('category', e.target.value)}>
+            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+          </select>
           <input className="field" value={form.colors} onChange={(e) => update('colors', e.target.value)} placeholder="colors, comma separated" />
           <input className="field" value={form.style} onChange={(e) => update('style', e.target.value)} placeholder="style" />
           <input className="field" value={form.season} onChange={(e) => update('season', e.target.value)} placeholder="season" />

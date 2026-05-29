@@ -10,9 +10,14 @@ type Clothing = {
   _id: string
   image: string
   category: string
+  primaryColor?: string
+  secondaryColors?: string[]
   colors: string[]
   style?: string
   season?: string
+  fit?: string
+  formalityScore?: number
+  warmthScore?: number
   brand?: string
   tags?: string[]
   occasion?: string[]
@@ -21,7 +26,7 @@ type Clothing = {
   isFavorite?: boolean
 }
 
-const categories = ['all', 't-shirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargos', 'pants', 'sneakers', 'accessories']
+const categories = ['all', 'unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories']
 
 export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
   const { user } = useUser()
@@ -58,7 +63,8 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
   const stats = useMemo(() => {
     const favoriteCount = items.filter((item) => item.isFavorite).length
     const styles = new Set(items.map((item) => item.style).filter(Boolean))
-    return { favoriteCount, styles: styles.size }
+    const avgFormality = Math.round(items.reduce((sum, item) => sum + Number(item.formalityScore || 45), 0) / Math.max(1, items.length))
+    return { favoriteCount, styles: styles.size, avgFormality }
   }, [items])
 
   async function toggleFavorite(item: Clothing) {
@@ -90,6 +96,7 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
           <span className="rounded-[8px] bg-white/7 px-3 py-2">{items.length} pieces</span>
           <span className="rounded-[8px] bg-white/7 px-3 py-2">{stats.favoriteCount} favorites</span>
           <span className="rounded-[8px] bg-white/7 px-3 py-2">{stats.styles} styles</span>
+          <span className="rounded-[8px] bg-white/7 px-3 py-2">{stats.avgFormality} formality</span>
         </div>
         <div className="flex gap-2">
           <div className="relative flex-1 md:w-56">
@@ -117,7 +124,7 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
         <div className="columns-2 gap-4 sm:columns-3 xl:columns-4">
           {items.map((it) => (
             <div key={it._id} className="relative mb-4 break-inside-avoid">
-              <ClothingCard image={it.image} title={it.category} category={it.style || it.category} colors={it.colors} isFavorite={it.isFavorite} />
+              <ClothingCard image={it.image} title={it.category} category={it.style || it.category} colors={it.colors || [it.primaryColor || 'black']} isFavorite={it.isFavorite} />
               <div className="absolute right-2 top-2 flex gap-1">
                 <button title={it.isFavorite ? 'Remove favorite' : 'Favorite'} onClick={() => toggleFavorite(it)} className="icon-button h-9 w-9">
                   <Heart className={`h-4 w-4 ${it.isFavorite ? 'fill-current' : ''}`} />
@@ -132,6 +139,11 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
                   <Trash2 className="h-3.5 w-3.5" />
                   Remove
                 </button>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-1.5">
+                {[...new Set([it.season, it.fit, ...(it.tags || []).slice(0, 2)].filter(Boolean).map(String))].map((tag) => (
+                  <span key={`${it._id}-${tag}`} className="rounded-[8px] bg-white/7 px-2 py-1 text-[11px] text-white/45">{tag}</span>
+                ))}
               </div>
             </div>
           ))}
