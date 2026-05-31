@@ -22,7 +22,7 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   return (
-    <div className="premium-grid min-h-screen px-4 py-6 sm:px-6 sm:py-8">
+    <div className="premium-grid min-h-screen px-3 pb-24 pt-5 sm:px-6 sm:py-8 lg:pb-8">
       <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[240px_1fr]">
         <aside className="glass hidden h-fit rounded-[8px] p-3 lg:block">
           <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/35">Studio</div>
@@ -40,18 +40,18 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
             ))}
           </nav>
         </aside>
-        <section>
+        <section className="min-w-0">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div>
               <p className="text-xs uppercase tracking-[0.3em] text-white/35">{eyebrow}</p>
               <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
             </div>
-            {action}
+            {action ? <div className="w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">{action}</div> : null}
           </div>
           {children}
         </section>
       </div>
-      <nav className="fixed inset-x-3 bottom-3 z-40 grid grid-cols-5 gap-1 rounded-[8px] border border-white/10 bg-black/80 p-1 backdrop-blur-xl lg:hidden">
+      <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-5 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/90 p-1 backdrop-blur-xl sm:inset-x-3 sm:bottom-3 lg:hidden">
         {nav.slice(0, 5).map(([label, href, Icon]) => (
           <Link
             key={href}

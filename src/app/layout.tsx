@@ -22,7 +22,7 @@ export default function RootLayout({
             process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string
           }
         >
-          <div className="min-h-screen flex flex-col bg-[#070707] text-white">
+          <div className="min-h-screen flex flex-col bg-[var(--page-bg)] text-[var(--text-main)]">
             <Navbar />
             <main className="flex-1">{children}</main>
             <Footer />

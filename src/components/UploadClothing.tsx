@@ -297,7 +297,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         >
           <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="relative min-h-[320px] bg-black/28">
-              <img src={draft.image} alt="Reviewed clothing item" className="absolute inset-0 h-full w-full object-contain p-5" />
+              <Image src={draft.image} alt="Reviewed clothing item" fill sizes="(min-width: 1024px) 32vw, 100vw" unoptimized className="object-contain p-5" />
             </div>
             <div className="grid gap-4 p-5">
               <div className="flex items-start justify-between gap-4">

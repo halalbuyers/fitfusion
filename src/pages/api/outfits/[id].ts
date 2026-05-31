@@ -27,7 +27,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'PATCH') {
     const allowed = ['title', 'occasion', 'isFavorite', 'plannedFor', 'tags', 'explanation']
     for (const key of allowed) {
-      if (key in req.body) outfit.set(key, req.body[key])
+      if (key in req.body) {
+        if (key === 'plannedFor') outfit.set(key, req.body[key] ? new Date(req.body[key]) : undefined)
+        else outfit.set(key, req.body[key])
+      }
     }
     await outfit.save()
     return res.status(200).json(outfit)

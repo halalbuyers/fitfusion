@@ -9,7 +9,7 @@ export default function Footer() {
   ] as const
 
   return (
-    <footer className="border-t border-white/10 bg-[#070707] px-4 py-10 sm:px-6">
+    <footer className="border-t border-white/10 bg-[var(--page-bg)] px-4 py-10 sm:px-6">
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3 text-lg font-semibold">
