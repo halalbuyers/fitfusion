@@ -2,7 +2,7 @@ import { getPaletteCompatibilityScore, isLuxuryPalette, normalizeColors } from '
 import { legacyCategory, normalizeCategory, normalizeStyle } from './fashion-analysis'
 import { explainOutfitLocally } from './outfit-explainer'
 import { emptyPreferenceProfile, preferenceBoost, type UserPreferenceProfile } from './preference-engine'
-import { analyzeWeather, scoreWeatherFit } from './weather-engine'
+import { analyzeWeather, outfitLayerCount, outfitWarmthScore, scoreWeatherFit, validateOutfitWeather, weatherPenalty } from './weather-engine'
 
 export type OutfitType = 'casual' | 'college' | 'date' | 'party' | 'gym' | 'formal' | 'travel' | 'winter' | 'summer' | 'monochrome' | 'luxury' | 'streetwear'
 
@@ -21,6 +21,7 @@ export type WardrobeEngineItem = {
   fitType?: string
   formalityScore?: number
   warmthScore?: number
+  material?: string
   tags?: string[]
   favorite?: boolean
   isFavorite?: boolean
@@ -49,6 +50,7 @@ export type OutfitScoreBreakdown = {
   balanceScore: number
   personalization: number
   memoryPenalty: number
+  weatherPenalty: number
 }
 
 export type GeneratedOutfit = {
@@ -132,9 +134,9 @@ function styleScore(items: WardrobeEngineItem[], request: OutfitRequest) {
 function seasonScore(items: WardrobeEngineItem[], request: OutfitRequest) {
   const occasion = String(request.occasion || '').toLowerCase()
   const requestedSeason = String(request.season || (['winter', 'summer'].includes(occasion) ? occasion : '')).toLowerCase()
-  const weather = analyzeWeather({ condition: request.weather, temperature: request.temperature, season: request.season })
+  const weather = analyzeWeather({ condition: request.weather, temperature: request.temperature, season: requestedSeason || request.season })
   const categories = items.map((item) => normalizeCategory(item.category))
-  let score = scoreWeatherFit(items, { condition: request.weather, temperature: request.temperature, season: request.season })
+  let score = scoreWeatherFit(items, { condition: request.weather, temperature: request.temperature, season: requestedSeason || request.season })
 
   if (requestedSeason) {
     const matches = items.filter((item) => ['all-season', requestedSeason].includes(String(item.season || 'all-season').toLowerCase())).length
@@ -142,9 +144,13 @@ function seasonScore(items: WardrobeEngineItem[], request: OutfitRequest) {
   }
 
   if (weather.needsLayer && categories.some((category) => ['hoodie', 'jacket'].includes(category))) score += 8
-  if (weather.avoidHeavyLayers && categories.some((category) => ['jacket', 'hoodie', 'boots'].includes(category))) score -= 18
-  if ((requestedSeason === 'winter' || String(request.weather).includes('cold')) && categories.includes('shorts')) score -= 28
-  if ((requestedSeason === 'summer' || String(request.weather).includes('hot')) && categories.includes('jacket')) score -= 20
+  if (weather.avoidHeavyLayers && categories.some((category) => ['jacket', 'hoodie', 'boots'].includes(category))) score -= 45
+  if ((requestedSeason === 'winter' || String(request.weather).includes('cold')) && categories.includes('shorts')) score -= 80
+  if ((requestedSeason === 'summer' || String(request.weather).includes('hot')) && categories.some((category) => ['hoodie', 'jacket'].includes(category))) score -= 100
+  if (requestedSeason === 'summer') {
+    score += categories.filter((category) => ['tshirt', 'shirt', 'shorts', 'sneakers'].includes(category)).length * 7
+    score -= categories.filter((category) => ['hoodie', 'jacket', 'boots'].includes(category)).length * 55
+  }
 
   return Math.max(0, Math.min(100, Math.round(score)))
 }
@@ -208,6 +214,9 @@ export function scoreOutfit(items: WardrobeEngineItem[], request: OutfitRequest 
   const colors = items.flatMap(itemColors)
   const currentOutfitKey = outfitKey(items)
   const memoryPenalty = (request.previousOutfitKeys || []).includes(currentOutfitKey) ? 12 : 0
+  const occasion = String(request.occasion || '').toLowerCase()
+  const season = request.season || (['winter', 'summer'].includes(occasion) ? occasion : undefined)
+  const validation = validateOutfitWeather(items, { condition: request.weather, temperature: request.temperature, season })
   const breakdown: OutfitScoreBreakdown = {
     colorScore: colors.length ? getPaletteCompatibilityScore(colors) : 50,
     styleScore: styleScore(items, request),
@@ -215,19 +224,21 @@ export function scoreOutfit(items: WardrobeEngineItem[], request: OutfitRequest 
     occasionScore: occasionScore(items, request.occasion || 'casual'),
     balanceScore: balanceScore(items, request),
     personalization: preferenceBoost(items, request.preferences || emptyPreferenceProfile),
-    memoryPenalty: memoryPenalty + recentlyWornPenalty(items)
+    memoryPenalty: memoryPenalty + recentlyWornPenalty(items),
+    weatherPenalty: validation.valid ? weatherPenalty(items, { condition: request.weather, temperature: request.temperature, season }) : 1000
   }
   const weighted =
-    breakdown.colorScore * 0.35 +
-    breakdown.styleScore * 0.30 +
-    breakdown.seasonScore * 0.15 +
+    breakdown.colorScore * 0.30 +
+    breakdown.styleScore * 0.25 +
+    breakdown.seasonScore * 0.25 +
     breakdown.occasionScore * 0.10 +
     breakdown.balanceScore * 0.10 +
     breakdown.personalization -
-    breakdown.memoryPenalty
+    breakdown.memoryPenalty -
+    breakdown.weatherPenalty
 
   return {
-    score: Math.max(0, Math.min(100, Math.round(weighted))),
+    score: validation.valid ? Math.max(0, Math.min(100, Math.round(weighted))) : 0,
     breakdown,
     confidence: confidenceScore(items)
   }
@@ -252,6 +263,28 @@ function topCandidates(items: WardrobeEngineItem[], categories: string[], limit:
     .filter((item) => categories.includes(normalizeCategory(item.category)))
     .sort((a, b) => Number(b.favorite || b.isFavorite) - Number(a.favorite || a.isFavorite))
     .slice(0, limit)
+}
+
+function weatherContextForRequest(request: OutfitRequest, occasion: string) {
+  return {
+    condition: request.weather,
+    temperature: request.temperature,
+    season: request.season || (['winter', 'summer'].includes(occasion) ? occasion : undefined)
+  }
+}
+
+function logWeatherRejection(items: WardrobeEngineItem[], request: OutfitRequest, occasion: string) {
+  const validation = validateOutfitWeather(items, weatherContextForRequest(request, occasion))
+  if (validation.valid) return validation
+  console.info('[FitFusion outfit weather rejection]', {
+    Weather: validation.weather,
+    Season: validation.season,
+    LayerCount: validation.layerCount,
+    WarmthScore: validation.warmthScore,
+    RejectedReason: validation.reason,
+    Items: items.map((item) => legacyCategory(item.category))
+  })
+  return validation
 }
 
 export function generateOutfits(items: WardrobeEngineItem[], request: OutfitRequest = {}): GeneratedOutfit[] {
@@ -286,10 +319,12 @@ export function generateOutfits(items: WardrobeEngineItem[], request: OutfitRequ
       seen.add(key)
       return true
     })
+    .filter((combo) => logWeatherRejection(combo, request, occasion).valid)
     .map((combo, index) => {
       const { score, breakdown, confidence } = scoreOutfit(combo, request)
       const colors = [...new Set(combo.flatMap(itemColors))]
-      const tags = [...new Set([occasion, ...combo.map((item) => normalizeStyle(item.style)), ...combo.flatMap((item) => item.tags || [])])].slice(0, 8)
+      const validation = validateOutfitWeather(combo, weatherContextForRequest(request, occasion))
+      const tags = [...new Set([occasion, validation.weather, `${outfitLayerCount(combo)} layers`, `warmth ${outfitWarmthScore(combo)}`, ...combo.map((item) => normalizeStyle(item.style)), ...combo.flatMap((item) => item.tags || [])])].slice(0, 8)
       return {
         title: titleFor(combo, occasion, index),
         occasion,

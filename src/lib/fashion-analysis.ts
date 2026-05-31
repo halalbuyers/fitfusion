@@ -35,8 +35,8 @@ const categoryAliases: Array<[ClothingCategory, string[]]> = [
   ['cargo', ['cargo', 'cargos']],
   ['jeans', ['jean', 'denim']],
   ['shorts', ['short']],
-  ['shirt', ['shirt', 'button', 'oxford', 'polo']],
   ['tshirt', ['tshirt', 't-shirt', 'tee', 't shirt']],
+  ['shirt', ['shirt', 'button', 'oxford', 'polo']],
   ['accessories', ['watch', 'cap', 'belt', 'bag', 'scarf', 'chain', 'ring', 'accessory']]
 ]
 
@@ -58,7 +58,7 @@ const materialWords = ['denim', 'cotton', 'wool', 'linen', 'leather', 'fleece', 
 export function normalizeCategory(value?: string): ClothingCategory {
   const text = String(value || '').trim().toLowerCase()
   if (!text || text === 'auto' || text === 'unknown') return 'unknown'
-  if (text === 't-shirt' || text === 'tee') return 'tshirt'
+  if (['tshirt', 't-shirt', 'tee', 't shirt', 't-shirts', 'tees'].includes(text)) return 'tshirt'
   if (text === 'pants' || text === 'trouser' || text === 'trousers') return 'jeans'
   if (text === 'cargos') return 'cargo'
   if (text === 'shoes') return 'sneakers'

@@ -5,6 +5,7 @@ import { Edit3, Heart, Search, SlidersHorizontal, Trash2, Undo2 } from 'lucide-r
 import ClothingCard from './ClothingCard'
 import EditClothingModal from './EditClothingModal'
 import { useUser } from '@clerk/nextjs'
+import { displayReviewValue, reviewCategories } from '../lib/review-options'
 
 type Clothing = {
   _id: string
@@ -26,7 +27,7 @@ type Clothing = {
   isFavorite?: boolean
 }
 
-const categories = ['all', 'unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories']
+const categories = ['all', 'unknown', ...reviewCategories]
 
 export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
   const { user } = useUser()
@@ -106,7 +107,7 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
           <div className="relative">
             <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
             <select value={category} onChange={(e) => setCategory(e.target.value)} className="field h-10 pl-9 capitalize">
-              {categories.map((item) => <option key={item} value={item}>{item}</option>)}
+              {categories.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
             </select>
           </div>
         </div>
@@ -124,7 +125,7 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
         <div className="columns-2 gap-4 sm:columns-3 xl:columns-4">
           {items.map((it) => (
             <div key={it._id} className="relative mb-4 break-inside-avoid">
-              <ClothingCard image={it.image} title={it.category} category={it.style || it.category} colors={it.colors || [it.primaryColor || 'black']} isFavorite={it.isFavorite} />
+              <ClothingCard image={it.image} title={it.category} category={it.style || it.category} colors={it.colors?.length ? it.colors : [it.primaryColor || 'unknown'].filter((color) => color !== 'unknown')} isFavorite={it.isFavorite} />
               <div className="absolute right-2 top-2 flex gap-1">
                 <button title={it.isFavorite ? 'Remove favorite' : 'Favorite'} onClick={() => toggleFavorite(it)} className="icon-button h-9 w-9">
                   <Heart className={`h-4 w-4 ${it.isFavorite ? 'fill-current' : ''}`} />

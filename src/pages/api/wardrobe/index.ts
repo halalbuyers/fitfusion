@@ -23,7 +23,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'GET') {
     const query: Record<string, any> = { userId }
     const { category, color, style, season, occasion, favorite, q } = req.query
-    if (typeof category === 'string' && category) query.category = normalizeCategory(category)
+    if (typeof category === 'string' && category) query.category = { $in: [category, normalizeCategory(category)] }
     if (typeof style === 'string' && style) query.style = style
     if (typeof season === 'string' && season) query.season = season
     if (typeof favorite === 'string') query.$or = [{ isFavorite: favorite === 'true' }, { favorite: favorite === 'true' }]
@@ -88,6 +88,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       warmthScore: analysis.warmthScore,
       material: material || analysis.material
     }
+    console.log('MONGODB SAVE COLORS:', {
+      primaryColor: payload.primaryColor,
+      colors: payload.colors
+    })
     const item = await Clothing.create({
       ...payload,
       embedding: generateClothingEmbedding(payload),

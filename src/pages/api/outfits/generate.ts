@@ -9,11 +9,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (!userId) return res.status(401).json({ error: 'Unauthorized' })
 
   try {
-    const { occasion, weather, temperature, preferences, mode = 'basic', limit } = req.body || {}
-    const outfits = await generateOutfitsForUser(userId, { occasion, weather, temperature, preferences, mode, limit })
+    const { occasion, weather, temperature, season, preferences, mode = 'basic', limit } = req.body || {}
+    const outfits = await generateOutfitsForUser(userId, { occasion, weather, temperature, season, preferences, mode, limit })
     return res.status(200).json({ outfits })
   } catch (error: any) {
     return res.status(500).json({ error: error?.message || 'Could not generate outfits' })
   }
 }
-

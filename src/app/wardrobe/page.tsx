@@ -14,7 +14,7 @@ export default function WardrobePage() {
         <section className="glass rounded-2xl p-6">
           <h2 className="text-xl font-semibold">Upload clothing</h2>
           <p className="mt-2 text-sm leading-6 text-white/50">
-            Add a clothing image and FitFusion will save it to your wardrobe with AI-assisted tags.
+            Add a clothing image, review FitFusion&apos;s AI-assisted tags, then save the final item.
           </p>
           <div className="mt-5">
             <UploadClothing onUploaded={() => setRefreshKey((key) => key + 1)} />

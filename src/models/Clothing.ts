@@ -26,6 +26,11 @@ export interface IClothing extends Document {
   lastWornAt: Date | null
   embedding?: number[]
   embeddingVersion?: number
+  aiCategory?: string
+  aiColor?: string
+  categoryConfidence?: number
+  colorConfidence?: number
+  correctedByUser?: boolean
   createdAt: Date
 }
 
@@ -53,7 +58,12 @@ const ClothingSchema: Schema = new Schema({
   usageCount: { type: Number, default: 0 },
   lastWornAt: { type: Date, default: null },
   embedding: { type: [Number], default: undefined },
-  embeddingVersion: { type: Number, default: 0, index: true }
+  embeddingVersion: { type: Number, default: 0, index: true },
+  aiCategory: { type: String },
+  aiColor: { type: String },
+  categoryConfidence: { type: Number, default: 0, min: 0, max: 100 },
+  colorConfidence: { type: Number, default: 0, min: 0, max: 100 },
+  correctedByUser: { type: Boolean, default: false, index: true }
 }, { timestamps: true })
 
 ClothingSchema.index({ userId: 1, category: 1 })

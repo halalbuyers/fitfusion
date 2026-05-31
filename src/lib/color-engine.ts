@@ -55,24 +55,6 @@ const colorAliases: Record<string, ColorFamily> = {
   gold: 'metallic'
 }
 
-const colorCentroids: Record<Exclude<ColorFamily, 'unknown'>, [number, number, number]> = {
-  black: [20, 20, 20],
-  white: [238, 238, 230],
-  gray: [128, 128, 128],
-  navy: [18, 32, 72],
-  blue: [48, 112, 190],
-  brown: [104, 68, 42],
-  beige: [198, 176, 132],
-  green: [42, 130, 76],
-  olive: [100, 112, 52],
-  red: [180, 42, 48],
-  pink: [214, 108, 146],
-  yellow: [218, 184, 52],
-  orange: [206, 108, 42],
-  purple: [112, 70, 152],
-  metallic: [174, 164, 142]
-}
-
 export const neutralColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige'])
 const luxuryColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige', 'metallic'])
 const warmColors = new Set<ColorFamily>(['brown', 'beige', 'red', 'pink', 'yellow', 'orange'])
@@ -125,7 +107,7 @@ export function normalizeColor(value?: string): ColorFamily {
 
 export function normalizeColors(values: Array<string | undefined> = []): ColorFamily[] {
   const colors = values.map(normalizeColor).filter((color) => color !== 'unknown')
-  return [...new Set(colors.length ? colors : (['black'] as ColorFamily[]))]
+  return [...new Set(colors)]
 }
 
 export function hexToColorFamily(hex?: string): ColorFamily {
@@ -138,18 +120,52 @@ export function hexToColorFamily(hex?: string): ColorFamily {
     parseInt(value.slice(4, 6), 16)
   ]
 
-  const [family] = Object.entries(colorCentroids)
-    .map(([name, centroid]) => {
-      const distance = Math.sqrt(
-        (rgb[0] - centroid[0]) ** 2 +
-        (rgb[1] - centroid[1]) ** 2 +
-        (rgb[2] - centroid[2]) ** 2
-      )
-      return [name as ColorFamily, distance] as const
-    })
-    .sort((a, b) => a[1] - b[1])[0]
+  return rgbToFashionColor(rgb)
+}
 
-  return family
+export function rgbToFashionColor([red, green, blue]: [number, number, number]): ColorFamily {
+  const r = red / 255
+  const g = green / 255
+  const b = blue / 255
+  const max = Math.max(r, g, b)
+  const min = Math.min(r, g, b)
+  const delta = max - min
+  const brightness = max
+  const saturation = max === 0 ? 0 : delta / max
+
+  let hue = 0
+  if (delta !== 0) {
+    if (max === r) hue = ((g - b) / delta) % 6
+    else if (max === g) hue = (b - r) / delta + 2
+    else hue = (r - g) / delta + 4
+    hue *= 60
+    if (hue < 0) hue += 360
+  }
+
+  if (brightness <= 0.16) return 'black'
+
+  if (saturation <= 0.12) {
+    if (brightness >= 0.82) return 'white'
+    if (brightness <= 0.28) return 'black'
+    return 'gray'
+  }
+
+  const isWarmNeutral = hue >= 28 && hue <= 62 && saturation <= 0.45
+  if (isWarmNeutral && brightness >= 0.56) return 'beige'
+  if (isWarmNeutral) return 'brown'
+
+  if ((hue >= 0 && hue < 12) || hue >= 345) return brightness < 0.45 && saturation < 0.7 ? 'brown' : 'red'
+  if (hue >= 12 && hue < 28) return brightness < 0.52 ? 'brown' : 'orange'
+  if (hue >= 28 && hue < 52) return brightness > 0.72 && saturation < 0.72 ? 'beige' : 'yellow'
+  if (hue >= 52 && hue < 72) return saturation < 0.55 ? 'olive' : 'yellow'
+  if (hue >= 72 && hue < 155) return saturation < 0.5 && brightness < 0.65 ? 'olive' : 'green'
+  if (hue >= 155 && hue < 190) return saturation < 0.45 ? 'green' : 'blue'
+  if (hue >= 190 && hue < 250) return brightness < 0.35 ? 'navy' : 'blue'
+  if (hue >= 250 && hue < 290) return 'purple'
+  if (hue >= 290 && hue < 330) return saturation < 0.48 ? 'purple' : 'pink'
+  if (hue >= 330 && hue < 345) return 'pink'
+
+  return 'unknown'
 }
 
 export function areComplementary(a: string, b: string) {

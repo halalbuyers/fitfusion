@@ -11,6 +11,8 @@ type Props = {
 }
 
 export default function ClothingCard({ image, title, category, colors = [], isFavorite }: Props) {
+  const swatches = [...new Set(colors.filter(Boolean))].slice(0, 3)
+
   return (
     <div className="group overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.045] transition hover:-translate-y-1 hover:border-white/25 hover:bg-white/[0.07]">
       <div className="relative flex aspect-[4/5] w-full items-center justify-center bg-black/35">
@@ -28,7 +30,7 @@ export default function ClothingCard({ image, title, category, colors = [], isFa
             <div className="mt-1 text-xs capitalize text-white/45">{category}</div>
           </div>
           <div className="flex max-w-[64px] flex-wrap justify-end gap-1">
-            {colors.slice(0, 3).map((color) => (
+            {swatches.map((color) => (
               <span key={color} title={color} className="h-3 w-3 rounded-full border border-white/25" style={{ backgroundColor: color }} />
             ))}
           </div>

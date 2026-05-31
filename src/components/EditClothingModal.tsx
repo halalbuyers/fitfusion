@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Loader2, Save, X } from 'lucide-react'
 import Toast from './Toast'
+import { displayReviewValue, reviewCategories } from '../lib/review-options'
 
 type Props = {
   item: any
@@ -17,8 +18,6 @@ function join(value: unknown) {
 function split(value: string) {
   return value.split(',').map((part) => part.trim()).filter(Boolean)
 }
-
-const categories = ['unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories']
 
 export default function EditClothingModal({ item, onClose, onSaved }: Props) {
   const [form, setForm] = useState({
@@ -90,7 +89,7 @@ export default function EditClothingModal({ item, onClose, onSaved }: Props) {
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
           <select className="field" value={form.category || 'unknown'} onChange={(e) => update('category', e.target.value)}>
-            {categories.map((category) => <option key={category} value={category}>{category}</option>)}
+            {['unknown', ...reviewCategories].map((category) => <option key={category} value={category}>{displayReviewValue(category)}</option>)}
           </select>
           <input className="field" value={form.colors} onChange={(e) => update('colors', e.target.value)} placeholder="colors, comma separated" />
           <input className="field" value={form.style} onChange={(e) => update('style', e.target.value)} placeholder="style" />
