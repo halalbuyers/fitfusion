@@ -6,6 +6,9 @@ export interface IUserPreference extends Document {
   preferredColors: string[]
   avoidedColors: string[]
   favoriteCategories: string[]
+  favoriteOccasions: string[]
+  dislikedColors: string[]
+  dislikedStyles: string[]
   rejectedOutfitKeys: string[]
   favoriteOutfitKeys: string[]
 }
@@ -16,6 +19,9 @@ const UserPreferenceSchema = new Schema({
   preferredColors: { type: [String], default: [] },
   avoidedColors: { type: [String], default: [] },
   favoriteCategories: { type: [String], default: [] },
+  favoriteOccasions: { type: [String], default: [] },
+  dislikedColors: { type: [String], default: [] },
+  dislikedStyles: { type: [String], default: [] },
   rejectedOutfitKeys: { type: [String], default: [] },
   favoriteOutfitKeys: { type: [String], default: [] }
 }, { timestamps: true })

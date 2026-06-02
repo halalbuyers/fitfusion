@@ -4,6 +4,7 @@ import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../../lib/embedding-engine'
 import { buildConfirmedClothingPayload } from '../../../lib/wardrobe-confirmation'
+import { recordTrainingExample } from '../../../lib/training-engine'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -40,5 +41,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   })
 
   const clothing = await Clothing.create(payloadWithEmbedding)
+  if (payloadWithEmbedding.correctedByUser) {
+    await recordTrainingExample({
+      userId,
+      imageUrl: payloadWithEmbedding.image,
+      aiCategory: payloadWithEmbedding.aiCategory,
+      userCategory: payloadWithEmbedding.category,
+      aiColor: payloadWithEmbedding.aiColor,
+      userColor: payloadWithEmbedding.primaryColor,
+      aiStyle: req.body?.aiStyle || req.body?.style,
+      userStyle: payloadWithEmbedding.style
+    }).catch(() => null)
+  }
   return res.status(201).json({ clothing, persisted: true })
 }

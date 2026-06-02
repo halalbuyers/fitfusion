@@ -1,5 +1,7 @@
 import { normalizeCategory, normalizeStyle } from './fashion-analysis'
 import { generateOutfits, type GeneratedOutfit, type WardrobeEngineItem } from './outfit-engine'
+import { analyzeWardrobeGaps } from './wardrobe-gap-engine'
+import type { PersonalizationProfile } from './personalization-engine'
 
 export type StylistIntent = 'recommendation' | 'weather' | 'college' | 'date' | 'streetwear' | 'formal' | 'wardrobe-analysis' | 'explanation'
 
@@ -19,6 +21,7 @@ type StylistContext = {
   weather?: string
   temperature?: number
   season?: string
+  preferences?: PersonalizationProfile
 }
 
 type StylistResponse = {
@@ -200,6 +203,7 @@ function explainOutfit(outfit: Partial<GeneratedOutfit> & { items?: any[] }, con
 }
 
 function analyzeWardrobe(wardrobe: WardrobeEngineItem[]) {
+  const professionalGaps = analyzeWardrobeGaps(wardrobe)
   const counts = wardrobe.reduce<Record<string, number>>((acc, item) => {
     const category = normalizeCategory(item.category)
     acc[category] = (acc[category] || 0) + 1
@@ -215,6 +219,11 @@ function analyzeWardrobe(wardrobe: WardrobeEngineItem[]) {
 
   if (!wardrobe.length) {
     return 'Your wardrobe is empty right now. Start with one neutral top, one pair of jeans or cargos, one pair of clean sneakers, and one light layer. That gives the stylist enough range to build real outfits from your closet.'
+  }
+
+  if (professionalGaps.length) {
+    const top = professionalGaps.slice(0, 3).map((gap) => gap.title.toLowerCase()).join(', ')
+    return `Your wardrobe has useful foundations, but the biggest upgrades would be ${top}. ${professionalGaps[0].reason} These additions would help FitFusion build more varied outfits without repeating the same pieces.`
   }
 
   if (!gaps.length) {
@@ -257,6 +266,17 @@ export function generateStylistResponse(context: StylistContext = {}): StylistRe
     weather,
     season: context.season,
     temperature: context.temperature,
+    preferences: context.preferences ? {
+      preferredStyles: context.preferences.favoriteStyles,
+      preferredColors: context.preferences.favoriteColors,
+      avoidedColors: context.preferences.dislikedColors,
+      favoriteCategories: context.preferences.favoriteCategories,
+      favoriteOccasions: context.preferences.favoriteOccasions,
+      dislikedColors: context.preferences.dislikedColors,
+      dislikedStyles: context.preferences.dislikedStyles,
+      rejectedOutfitKeys: [],
+      favoriteOutfitKeys: []
+    } : undefined,
     limit: 3
   })
   const top = outfits[0]

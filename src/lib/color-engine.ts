@@ -4,11 +4,15 @@ export type ColorFamily =
   | 'gray'
   | 'navy'
   | 'blue'
+  | 'light blue'
   | 'brown'
   | 'beige'
+  | 'cream'
+  | 'tan'
   | 'green'
   | 'olive'
   | 'red'
+  | 'burgundy'
   | 'pink'
   | 'yellow'
   | 'orange'
@@ -24,9 +28,9 @@ const colorAliases: Record<string, ColorFamily> = {
   silver: 'metallic',
   white: 'white',
   ivory: 'white',
-  cream: 'beige',
+  cream: 'cream',
   beige: 'beige',
-  tan: 'beige',
+  tan: 'tan',
   khaki: 'beige',
   camel: 'beige',
   brown: 'brown',
@@ -34,6 +38,8 @@ const colorAliases: Record<string, ColorFamily> = {
   espresso: 'brown',
   navy: 'navy',
   blue: 'blue',
+  lightblue: 'light blue',
+  skyblue: 'light blue',
   denim: 'blue',
   cyan: 'blue',
   teal: 'blue',
@@ -42,8 +48,8 @@ const colorAliases: Record<string, ColorFamily> = {
   olive: 'olive',
   sage: 'olive',
   red: 'red',
-  burgundy: 'red',
-  maroon: 'red',
+  burgundy: 'burgundy',
+  maroon: 'burgundy',
   pink: 'pink',
   rose: 'pink',
   yellow: 'yellow',
@@ -55,24 +61,27 @@ const colorAliases: Record<string, ColorFamily> = {
   gold: 'metallic'
 }
 
-export const neutralColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige'])
-const luxuryColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige', 'metallic'])
-const warmColors = new Set<ColorFamily>(['brown', 'beige', 'red', 'pink', 'yellow', 'orange'])
-const coolColors = new Set<ColorFamily>(['navy', 'blue', 'green', 'olive', 'purple', 'gray'])
+export const neutralColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige', 'cream', 'tan'])
+const luxuryColors = new Set<ColorFamily>(['black', 'white', 'gray', 'navy', 'brown', 'beige', 'cream', 'tan', 'burgundy', 'metallic'])
+const warmColors = new Set<ColorFamily>(['brown', 'beige', 'cream', 'tan', 'red', 'burgundy', 'pink', 'yellow', 'orange'])
+const coolColors = new Set<ColorFamily>(['navy', 'blue', 'light blue', 'green', 'olive', 'purple', 'gray'])
 
 const analogousGroups: ColorFamily[][] = [
   ['black', 'gray', 'white'],
-  ['brown', 'beige', 'olive'],
-  ['navy', 'blue', 'gray'],
+  ['brown', 'beige', 'cream', 'tan', 'olive'],
+  ['navy', 'blue', 'light blue', 'gray'],
   ['green', 'olive', 'beige'],
-  ['red', 'pink', 'purple'],
+  ['red', 'burgundy', 'pink', 'purple'],
   ['yellow', 'orange', 'brown']
 ]
 
 const complementaryPairs: Array<[ColorFamily, ColorFamily]> = [
   ['black', 'white'],
   ['navy', 'beige'],
+  ['navy', 'cream'],
+  ['navy', 'tan'],
   ['blue', 'brown'],
+  ['light blue', 'tan'],
   ['blue', 'orange'],
   ['green', 'red'],
   ['olive', 'white'],
@@ -84,12 +93,22 @@ const complementaryPairs: Array<[ColorFamily, ColorFamily]> = [
 
 const pairOverrides: Record<string, number> = {
   'black:white': 95,
+  'black:gray': 94,
+  'gray:black': 94,
+  'navy:beige': 94,
+  'beige:navy': 94,
+  'navy:cream': 93,
+  'cream:navy': 93,
   'beige:black': 92,
   'black:beige': 92,
+  'burgundy:cream': 88,
+  'cream:burgundy': 88,
   'brown:green': 30,
   'green:brown': 30,
   'green:orange': 32,
   'orange:green': 32,
+  'red:green': 34,
+  'green:red': 34,
   'brown:yellow': 42,
   'orange:purple': 38,
   'purple:orange': 38

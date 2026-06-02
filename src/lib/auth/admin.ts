@@ -1,14 +1,15 @@
 import type { NextApiRequest } from 'next'
 import { auth, clerkClient, getAuth } from '@clerk/nextjs/server'
 
-export type UserRole = 'user' | 'admin'
+export type UserRole = 'user' | 'moderator' | 'admin'
 type AdminAuthInput = NextApiRequest | { userId?: string | null; sessionClaims?: unknown }
 
 function roleFromMetadata(metadata?: unknown): UserRole {
   const role = typeof metadata === 'object' && metadata && 'role' in metadata
     ? String((metadata as { role?: unknown }).role || '').toLowerCase()
     : 'user'
-  return role === 'admin' ? 'admin' : 'user'
+  if (role === 'admin' || role === 'moderator') return role
+  return 'user'
 }
 
 function isApiRequest(input?: AdminAuthInput): input is NextApiRequest {

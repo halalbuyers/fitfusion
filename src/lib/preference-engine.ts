@@ -3,6 +3,9 @@ export type UserPreferenceProfile = {
   preferredColors: string[]
   avoidedColors: string[]
   favoriteCategories: string[]
+  favoriteOccasions: string[]
+  dislikedColors: string[]
+  dislikedStyles: string[]
   rejectedOutfitKeys: string[]
   favoriteOutfitKeys: string[]
 }
@@ -12,6 +15,9 @@ export const emptyPreferenceProfile: UserPreferenceProfile = {
   preferredColors: [],
   avoidedColors: [],
   favoriteCategories: [],
+  favoriteOccasions: [],
+  dislikedColors: [],
+  dislikedStyles: [],
   rejectedOutfitKeys: [],
   favoriteOutfitKeys: []
 }
@@ -38,6 +44,9 @@ export function buildPreferenceProfile(items: Array<{ style?: string; primaryCol
     preferredColors,
     avoidedColors: [...new Set((stored?.avoidedColors || []).map((color) => color.toLowerCase()))],
     favoriteCategories,
+    favoriteOccasions: [...new Set((stored?.favoriteOccasions || []).map((occasion) => occasion.toLowerCase()))],
+    dislikedColors: [...new Set((stored?.dislikedColors || []).map((color) => color.toLowerCase()))],
+    dislikedStyles: [...new Set((stored?.dislikedStyles || []).map((style) => style.toLowerCase()))],
     rejectedOutfitKeys: [...new Set((stored?.rejectedOutfitKeys || []).map(String))],
     favoriteOutfitKeys: [...new Set((stored?.favoriteOutfitKeys || []).map(String))]
   }
@@ -54,6 +63,8 @@ export function preferenceBoost(items: Array<{ style?: string; primaryColor?: st
   boost += categories.filter((category) => profile.favoriteCategories.includes(category)).length * 2
   boost += items.filter((item) => item.favorite || item.isFavorite).length * 2
   boost -= colors.filter((color) => profile.avoidedColors.includes(color)).length * 8
+  boost -= colors.filter((color) => profile.dislikedColors.includes(color)).length * 8
+  boost -= styles.filter((style) => profile.dislikedStyles.includes(style)).length * 8
 
   return Math.max(-20, Math.min(20, boost))
 }

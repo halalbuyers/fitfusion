@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CalendarPlus, Heart, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react'
+import { CalendarPlus, CheckCircle2, Heart, Loader2, Send, Sparkles, ThumbsDown, X } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type Clothing = { _id: string; image: string; category: string }
@@ -87,6 +87,25 @@ export default function OutfitsPage() {
     } catch (e: any) {
       setOutfits(previous)
       setError(e.message || 'Remove failed')
+    } finally {
+      setBusyId('')
+    }
+  }
+
+  async function markWorn(outfit: Outfit) {
+    setBusyId(outfit._id)
+    setError('')
+    setNotice('')
+    try {
+      const res = await fetch('/api/outfits/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outfitId: outfit._id, action: 'worn' })
+      })
+      if (!res.ok) throw new Error('Update failed')
+      setNotice('Marked as worn. Future recommendations will learn from this.')
+    } catch (e: any) {
+      setError(e.message || 'Update failed')
     } finally {
       setBusyId('')
     }
@@ -180,6 +199,9 @@ export default function OutfitsPage() {
                     <button title="Favorite" onClick={() => patchOutfit(outfit, { isFavorite: !outfit.isFavorite }, outfit.isFavorite ? 'Removed favorite.' : 'Marked favorite.')} className="icon-button h-10 w-10">
                       <Heart className={`h-4 w-4 ${outfit.isFavorite ? 'fill-current' : ''}`} />
                     </button>
+                    <button title="Mark worn" onClick={() => markWorn(outfit)} disabled={busyId === outfit._id} className="icon-button h-10 w-10">
+                      <CheckCircle2 className="h-4 w-4" />
+                    </button>
                     <button title="Share to community" onClick={() => shareOutfit(outfit)} disabled={busyId === outfit._id} className="icon-button h-10 w-10">
                       <Send className="h-4 w-4" />
                     </button>
@@ -188,8 +210,8 @@ export default function OutfitsPage() {
                         <X className="h-4 w-4" />
                       </button>
                     )}
-                    <button title="Delete outfit" onClick={() => removeOutfit(outfit)} disabled={busyId === outfit._id} className="icon-button ml-auto h-10 w-10 text-red-100 hover:bg-red-400/15">
-                      <Trash2 className="h-4 w-4" />
+                    <button title="Reject and delete outfit" onClick={() => removeOutfit(outfit)} disabled={busyId === outfit._id} className="icon-button ml-auto h-10 w-10 text-red-100 hover:bg-red-400/15">
+                      <ThumbsDown className="h-4 w-4" />
                     </button>
                   </div>
                 </div>

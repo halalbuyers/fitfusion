@@ -2,6 +2,8 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Outfit from '../../../models/Outfit'
+import Clothing from '../../../models/Clothing'
+import { recordOutfitInteraction } from '../../../lib/learning-engine'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -33,10 +35,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
     }
     await outfit.save()
+    if ('isFavorite' in req.body && req.body.isFavorite) {
+      await recordOutfitInteraction({ userId, outfitId: id, outfitKey: outfit.outfitKey, action: 'favorited', outfit }).catch(() => null)
+    }
+    if ('plannedFor' in req.body && req.body.plannedFor) {
+      await recordOutfitInteraction({ userId, outfitId: id, outfitKey: outfit.outfitKey, action: 'worn', outfit }).catch(() => null)
+    }
     return res.status(200).json(outfit)
   }
 
   if (req.method === 'DELETE') {
+    await recordOutfitInteraction({ userId, outfitId: id, outfitKey: outfit.outfitKey, action: 'rejected', outfit }).catch(() => null)
+    await Clothing.updateMany(
+      { _id: { $in: outfit.items.map((item: any) => item.clothing).filter(Boolean) } },
+      { $inc: { usageCount: 1 } }
+    ).catch(() => null)
     await outfit.deleteOne()
     return res.status(200).json({ ok: true })
   }
