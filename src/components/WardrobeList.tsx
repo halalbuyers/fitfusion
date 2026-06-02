@@ -1,7 +1,7 @@
 "use client"
 
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { Edit3, Heart, Search, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
+import { Edit3, Search, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
 import ClothingCard from './ClothingCard'
 import EditClothingModal from './EditClothingModal'
 import { useUser } from '@clerk/nextjs'
@@ -122,15 +122,18 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
       ) : !items.length ? (
         <div className="rounded-[8px] border border-white/10 bg-white/[0.04] p-8 text-center text-white/45">No matching pieces yet.</div>
       ) : (
-        <div className="columns-2 gap-4 sm:columns-3 xl:columns-4">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 xl:grid-cols-4 2xl:grid-cols-6">
           {items.map((it) => (
-            <div key={it._id} className="relative mb-4 break-inside-avoid">
-              <ClothingCard image={it.image} title={it.category} category={it.style || it.category} colors={it.colors?.length ? it.colors : [it.primaryColor || 'unknown'].filter((color) => color !== 'unknown')} isFavorite={it.isFavorite} />
-              <div className="absolute right-2 top-2 flex gap-1">
-                <button title={it.isFavorite ? 'Remove favorite' : 'Favorite'} onClick={() => toggleFavorite(it)} className="icon-button h-9 w-9">
-                  <Heart className={`h-4 w-4 ${it.isFavorite ? 'fill-current' : ''}`} />
-                </button>
-              </div>
+            <div key={it._id} className="min-w-0">
+              <ClothingCard
+                image={it.image}
+                title={it.category}
+                category={it.style || it.category}
+                colors={it.colors?.length ? it.colors : [it.primaryColor || 'unknown'].filter((color) => color !== 'unknown')}
+                isFavorite={it.isFavorite}
+                onFavorite={() => toggleFavorite(it)}
+                onEdit={() => setEditing(it)}
+              />
               <div className="mt-2 grid grid-cols-2 gap-2">
                 <button onClick={() => setEditing(it)} className="flex h-10 items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white/7 text-xs font-medium text-white/75 transition hover:bg-white/12 hover:text-white">
                   <Edit3 className="h-3.5 w-3.5" />

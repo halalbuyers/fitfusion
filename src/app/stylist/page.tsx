@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from 'react'
-import { Bot, Footprints, Loader2, Send, Shirt, Sparkles, UserRound } from 'lucide-react'
+import { Bot, Footprints, Send, Shirt, Sparkles, UserRound } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type OutfitCardData = {
@@ -25,6 +25,18 @@ const starters = [
   'Suggest a rainy day streetwear fit.',
   'What items am I missing from my wardrobe?'
 ]
+
+function cleanAssistantText(value: unknown) {
+  if (typeof value !== 'string') return 'I could not produce a recommendation yet.'
+  const trimmed = value.trim()
+  if (!trimmed.startsWith('{') && !trimmed.startsWith('[')) return trimmed
+  try {
+    const parsed = JSON.parse(trimmed)
+    return parsed.reply || parsed.recommendation || parsed.explanation || 'Here is a wardrobe-aware recommendation.'
+  } catch {
+    return trimmed.replace(/[{}[\]"]/g, '').replace(/,/g, '\n')
+  }
+}
 
 export default function StylistPage() {
   const [messages, setMessages] = useState<Message[]>([
@@ -59,7 +71,7 @@ export default function StylistPage() {
       if (!res.ok) throw new Error(data.error || 'Stylist failed')
       setMessages((current) => [...current, {
         role: 'assistant',
-        content: data.reply || 'I could not produce a recommendation yet.',
+        content: cleanAssistantText(data.reply),
         method: data.method,
         outfitCard: data.outfitCard
       }])
@@ -123,7 +135,8 @@ export default function StylistPage() {
               <p className="text-sm text-white/42">Local engine plus optional AI polish</p>
             </div>
           </div>
-          <div className="mt-5 grid gap-2">
+          <p className="mt-5 text-xs uppercase tracking-[0.2em] text-white/35">Suggested prompts</p>
+          <div className="mt-3 grid gap-2">
             {starters.map((starter) => (
               <button key={starter} onClick={() => send(starter)} className="rounded-[8px] border border-white/10 bg-black/20 px-3 py-3 text-left text-sm leading-5 text-white/65 transition hover:bg-white/8 hover:text-white">
                 {starter}
@@ -132,8 +145,8 @@ export default function StylistPage() {
           </div>
         </aside>
 
-        <section className="rounded-[8px] border border-white/10 bg-white/[0.035] p-4">
-          <div className="grid max-h-[62vh] min-h-[420px] content-start gap-4 overflow-y-auto pr-1">
+        <section className="rounded-[8px] border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/20 sm:p-4">
+          <div className="hide-scrollbar grid max-h-[68vh] min-h-[430px] content-start gap-4 overflow-y-auto pr-1">
             {messages.map((message, index) => (
               <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'assistant' && (
@@ -141,7 +154,7 @@ export default function StylistPage() {
                     <Bot className="h-4 w-4" />
                   </div>
                 )}
-                <div className={`max-w-[85%] rounded-[8px] p-4 ${message.role === 'user' ? 'bg-white text-black' : 'bg-black/28 text-white'}`}>
+                <div className={`max-w-[85%] rounded-[8px] p-4 shadow-lg shadow-black/12 ${message.role === 'user' ? 'bg-white text-black' : 'bg-black/28 text-white'}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold opacity-60">
                     {message.role === 'user' ? 'You' : 'FitFusion'}
                     {message.method && <span className="rounded bg-white/10 px-1.5 py-0.5 uppercase">{message.method}</span>}
@@ -161,8 +174,13 @@ export default function StylistPage() {
                 <div className="grid h-9 w-9 place-items-center rounded-[8px] bg-white/10">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="rounded-[8px] bg-black/28 p-4 text-sm text-white/55">
-                  <Loader2 className="inline h-4 w-4 animate-spin" /> Styling from your wardrobe...
+                <div className="flex items-center gap-2 rounded-[8px] bg-black/28 p-4 text-sm text-white/55">
+                  <span className="flex gap-1" aria-label="Stylist is typing">
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:120ms]" />
+                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:240ms]" />
+                  </span>
+                  Styling from your wardrobe
                 </div>
               </div>
             )}

@@ -3,61 +3,85 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
+import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { CalendarDays, LayoutDashboard, MessageCircle, Shirt, Sparkles, Users, UserRound, Wand2 } from 'lucide-react'
+import { CloudSun, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Wand2 } from 'lucide-react'
 
-const nav: Array<[string, string, LucideIcon]> = [
+const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
-  ['Generator', '/outfit-generator', Wand2],
-  ['Outfits', '/outfits', Sparkles],
-  ['Calendar', '/calendar', CalendarDays],
+  ['Outfit Generator', '/outfit-generator', Wand2],
+  ['AI Stylist', '/stylist', MessageCircle],
+  ['Saved Outfits', '/outfits', Sparkles],
+  ['Weather', '/weather', CloudSun],
+  ['Profile', '/profile', UserRound],
+  ['Admin', '/admin', Shield]
+]
+const mobileNav: Array<[string, string, LucideIcon]> = [
+  ['Dashboard', '/dashboard', LayoutDashboard],
+  ['Wardrobe', '/wardrobe', Shirt],
+  ['Generate', '/outfit-generator', Wand2],
   ['Stylist', '/stylist', MessageCircle],
-  ['Community', '/community', Users],
   ['Profile', '/profile', UserRound]
 ]
+const MotionSection = motion.section as any
 
 export function AppFrame({ title, eyebrow, children, action }: { title: string; eyebrow: string; children: React.ReactNode; action?: React.ReactNode }) {
   const pathname = usePathname() || ''
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
 
   return (
-    <div className="premium-grid min-h-screen px-3 pb-24 pt-5 sm:px-6 sm:py-8 lg:pb-8">
-      <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-[240px_1fr]">
-        <aside className="glass hidden h-fit rounded-[8px] p-3 lg:block">
-          <div className="px-3 py-2 text-xs uppercase tracking-[0.25em] text-white/35">Studio</div>
-          <nav className="mt-2 grid gap-1">
-            {nav.map(([label, href, Icon]) => (
+    <div className="premium-grid min-h-screen px-3 pb-24 pt-4 sm:px-6 sm:py-7 lg:pb-8">
+      <div className="mx-auto grid max-w-[1480px] gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
+        <aside className="glass sticky top-5 hidden h-[calc(100vh-2.5rem)] rounded-[8px] p-4 lg:block">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#d7ff55] text-sm font-black text-black">FF</div>
+            <div>
+              <p className="text-sm font-semibold">FitFusion</p>
+              <p className="text-xs text-white/42">Fashion OS</p>
+            </div>
+          </div>
+          <nav className="mt-7 grid gap-1.5" aria-label="Primary navigation">
+            {desktopNav.map(([label, href, Icon]) => (
               <Link
                 key={href}
                 href={href}
                 aria-current={isActive(href) ? 'page' : undefined}
-                className={`flex items-center gap-3 rounded-[8px] px-3 py-2 text-sm transition ${isActive(href) ? 'bg-[#d7ff55] text-black' : 'text-white/62 hover:bg-white/8 hover:text-white'}`}
+                className={`flex min-h-11 items-center gap-3 rounded-[8px] px-3 py-2.5 text-sm transition ${isActive(href) ? 'bg-[#d7ff55] text-black shadow-lg shadow-[#d7ff55]/10' : 'text-white/62 hover:bg-white/8 hover:text-white'}`}
               >
                 <Icon className="h-4 w-4" />
                 {label}
               </Link>
             ))}
           </nav>
+          <div className="absolute inset-x-4 bottom-4 rounded-[8px] border border-white/10 bg-black/24 p-4">
+            <p className="text-xs uppercase tracking-[0.22em] text-white/35">Today</p>
+            <p className="mt-2 text-sm leading-5 text-white/64">Build weather-aware outfits from pieces you already own.</p>
+          </div>
         </aside>
-        <section className="min-w-0">
+        <MotionSection
+          initial={{ opacity: 0, y: 14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.32, ease: 'easeOut' }}
+          className="min-w-0"
+        >
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
-            <div>
+            <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.3em] text-white/35">{eyebrow}</p>
-              <h1 className="mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
+              <h1 className="accent-text mt-3 text-3xl font-semibold tracking-tight sm:text-5xl">{title}</h1>
             </div>
             {action ? <div className="w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">{action}</div> : null}
           </div>
           {children}
-        </section>
+        </MotionSection>
       </div>
-      <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-5 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/90 p-1 backdrop-blur-xl sm:inset-x-3 sm:bottom-3 lg:hidden">
-        {nav.slice(0, 5).map(([label, href, Icon]) => (
+      <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-5 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/88 p-1 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:inset-x-3 sm:bottom-3 lg:hidden" aria-label="Mobile navigation">
+        {mobileNav.map(([label, href, Icon]) => (
           <Link
             key={href}
             href={href}
             aria-current={isActive(href) ? 'page' : undefined}
-            className={`flex h-12 flex-col items-center justify-center gap-1 rounded-[6px] text-[10px] transition ${isActive(href) ? 'bg-[#d7ff55] text-black' : 'text-white/58 hover:bg-white/10 hover:text-white'}`}
+            className={`flex h-13 min-h-[52px] flex-col items-center justify-center gap-1 rounded-[6px] text-[10px] transition active:scale-[0.98] ${isActive(href) ? 'bg-[#d7ff55] text-black' : 'text-white/58 hover:bg-white/10 hover:text-white'}`}
           >
             <Icon className="h-4 w-4" />
             <span>{label}</span>

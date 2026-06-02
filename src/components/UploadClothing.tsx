@@ -119,6 +119,8 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       || review.tags !== toCsv(draft.tags)
       || review.brand !== (draft.brand || '')
   }, [draft, review])
+  const currentStep = saving ? 4 : draft ? 3 : loading ? 2 : preview ? 1 : 0
+  const steps = ['Upload', 'AI analysis', 'Review', 'Save']
 
   function update(key: keyof typeof form, value: string) {
     setForm((current) => ({ ...current, [key]: value }))
@@ -229,13 +231,27 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
 
   return (
     <div className="grid gap-5">
+      <div className="grid grid-cols-4 gap-2">
+        {steps.map((step, index) => {
+          const active = currentStep >= index + 1
+          const current = currentStep === index + 1
+          return (
+            <div key={step} className={`rounded-[8px] border px-2 py-2 text-center text-[11px] font-semibold transition sm:text-xs ${active ? 'border-[#d7ff55]/35 bg-[#d7ff55]/10 text-[#e8ff91]' : 'border-white/10 bg-white/[0.035] text-white/38'}`}>
+              <div className={`mx-auto mb-1 grid h-6 w-6 place-items-center rounded-full ${active ? 'bg-[#d7ff55] text-black' : 'bg-white/8 text-white/45'}`}>
+                {active && !current ? <Check className="h-3.5 w-3.5" /> : index + 1}
+              </div>
+              <span className="block truncate">{step}</span>
+            </div>
+          )
+        })}
+      </div>
       <form onSubmit={submit} className="grid gap-5">
         <label className="group relative flex min-h-[260px] cursor-pointer items-center justify-center overflow-hidden rounded-[8px] border border-dashed border-white/15 bg-white/[0.04] transition hover:border-white/35 hover:bg-white/[0.07]">
           <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
           {preview ? (
             <Image src={preview} alt="Clothing upload preview" fill sizes="(min-width: 1024px) 360px, 90vw" className="object-contain p-4" unoptimized />
           ) : (
-            <div className="flex flex-col items-center gap-3 text-center text-white/55">
+            <div className="flex max-w-xs flex-col items-center gap-3 px-4 text-center text-white/55">
               <div className="flex h-12 w-12 items-center justify-center rounded-[8px] bg-white text-black">
                 <Upload className="h-5 w-5" />
               </div>

@@ -1,7 +1,14 @@
+﻿'use client'
+
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 import React from 'react'
 
 export default function Footer() {
+  const pathname = usePathname() || ''
+  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/profile', '/admin', '/weather', '/calendar']
+  const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
+
   const groups = [
     ['Product', ['Wardrobe', 'Outfits', 'Calendar', 'AI Stylist']],
     ['Company', ['Community', 'Pricing', 'Admin', 'Profile']],
@@ -9,7 +16,7 @@ export default function Footer() {
   ] as const
 
   return (
-    <footer className="border-t border-white/10 bg-[var(--page-bg)] px-4 py-10 sm:px-6">
+    <footer className={`border-t border-white/10 bg-[var(--page-bg)] px-4 py-10 sm:px-6 ${isAppRoute ? 'hidden lg:block' : ''}`}>
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3 text-lg font-semibold">

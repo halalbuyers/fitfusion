@@ -8,12 +8,12 @@ body {
 }
 
 :root {
-  --page-bg: #070707;
-  --page-bg-soft: #0d0d0d;
+  --page-bg: #0b0c0f;
+  --page-bg-soft: #12141a;
   --text-main: #ffffff;
   --text-muted: rgba(255, 255, 255, 0.58);
   --border-soft: rgba(255, 255, 255, 0.1);
-  --glass-bg: rgba(255, 255, 255, 0.055);
+  --glass-bg: rgba(255, 255, 255, 0.07);
   --panel-bg: rgba(255, 255, 255, 0.04);
   --panel-strong: rgba(0, 0, 0, 0.36);
   --accent: #d7ff55;
@@ -39,11 +39,12 @@ body {
 body {
   margin: 0;
   background:
-    radial-gradient(circle at 15% 0%, rgba(215, 255, 85, 0.08), transparent 28rem),
-    radial-gradient(circle at 85% 15%, rgba(255, 255, 255, 0.08), transparent 24rem),
+    radial-gradient(circle at 8% -10%, rgba(215, 255, 85, 0.12), transparent 25rem),
+    radial-gradient(circle at 92% 8%, rgba(125, 211, 252, 0.11), transparent 23rem),
+    linear-gradient(135deg, rgba(255, 255, 255, 0.04), transparent 42%),
     var(--page-bg);
   color: var(--text-main);
-  font-family: "Avenir Next", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  font-family: Inter, "Plus Jakarta Sans", "Avenir Next", "Helvetica Neue", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
@@ -52,9 +53,9 @@ body {
 .glass {
   background: var(--glass-bg);
   border: 1px solid var(--border-soft);
-  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.3);
-  -webkit-backdrop-filter: blur(18px);
-  backdrop-filter: blur(18px);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  -webkit-backdrop-filter: blur(22px) saturate(145%);
+  backdrop-filter: blur(22px) saturate(145%);
 }
 
 .field {
@@ -102,9 +103,39 @@ body {
 
 .premium-grid {
   background-image:
-    linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.045) 1px, transparent 1px);
-  background-size: 52px 52px;
+    linear-gradient(rgba(255, 255, 255, 0.032) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.032) 1px, transparent 1px);
+  background-size: 44px 44px;
+}
+
+.accent-text {
+  background: linear-gradient(135deg, #ffffff 0%, #e7ff95 44%, #a7e8ff 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.focus-ring:focus-visible,
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid rgba(215, 255, 85, 0.88);
+  outline-offset: 3px;
+}
+
+.hide-scrollbar {
+  scrollbar-width: none;
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+::selection {
+  background: rgba(215, 255, 85, 0.26);
+  color: white;
 }
 
 .theme-light body,
@@ -142,6 +173,10 @@ body {
 @media (max-width: 640px) {
   .field {
     font-size: 16px;
+  }
+
+  body {
+    background-size: auto;
   }
 }
 

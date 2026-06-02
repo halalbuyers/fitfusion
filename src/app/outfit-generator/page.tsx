@@ -4,7 +4,7 @@ import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { motion } from 'framer-motion'
-import { AlertCircle, Check, CloudSun, Heart, Loader2, RefreshCw, Save, Shirt, SlidersHorizontal, Sparkles, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
+import { AlertCircle, Check, CloudSun, Heart, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type Clothing = { _id: string; image: string; category: string; colors?: string[]; primaryColor?: string; style?: string; season?: string }
@@ -149,6 +149,16 @@ export default function OutfitGeneratorPage() {
     } else {
       setNotice('Preference saved.')
     }
+  }
+
+  async function shareOutfit(outfit: Outfit, index: number) {
+    const text = `${outfit.title || `${occasion} fit ${index + 1}`} - ${outfit.score}% style match. ${outfit.explanation}`
+    if (navigator.share) {
+      await navigator.share({ title: 'FitFusion outfit', text }).catch(() => undefined)
+      return
+    }
+    await navigator.clipboard?.writeText(text).catch(() => undefined)
+    setNotice('Outfit copied for sharing.')
   }
 
   return (
@@ -316,8 +326,23 @@ export default function OutfitGeneratorPage() {
                     <p className="mt-4 text-sm leading-6 text-white/58">{outfit.explanation}</p>
                     {outfit.colorAnalysis && <p className="mt-2 text-xs text-white/38">{outfit.colorAnalysis}</p>}
 
+                    <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
+                      {['Top', 'Bottom', 'Shoes', 'Layer', 'Accessories'].map((role) => {
+                        const match = outfit.items.find((item) => item.role?.toLowerCase().includes(role.toLowerCase()))
+                        const clothing = match?.clothing || (match?.id ? wardrobeById.get(match.id) : undefined)
+                        return (
+                          <div key={role} className="min-h-[68px] rounded-[8px] border border-white/8 bg-black/22 p-2">
+                            <p className="text-[10px] uppercase tracking-[0.16em] text-white/35">{role}</p>
+                            <p className="mt-2 line-clamp-2 text-xs capitalize text-white/72">{clothing?.category || 'Optional'}</p>
+                          </div>
+                        )
+                      })}
+                    </div>
+
                     <div className="mt-4 flex flex-wrap gap-2">
                       {[...new Set((outfit.tags || []).filter(Boolean).map(String))].slice(0, 7).map((tag, tagIndex) => <span key={`${outfit.outfitKey || index}-tag-${tag}-${tagIndex}`} className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/58">{tag}</span>)}
+                      <span className="rounded-[8px] bg-[#d7ff55]/10 px-2.5 py-1 text-xs capitalize text-[#e8ff91]">{weather} weather fit</span>
+                      <span className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/58">{outfit.occasion || occasion}</span>
                     </div>
 
                     <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-white/50">
@@ -329,13 +354,19 @@ export default function OutfitGeneratorPage() {
                       ))}
                     </div>
 
-                    <div className="mt-5 flex gap-2">
+                    <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-[1fr_repeat(4,40px)]">
                       <button onClick={() => saveOutfit(outfit, index)} disabled={saving === String(index)} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-[8px] bg-white text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60">
                         {saving === String(index) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         Save
                       </button>
                       <button title="Favorite signal" onClick={() => rememberOutfit(outfit, 'favorite')} className="icon-button h-10 w-10">
                         <Heart className="h-4 w-4" />
+                      </button>
+                      <button title="Regenerate outfits" onClick={generate} disabled={loading} className="icon-button h-10 w-10 disabled:opacity-50">
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                      <button title="Share outfit" onClick={() => shareOutfit(outfit, index)} className="icon-button h-10 w-10">
+                        <Share2 className="h-4 w-4" />
                       </button>
                       <button title="Reject outfit" onClick={() => rememberOutfit(outfit, 'reject')} className="icon-button h-10 w-10">
                         <ThumbsDown className="h-4 w-4" />

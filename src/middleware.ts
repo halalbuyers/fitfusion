@@ -13,6 +13,7 @@ const isProtectedRoute = createRouteMatcher([
   '/profile(.*)',
   '/stylist(.*)',
   '/wardrobe(.*)',
+  '/weather(.*)',
   '/api(.*)'
 ])
 const isAdminRoute = createRouteMatcher(['/admin(.*)', '/api/admin(.*)'])
