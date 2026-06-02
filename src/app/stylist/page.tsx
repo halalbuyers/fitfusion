@@ -1,13 +1,22 @@
 "use client"
 
 import { useMemo, useState } from 'react'
-import { Bot, Loader2, Send, Sparkles, UserRound } from 'lucide-react'
+import { Bot, Footprints, Loader2, Send, Shirt, Sparkles, UserRound } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+
+type OutfitCardData = {
+  top: string
+  bottom: string
+  shoes: string
+  style: string
+  reason: string
+}
 
 type Message = {
   role: 'assistant' | 'user'
   content: string
   method?: string
+  outfitCard?: OutfitCardData
 }
 
 const starters = [
@@ -51,7 +60,8 @@ export default function StylistPage() {
       setMessages((current) => [...current, {
         role: 'assistant',
         content: data.reply || 'I could not produce a recommendation yet.',
-        method: data.method
+        method: data.method,
+        outfitCard: data.outfitCard
       }])
     } catch {
       setMessages((current) => [...current, {
@@ -62,6 +72,42 @@ export default function StylistPage() {
     } finally {
       setIsTyping(false)
     }
+  }
+
+  function OutfitRecommendationCard({ card }: { card: OutfitCardData }) {
+    const rows = [
+      ['Top', card.top, Shirt],
+      ['Bottom', card.bottom, Sparkles],
+      ['Shoes', card.shoes, Footprints]
+    ] as const
+
+    return (
+      <div className="mt-4 overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.045]">
+        <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
+          <div>
+            <p className="text-xs font-semibold uppercase text-white/40">Outfit card</p>
+            <h3 className="mt-1 text-sm font-semibold">{card.style}</h3>
+          </div>
+          <Sparkles className="h-4 w-4 text-[#d7ff55]" />
+        </div>
+        <div className="grid gap-2 p-3">
+          {rows.map(([label, value, Icon]) => (
+            <div key={label} className="flex items-center gap-3 rounded-[8px] bg-black/24 px-3 py-2">
+              <div className="grid h-8 w-8 shrink-0 place-items-center rounded-[8px] bg-white/8">
+                <Icon className="h-4 w-4 text-white/70" />
+              </div>
+              <div>
+                <p className="text-[11px] font-semibold uppercase text-white/35">{label}</p>
+                <p className="text-sm text-white/82">{value}</p>
+              </div>
+            </div>
+          ))}
+          <div className="rounded-[8px] bg-[#d7ff55]/10 px-3 py-3 text-sm leading-6 text-white/68">
+            <span className="font-semibold text-white">Reason: </span>{card.reason}
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -101,6 +147,7 @@ export default function StylistPage() {
                     {message.method && <span className="rounded bg-white/10 px-1.5 py-0.5 uppercase">{message.method}</span>}
                   </div>
                   <p className="mt-2 whitespace-pre-line text-sm leading-6">{message.content}</p>
+                  {message.role === 'assistant' && message.outfitCard && <OutfitRecommendationCard card={message.outfitCard} />}
                 </div>
                 {message.role === 'user' && (
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-white text-black">

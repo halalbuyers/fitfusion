@@ -4,7 +4,7 @@ import Clothing from '../../../models/Clothing'
 import { connectToDatabase } from '../../../lib/mongodb'
 import { generateGeminiText, hasGemini } from '../../../ai/gemini'
 import type { WardrobeItem } from '../../../lib/fashion'
-import { generateStylistAdvice } from '../../../lib/local-stylist'
+import { ensureNaturalLanguageResponse, generateStylistAdvice, generateStylistResponse } from '../../../lib/local-stylist'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -24,10 +24,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const inventory = wardrobe.map((item) => `${item.category} in ${(item.colors || []).join(', ') || item.color}, ${item.style}`).join('; ')
     const messages = Array.isArray(req.body.messages) ? req.body.messages : []
     const prompt = String(req.body.message || messages[messages.length - 1]?.content || 'Give me a wardrobe-aware styling suggestion.')
-    const localReply = generateStylistAdvice({ message: prompt, wardrobe })
+    const localResponse = generateStylistResponse({ message: prompt, wardrobe })
+    const localReply = localResponse.reply
 
     if (!hasGemini()) {
-      return res.status(200).json({ reply: localReply, method: 'local' })
+      return res.status(200).json({ reply: localReply, outfitCard: localResponse.outfitCard, intent: localResponse.intent, method: 'local' })
     }
 
     const userPrompt = messages
@@ -39,13 +40,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     try {
       responseText = await generateGeminiText(
         `${userPrompt || prompt}\n\nLocal FitFusion recommendation:\n${localReply}`,
-        `You are FitFusion, a concise modern AI stylist. Use this wardrobe inventory when advising: ${inventory || 'No persisted wardrobe available'}. Never invent items. If the local recommendation is enough, refine it in a premium, practical tone.`
+        `You are FitFusion, a concise modern AI stylist. Use this wardrobe inventory when advising: ${inventory || 'No persisted wardrobe available'}. Never invent items. Return only natural conversational prose. Never return JSON, objects, arrays, markdown code fences, or stringified data. If the local recommendation is enough, refine it in a premium, practical tone.`
       )
     } catch {
       responseText = localReply
     }
 
-    return res.status(200).json({ reply: responseText || localReply, method: responseText === localReply ? 'local' : 'hybrid' })
+    const reply = ensureNaturalLanguageResponse(responseText || localReply, localReply)
+    return res.status(200).json({
+      reply,
+      outfitCard: localResponse.outfitCard,
+      intent: localResponse.intent,
+      method: reply === localReply ? 'local' : 'hybrid'
+    })
   } catch (error: any) {
     return res.status(200).json({
       reply: generateStylistAdvice(),

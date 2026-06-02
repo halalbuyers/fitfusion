@@ -317,7 +317,7 @@ export default function OutfitGeneratorPage() {
                     {outfit.colorAnalysis && <p className="mt-2 text-xs text-white/38">{outfit.colorAnalysis}</p>}
 
                     <div className="mt-4 flex flex-wrap gap-2">
-                      {(outfit.tags || []).slice(0, 7).map((tag) => <span key={tag} className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/58">{tag}</span>)}
+                      {[...new Set((outfit.tags || []).filter(Boolean).map(String))].slice(0, 7).map((tag, tagIndex) => <span key={`${outfit.outfitKey || index}-tag-${tag}-${tagIndex}`} className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/58">{tag}</span>)}
                     </div>
 
                     <div className="mt-5 grid grid-cols-3 gap-2 text-xs text-white/50">

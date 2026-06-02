@@ -123,6 +123,7 @@ export default function CommunityPage() {
         <div className="grid gap-6 lg:grid-cols-3">
           {posts.map((post) => {
             const images = postImages(post)
+            const tags = [...new Set((post.tags || []).filter(Boolean).map(String))].slice(0, 4)
             return (
               <article key={post._id} className="glass overflow-hidden rounded-[8px]">
                 <div className="grid grid-cols-2 gap-px bg-white/10">
@@ -148,7 +149,7 @@ export default function CommunityPage() {
                   </div>
                   <p className="mt-3 min-h-[48px] text-sm leading-6 text-white/50">{post.caption || 'Shared from a FitFusion wardrobe.'}</p>
                   <div className="mt-4 flex flex-wrap gap-2">
-                    {(post.tags || []).slice(0, 4).map((tag) => <span key={tag} className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/55">{tag}</span>)}
+                    {tags.map((tag, index) => <span key={`${post._id}-tag-${tag}-${index}`} className="rounded-[8px] bg-white/8 px-2.5 py-1 text-xs capitalize text-white/55">{tag}</span>)}
                   </div>
                   <div className="mt-5 grid grid-cols-3 gap-2 text-sm">
                     <button onClick={() => togglePost(post, 'like')} disabled={busyId === post._id} className="flex h-10 items-center justify-center gap-2 rounded-[8px] bg-white/8 text-white/70 hover:bg-white/14">
