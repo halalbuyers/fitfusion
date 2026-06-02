@@ -5,12 +5,14 @@ import Clothing from '../../../models/Clothing'
 import Outfit from '../../../models/Outfit'
 import Post from '../../../models/Post'
 import User from '../../../models/User'
+import { isAdmin } from '../../../lib/auth/admin'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'GET') return res.status(405).end()
 
   const { userId } = getAuth(req)
   if (!userId) return res.status(401).json({ error: 'Unauthorized' })
+  if (!(await isAdmin(req))) return res.status(403).json({ error: 'Access Denied' })
 
   try {
     await connectToDatabase()

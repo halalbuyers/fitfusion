@@ -1,18 +1,10 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { generateGeminiText, hasGemini } from '../../../ai/gemini'
-import { explainOutfitLocally } from '../../../lib/outfit-explainer'
+import { generateStylistAdvice } from '../../../lib/local-stylist'
 
-function localExplanation(outfit: any) {
-  if (Array.isArray(outfit?.items)) {
-    return explainOutfitLocally({
-      items: outfit.items.map((item: any) => item.clothing || item),
-      occasion: outfit.occasion || 'casual',
-      score: outfit.score || 0,
-      breakdown: outfit.breakdown || {}
-    })
-  }
-  return `This outfit works because its pieces keep a coherent styling direction while balancing color, occasion, and weather.`
+function localExplanation(outfit: any, occasion?: string, weather?: string) {
+  return generateStylistAdvice({ outfit, occasion: occasion || outfit?.occasion || 'casual', weather })
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {

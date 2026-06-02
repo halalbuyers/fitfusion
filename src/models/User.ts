@@ -10,6 +10,7 @@ export interface IUser extends Document {
   stylePreferences?: string[]
   favoriteColors?: string[]
   sizes?: Record<string, string>
+  role: 'user' | 'admin'
   createdAt: Date
 }
 
@@ -22,7 +23,8 @@ const UserSchema: Schema = new Schema({
   gender: { type: String },
   stylePreferences: { type: [String], default: [] },
   favoriteColors: { type: [String], default: [] },
-  sizes: { type: Schema.Types.Mixed, default: {} }
+  sizes: { type: Schema.Types.Mixed, default: {} },
+  role: { type: String, enum: ['user', 'admin'], default: 'user', index: true }
 }, { timestamps: true })
 
 export default (mongoose.models.User as mongoose.Model<IUser>) || mongoose.model<IUser>('User', UserSchema)

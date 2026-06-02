@@ -96,11 +96,24 @@ export async function generateOutfitsForUser(
   const recentOutfits = await Outfit.find({ userId, outfitKey: { $exists: true, $ne: '' } })
     .sort({ createdAt: -1 })
     .limit(20)
-    .select('outfitKey')
+    .select('outfitKey items')
     .lean()
     .catch(() => [])
 
   const profile = buildPreferenceProfile(items as any, storedPreferences || undefined)
+  const itemUsageCount = recentOutfits.reduce<Record<string, number>>((acc, outfit: any) => {
+    for (const entry of outfit.items || []) {
+      const id = String(entry.clothing || '')
+      if (id) acc[id] = (acc[id] || 0) + 1
+    }
+    return acc
+  }, {})
+  for (const item of items as any[]) {
+    const id = String(item._id || item.id || '')
+    if (!id) continue
+    itemUsageCount[id] = Math.max(itemUsageCount[id] || 0, Number(item.usageCount || item.wearCount || 0))
+  }
+  const generationHistory = recentOutfits.map((outfit: any) => String(outfit.outfitKey)).filter(Boolean)
   const request: OutfitRequest = {
     occasion: options.occasion || 'casual',
     weather: options.weather,
@@ -108,8 +121,11 @@ export async function generateOutfitsForUser(
     season: options.season,
     stylePreference: options.preferences?.[0] || profile.preferredStyles[0],
     preferences: profile,
-    previousOutfitKeys: recentOutfits.map((outfit: any) => String(outfit.outfitKey)).filter(Boolean),
-    limit: options.limit || 12
+    recentlyGenerated: generationHistory.slice(0, 5),
+    generationHistory,
+    itemUsageCount,
+    previousOutfitKeys: generationHistory,
+    limit: options.limit || 5
   }
 
   const localOutfits = toApiOutfits(items as any[], request)

@@ -37,6 +37,9 @@ export type OutfitRequest = {
   season?: string
   stylePreference?: string
   preferences?: UserPreferenceProfile
+  recentlyGenerated?: string[]
+  generationHistory?: string[]
+  itemUsageCount?: Record<string, number>
   rejectedOutfitKeys?: string[]
   previousOutfitKeys?: string[]
   limit?: number
@@ -49,6 +52,8 @@ export type OutfitScoreBreakdown = {
   occasionScore: number
   balanceScore: number
   personalization: number
+  weatherScore: number
+  diversityScore: number
   memoryPenalty: number
   weatherPenalty: number
 }
@@ -95,6 +100,24 @@ function itemId(item: WardrobeEngineItem) {
 
 export function outfitKey(items: WardrobeEngineItem[]) {
   return items.map(itemId).sort().join('|')
+}
+
+function itemKey(item: WardrobeEngineItem) {
+  return itemId(item)
+}
+
+function outfitStructureKey(items: WardrobeEngineItem[]) {
+  const byRole = items.reduce<Record<string, string[]>>((acc, item) => {
+    const itemRole = role(item.category)
+    const category = normalizeCategory(item.category)
+    acc[itemRole] = [...(acc[itemRole] || []), category]
+    return acc
+  }, {})
+
+  return Object.entries(byRole)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([itemRole, categories]) => `${itemRole}:${categories.sort().join(',')}`)
+    .join('|')
 }
 
 function itemColors(item: WardrobeEngineItem) {
@@ -196,6 +219,17 @@ function recentlyWornPenalty(items: WardrobeEngineItem[]) {
   }, 0)
 }
 
+function diversityScore(items: WardrobeEngineItem[], request: OutfitRequest) {
+  const currentKey = outfitKey(items)
+  const itemUsage = request.itemUsageCount || {}
+  const recentlyGenerated = new Set([...(request.recentlyGenerated || []), ...(request.previousOutfitKeys || [])])
+  const generationHistory = new Set(request.generationHistory || [])
+  const usagePenalty = items.reduce((sum, item) => sum + Number(itemUsage[itemKey(item)] || item.usageCount || item.wearCount || 0) * 5, 0)
+  const exactPenalty = recentlyGenerated.has(currentKey) ? 30 : generationHistory.has(currentKey) ? 18 : 0
+  const averagePenalty = usagePenalty / Math.max(1, items.length)
+  return Math.max(0, Math.min(100, Math.round(100 - averagePenalty - exactPenalty)))
+}
+
 function confidenceScore(items: WardrobeEngineItem[]) {
   const itemScores = items.map((item) => {
     let score = 30
@@ -213,10 +247,11 @@ function confidenceScore(items: WardrobeEngineItem[]) {
 export function scoreOutfit(items: WardrobeEngineItem[], request: OutfitRequest = {}) {
   const colors = items.flatMap(itemColors)
   const currentOutfitKey = outfitKey(items)
-  const memoryPenalty = (request.previousOutfitKeys || []).includes(currentOutfitKey) ? 12 : 0
+  const memoryPenalty = (request.previousOutfitKeys || []).includes(currentOutfitKey) ? 18 : 0
   const occasion = String(request.occasion || '').toLowerCase()
   const season = request.season || (['winter', 'summer'].includes(occasion) ? occasion : undefined)
   const validation = validateOutfitWeather(items, { condition: request.weather, temperature: request.temperature, season })
+  const weatherScore = validation.valid ? scoreWeatherFit(items, { condition: request.weather, temperature: request.temperature, season }) : 0
   const breakdown: OutfitScoreBreakdown = {
     colorScore: colors.length ? getPaletteCompatibilityScore(colors) : 50,
     styleScore: styleScore(items, request),
@@ -224,16 +259,21 @@ export function scoreOutfit(items: WardrobeEngineItem[], request: OutfitRequest 
     occasionScore: occasionScore(items, request.occasion || 'casual'),
     balanceScore: balanceScore(items, request),
     personalization: preferenceBoost(items, request.preferences || emptyPreferenceProfile),
+    weatherScore,
+    diversityScore: diversityScore(items, request),
     memoryPenalty: memoryPenalty + recentlyWornPenalty(items),
     weatherPenalty: validation.valid ? weatherPenalty(items, { condition: request.weather, temperature: request.temperature, season }) : 1000
   }
+  const preferenceScore = Math.max(0, Math.min(100, 50 + breakdown.personalization * 2))
   const weighted =
-    breakdown.colorScore * 0.30 +
+    breakdown.colorScore * 0.35 +
     breakdown.styleScore * 0.25 +
-    breakdown.seasonScore * 0.25 +
-    breakdown.occasionScore * 0.10 +
-    breakdown.balanceScore * 0.10 +
-    breakdown.personalization -
+    breakdown.weatherScore * 0.15 +
+    breakdown.seasonScore * 0.10 +
+    preferenceScore * 0.10 +
+    breakdown.diversityScore * 0.05 +
+    breakdown.occasionScore * 0.04 +
+    breakdown.balanceScore * 0.04 -
     breakdown.memoryPenalty -
     breakdown.weatherPenalty
 
@@ -261,8 +301,17 @@ function explanationFor(items: WardrobeEngineItem[], occasion: string, score: nu
 function topCandidates(items: WardrobeEngineItem[], categories: string[], limit: number) {
   return items
     .filter((item) => categories.includes(normalizeCategory(item.category)))
-    .sort((a, b) => Number(b.favorite || b.isFavorite) - Number(a.favorite || a.isFavorite))
+    .sort((a, b) => {
+      const aScore = Number(a.favorite || a.isFavorite) * 12 - Number(a.usageCount || a.wearCount || 0) * 5 + Math.random() * 8
+      const bScore = Number(b.favorite || b.isFavorite) * 12 - Number(b.usageCount || b.wearCount || 0) * 5 + Math.random() * 8
+      return bScore - aScore
+    })
     .slice(0, limit)
+}
+
+function sampleTop<T>(items: T[], limit: number) {
+  const pool = items.slice(0, Math.max(limit, Math.min(items.length, 5)))
+  return [...pool].sort(() => Math.random() - 0.5).slice(0, limit)
 }
 
 function weatherContextForRequest(request: OutfitRequest, occasion: string) {
@@ -289,11 +338,11 @@ function logWeatherRejection(items: WardrobeEngineItem[], request: OutfitRequest
 
 export function generateOutfits(items: WardrobeEngineItem[], request: OutfitRequest = {}): GeneratedOutfit[] {
   const occasion = String(request.occasion || 'casual').toLowerCase()
-  const tops = topCandidates(items, ['tshirt', 'shirt', 'hoodie'], 14)
-  const layers = topCandidates(items, ['jacket'], 6)
-  const bottoms = topCandidates(items, ['jeans', 'cargo', 'shorts'], 14)
-  const shoes = topCandidates(items, ['sneakers', 'boots'], 10)
-  const accessories = topCandidates(items, ['accessories'], 4)
+  const tops = sampleTop(topCandidates(items, ['tshirt', 'shirt', 'hoodie'], 18), 10)
+  const layers = sampleTop(topCandidates(items, ['jacket'], 8), 4)
+  const bottoms = sampleTop(topCandidates(items, ['jeans', 'cargo', 'shorts'], 18), 10)
+  const shoes = sampleTop(topCandidates(items, ['sneakers', 'boots'], 12), 6)
+  const accessories = sampleTop(topCandidates(items, ['accessories'], 6), 3)
   const candidates: WardrobeEngineItem[][] = []
 
   for (const top of tops) {
@@ -311,7 +360,8 @@ export function generateOutfits(items: WardrobeEngineItem[], request: OutfitRequ
   const rejected = new Set([...(request.rejectedOutfitKeys || []), ...(request.preferences?.rejectedOutfitKeys || [])])
   const seen = new Set<string>()
 
-  return candidates
+  const scored = candidates
+    .sort(() => Math.random() - 0.5)
     .filter(uniqueRoles)
     .filter((combo) => {
       const key = outfitKey(combo)
@@ -339,5 +389,22 @@ export function generateOutfits(items: WardrobeEngineItem[], request: OutfitRequ
       }
     })
     .sort((a, b) => b.score - a.score)
-    .slice(0, request.limit || 12)
+
+  const unique: GeneratedOutfit[] = []
+  const structures = new Map<string, number>()
+  const usedItems = new Set<string>()
+  const maxResults = request.limit || 5
+
+  for (const outfit of scored) {
+    const structure = outfitStructureKey(outfit.items)
+    const repeatedItems = outfit.items.filter((item) => usedItems.has(itemKey(item))).length
+    if ((structures.get(structure) || 0) >= 1 && repeatedItems >= Math.max(1, outfit.items.length - 1)) continue
+    if ((structures.get(structure) || 0) >= 2) continue
+    unique.push(outfit)
+    structures.set(structure, (structures.get(structure) || 0) + 1)
+    outfit.items.forEach((item) => usedItems.add(itemKey(item)))
+    if (unique.length >= maxResults) break
+  }
+
+  return unique.length ? unique : scored.slice(0, maxResults)
 }
