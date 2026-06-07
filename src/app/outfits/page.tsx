@@ -122,9 +122,16 @@ export default function OutfitsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           outfit: outfit._id,
+          type: 'outfit',
+          visibility: 'public',
+          title: outfit.title,
           caption: outfit.explanation || outfit.title,
           images,
-          tags: [outfit.occasion, ...(outfit.tags || [])].filter(Boolean)
+          hashtags: [outfit.occasion, ...(outfit.tags || [])].filter(Boolean),
+          tags: [outfit.occasion, ...(outfit.tags || [])].filter(Boolean),
+          occasion: outfit.occasion,
+          style: outfit.tags?.[0] || '',
+          season: ''
         })
       })
       const data = await res.json().catch(() => ({}))

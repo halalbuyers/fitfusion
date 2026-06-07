@@ -2,9 +2,11 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
+import FashionProfile from '../../../models/FashionProfile'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../../lib/embedding-engine'
 import { buildConfirmedClothingPayload } from '../../../lib/wardrobe-confirmation'
 import { recordTrainingExample } from '../../../lib/training-engine'
+import { sanitizeCategoryForFashionType } from '../../../lib/outfit-engine-profile'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') {
@@ -24,8 +26,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
   }
 
+  const profile = await FashionProfile.findOne({ userId })
+  const correctedCategory = sanitizeCategoryForFashionType(
+    req.body.category || req.body.aiCategory,
+    profile?.fashionType || 'prefer-not-to-specify'
+  )
+
   const payload = buildConfirmedClothingPayload({
     ...req.body,
+    category: correctedCategory,
     userId
   })
   const payloadWithEmbedding = {

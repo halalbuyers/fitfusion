@@ -5,6 +5,7 @@ import cloudinary from '../../lib/cloudinary'
 import { analyzeImage } from '../../ai/openai'
 import { connectToDatabase } from '../../lib/mongodb'
 import Clothing from '../../models/Clothing'
+import FashionProfile from '../../models/FashionProfile'
 import { getAuth } from '@clerk/nextjs/server'
 import { analyzeClothingText, mergeFashionAnalysis } from '../../lib/fashion-analysis'
 import { parseTags } from '../../lib/api'
@@ -13,6 +14,7 @@ import { classifyClothingCategory } from '../../lib/local-category-classifier'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../lib/embedding-engine'
 import { buildConfirmedClothingPayload } from '../../lib/wardrobe-confirmation'
 import { normalizeReviewCategory, normalizeReviewColor } from '../../lib/review-options'
+import { sanitizeCategoryForFashionType } from '../../lib/outfit-engine-profile'
 
 export const config = {
   api: { bodyParser: false }
@@ -166,6 +168,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         text: manualText,
         aiCategory: analysis.category
       })
+      let profile: any = null
+      try {
+        await connectToDatabase()
+        profile = await FashionProfile.findOne({ userId })
+      } catch {
+        // Proceed without fashion profile if the database is unavailable during upload analysis
+      }
+      const finalCategory = sanitizeCategoryForFashionType(
+        fieldValue(fields, 'category') || categoryClassification.category,
+        profile?.fashionType || 'prefer-not-to-specify'
+      )
+      console.log('CATEGORY RESOLUTION:', {
+        userId,
+        fashionType: profile?.fashionType,
+        manualCategory: fieldValue(fields, 'category'),
+        aiCategory: analysis.category,
+        classifiedCategory: categoryClassification.category,
+        finalCategory
+      })
       const categoryConfidence = estimateCategoryConfidence({
         manualCategory: fieldValue(fields, 'category'),
         aiCategory: analysis.category,
@@ -192,7 +213,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const reviewedInput = {
         userId,
         image: result.secure_url,
-        category: fieldValue(fields, 'category') || categoryClassification.category,
+        category: finalCategory,
         primaryColor,
         secondaryColors: resolvedSecondaryColors,
         colors: colors.length ? colors : (detectedColors.length ? detectedColors : (primaryColor === 'unknown' ? [] : [primaryColor, ...resolvedSecondaryColors])),

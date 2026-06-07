@@ -1,6 +1,7 @@
 import Clothing from '../models/Clothing'
 import Outfit from '../models/Outfit'
 import UserPreference from '../models/UserPreference'
+import FashionProfile from '../models/FashionProfile'
 import { connectToDatabase } from '../lib/mongodb'
 import { normalizeCategory } from '../lib/fashion-analysis'
 import { buildPreferenceProfile } from '../lib/preference-engine'
@@ -8,6 +9,7 @@ import { getUserLearningMemory } from '../lib/learning-engine'
 import { getPersonalizationProfile } from '../lib/personalization-engine'
 import { generateOutfits, outfitKey, type OutfitRequest } from '../lib/outfit-engine'
 import { generateGeminiText, hasGemini } from './gemini'
+import { filterItemsByFashionProfile, getCategoriesForFashionType } from '../lib/outfit-engine-profile'
 
 export type GeneratedOutfit = {
   items: { id: string; role?: string }[]
@@ -89,13 +91,18 @@ export async function generateOutfitsForUser(
     return []
   }
 
-  const [items, storedPreferences, memory, personalization] = await Promise.all([
+  const [items, storedPreferences, memory, personalization, fashionProfile] = await Promise.all([
     Clothing.find({ userId }).lean(),
     UserPreference.findOne({ userId }).lean().catch(() => null),
     getUserLearningMemory(userId),
-    getPersonalizationProfile(userId)
+    getPersonalizationProfile(userId),
+    FashionProfile.findOne({ userId }).lean().catch(() => null)
   ])
   if (!items.length) return []
+
+  // Filter items based on fashion profile
+  const filteredItems = filterItemsByFashionProfile(items, fashionProfile as any)
+  if (!filteredItems.length) return items.length ? toApiOutfits(items, { occasion: options.occasion || 'casual', limit: options.limit || 5 } as OutfitRequest) : []
 
   const recentOutfits = await Outfit.find({ userId, outfitKey: { $exists: true, $ne: '' } })
     .sort({ createdAt: -1 })
@@ -148,7 +155,7 @@ export async function generateOutfitsForUser(
     limit: options.limit || 5
   }
 
-  const localOutfits = toApiOutfits(items as any[], request)
+  const localOutfits = toApiOutfits(filteredItems as any[], request)
   if (options.mode === 'hybrid') return explainWithAi(localOutfits, options)
   return localOutfits
 }

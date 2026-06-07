@@ -11,6 +11,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!userId) return res.status(401).json({ error: 'Unauthorized' })
     const post = await Post.findById(req.query.id)
     if (!post) return res.status(404).json({ error: 'Not found' })
+    if (post.likesEnabled === false) return res.status(403).json({ error: 'Likes are disabled for this post.' })
     post.likes = post.likes.includes(userId) ? post.likes.filter((id: string) => id !== userId) : [...post.likes, userId]
     await post.save()
     return res.status(200).json(post)
