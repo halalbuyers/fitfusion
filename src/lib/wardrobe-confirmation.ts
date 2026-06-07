@@ -39,7 +39,9 @@ export function buildConfirmedClothingPayload(input: WardrobeConfirmationInput) 
   const parsedOccasion = parseTags(input.occasion)
   const parsedColors = parseTags(input.colors)
   const parsedSecondaryColors = parseTags(input.secondaryColors)
-  const category = normalizeReviewCategory(input.category)
+  const rawCategory = String(input.category || '').trim().toLowerCase()
+  const category = normalizeReviewCategory(rawCategory)
+  const resolvedCategory = category === 'other' && rawCategory ? rawCategory : category
   const primaryColor = normalizeReviewColor(input.primaryColor || input.color)
   const colors = parsedColors.length ? uniqueColors(parsedColors) : uniqueColors([primaryColor, ...parsedSecondaryColors])
   const secondaryColors = parsedSecondaryColors.length
@@ -62,12 +64,12 @@ export function buildConfirmedClothingPayload(input: WardrobeConfirmationInput) 
   const aiCategory = normalizeReviewCategory(input.aiCategory || category)
   const aiColor = normalizeReviewColor(input.aiColor || primaryColor)
   const finalColors = colors.length ? colors : uniqueColors(analysis.colors)
-  const correctedByUser = Boolean(input.correctedByUser) || aiCategory !== category || aiColor !== primaryColor
+  const correctedByUser = Boolean(input.correctedByUser) || aiCategory !== resolvedCategory || aiColor !== primaryColor
 
   return {
     userId: input.userId,
     image: input.image,
-    category,
+    category: resolvedCategory,
     primaryColor,
     secondaryColors,
     color: primaryColor,

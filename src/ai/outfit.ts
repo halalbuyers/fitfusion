@@ -91,18 +91,24 @@ export async function generateOutfitsForUser(
     return []
   }
 
-  const [items, storedPreferences, memory, personalization, fashionProfile] = await Promise.all([
+  const [items, storedPreferences, memory, personalization] = await Promise.all([
     Clothing.find({ userId }).lean(),
     UserPreference.findOne({ userId }).lean().catch(() => null),
     getUserLearningMemory(userId),
-    getPersonalizationProfile(userId),
-    FashionProfile.findOne({ userId }).lean().catch(() => null)
+    getPersonalizationProfile(userId)
   ])
+  const fashionProfile = (await FashionProfile.findOne({ userId }).lean().catch(() => null)) as any
   if (!items.length) return []
 
   // Filter items based on fashion profile
-  const filteredItems = filterItemsByFashionProfile(items, fashionProfile as any)
-  if (!filteredItems.length) return items.length ? toApiOutfits(items, { occasion: options.occasion || 'casual', limit: options.limit || 5 } as OutfitRequest) : []
+  const filteredItems = filterItemsByFashionProfile(items, fashionProfile)
+  console.log('OUTFIT GENERATION PROFILE:', { userId, fashionType: fashionProfile?.fashionType, totalItems: items.length, filteredItems: filteredItems.length })
+  if (!filteredItems.length) {
+    if (fashionProfile && fashionProfile.fashionType) {
+      return []
+    }
+    return items.length ? toApiOutfits(items, { occasion: options.occasion || 'casual', limit: options.limit || 5 } as OutfitRequest) : []
+  }
 
   const recentOutfits = await Outfit.find({ userId, outfitKey: { $exists: true, $ne: '' } })
     .sort({ createdAt: -1 })

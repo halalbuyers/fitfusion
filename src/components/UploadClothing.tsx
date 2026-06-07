@@ -6,6 +6,7 @@ import { motion } from 'framer-motion'
 import { AlertTriangle, Check, Cloud, Loader2, RotateCcw, Sparkles, Upload, X } from 'lucide-react'
 import Toast from './Toast'
 import { displayReviewValue, reviewCategories, reviewColors, reviewSeasons, reviewStyles } from '../lib/review-options'
+import { getAllowedCategoriesForFashionType } from '../lib/fashion-profile-categories'
 
 const fits = ['regular', 'oversized', 'slim', 'baggy']
 const MotionSection = motion.section as any
@@ -87,6 +88,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
   const [draft, setDraft] = useState<Draft | null>(null)
   const [autoSaveHighConfidence, setAutoSaveHighConfidence] = useState(false)
   const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null)
+  const [fashionProfile, setFashionProfile] = useState<{ fashionType?: string } | null>(null)
   const [form, setForm] = useState({
     category: '',
     primaryColor: '',
@@ -145,6 +147,21 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
     setReview({ category: '', primaryColor: '', secondaryColors: '', style: '', season: '', tags: '', brand: '' })
   }
 
+  React.useEffect(() => {
+    async function loadProfile() {
+      try {
+        const response = await fetch('/api/fashion-profile')
+        if (!response.ok) return
+        const profile = await response.json()
+        setFashionProfile(profile)
+      } catch {
+        return
+      }
+    }
+
+    loadProfile()
+  }, [])
+
   async function submit(e: React.FormEvent) {
     e.preventDefault()
     if (!file) {
@@ -187,6 +204,11 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       setLoading(false)
     }
   }
+
+  const categoryOptions = React.useMemo(() => {
+    if (!fashionProfile?.fashionType) return reviewCategories
+    return [...new Set(['other', ...getAllowedCategoriesForFashionType(fashionProfile.fashionType)])]
+  }, [fashionProfile])
 
   async function saveReviewedItem() {
     if (!draft) return
@@ -266,7 +288,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         <div className="grid gap-3 sm:grid-cols-2">
           <select value={form.category} onChange={(e) => update('category', e.target.value)} className="field">
             <option value="">Auto category</option>
-            {reviewCategories.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
+            {categoryOptions.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
           </select>
           <select value={form.primaryColor} onChange={(e) => update('primaryColor', e.target.value)} className="field">
             <option value="">Auto color</option>
@@ -333,7 +355,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
                 <label className="grid gap-1 text-xs text-white/45">
                   Category
                   <select value={review.category} onChange={(e) => updateReview('category', e.target.value)} className="field text-sm">
-                    {reviewCategories.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
+                    {categoryOptions.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
                   </select>
                 </label>
                 <label className="grid gap-1 text-xs text-white/45">

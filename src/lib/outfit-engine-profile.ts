@@ -1,9 +1,14 @@
 import mongoose from 'mongoose'
 import FashionProfile, { IFashionProfile } from '../models/FashionProfile'
 import { normalizeCategory } from './fashion-analysis'
+import {
+  getCategoriesForFashionType,
+  getAllowedCategoriesForFashionType,
+  isCategoryAllowedForFashionType,
+  sanitizeCategoryForFashionType
+} from './fashion-profile-categories'
 
-// Category definitions for different fashion types
-const CATEGORY_PRESETS = {
+// Category definitions for different fashion types are now stored in fashion-profile-categories.ts
   menswear: {
     tops: ['tshirt', 'shirt', 'hoodie'],
     bottoms: ['jeans', 'cargo', 'shorts'],
@@ -12,21 +17,21 @@ const CATEGORY_PRESETS = {
     accessories: ['accessories']
   },
   womenswear: {
-    tops: ['blouse', 'crop-top', 'shirt', 'tshirt'],
+    tops: ['dress', 'blouse', 'kurti', 'crop-top', 'shirt', 'tshirt'],
     bottoms: ['jeans', 'skirt', 'shorts', 'pants'],
     shoes: ['heels', 'sneakers', 'boots', 'flats'],
     layers: ['jacket', 'cardigan'],
     accessories: ['accessories', 'handbag']
   },
   both: {
-    tops: ['tshirt', 'shirt', 'hoodie', 'blouse', 'crop-top'],
+    tops: ['dress', 'blouse', 'kurti', 'tshirt', 'shirt', 'hoodie', 'crop-top'],
     bottoms: ['jeans', 'cargo', 'shorts', 'skirt', 'pants'],
     shoes: ['sneakers', 'boots', 'heels', 'flats'],
     layers: ['jacket', 'cardigan'],
     accessories: ['accessories', 'handbag']
   },
   'prefer-not-to-specify': {
-    tops: ['tshirt', 'shirt', 'hoodie', 'blouse', 'crop-top'],
+    tops: ['dress', 'blouse', 'kurti', 'tshirt', 'shirt', 'hoodie', 'crop-top'],
     bottoms: ['jeans', 'cargo', 'shorts', 'skirt', 'pants'],
     shoes: ['sneakers', 'boots', 'heels', 'flats'],
     layers: ['jacket', 'cardigan'],
@@ -44,34 +49,7 @@ export async function getFashionProfile(userId: string): Promise<IFashionProfile
   }
 }
 
-export function getCategoriesForFashionType(fashionType: string) {
-  return CATEGORY_PRESETS[fashionType as keyof typeof CATEGORY_PRESETS] || CATEGORY_PRESETS['prefer-not-to-specify']
-}
-
-export function isCategoryAllowedForFashionType(category: string | undefined, fashionType: string) {
-  const normalizedCategory = normalizeCategory(category)
-  const rawCategory = String(category || '').trim().toLowerCase()
-  const categories = getCategoriesForFashionType(fashionType)
-  const allowed = [
-    ...categories.tops,
-    ...categories.bottoms,
-    ...categories.shoes,
-    ...categories.layers,
-    ...categories.accessories
-  ]
-
-  return allowed.includes(normalizedCategory) || allowed.includes(rawCategory)
-}
-
-export function sanitizeCategoryForFashionType(category: string | undefined, fashionType: string) {
-  if (!category) return 'unknown'
-  const rawCategory = String(category).trim().toLowerCase()
-  if (isCategoryAllowedForFashionType(rawCategory, fashionType)) {
-    const normalizedCategory = normalizeCategory(rawCategory)
-    return normalizedCategory !== 'unknown' ? normalizedCategory : rawCategory
-  }
-  return 'unknown'
-}
+export { getCategoriesForFashionType, getAllowedCategoriesForFashionType, isCategoryAllowedForFashionType, sanitizeCategoryForFashionType } from './fashion-profile-categories'
 
 export function enhanceOutfitRequestWithProfile(
   request: any,
@@ -118,8 +96,8 @@ export function filterItemsByFashionProfile(
 
   return items.filter(item => {
     // Allow items in the fashion type's category pool
-    const itemCategory = String(item.category || '').toLowerCase()
-    const categoryMatch = allCategoriesAllowed.some(cat => itemCategory.includes(cat))
+    const itemCategory = String(item.category || '').trim().toLowerCase()
+    const categoryMatch = allCategoriesAllowed.includes(itemCategory)
 
     if (!categoryMatch) return false
 

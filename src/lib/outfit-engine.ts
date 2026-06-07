@@ -72,18 +72,18 @@ export type GeneratedOutfit = {
 }
 
 const outfitTypeRules: Record<string, { styles: string[]; minFormality: number; maxFormality: number; categories: string[]; avoid: string[] }> = {
-  casual: { styles: ['casual', 'minimal', 'streetwear'], minFormality: 15, maxFormality: 75, categories: ['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'shorts', 'sneakers'], avoid: [] },
-  college: { styles: ['casual', 'minimal', 'streetwear', 'sporty'], minFormality: 10, maxFormality: 65, categories: ['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'sneakers'], avoid: ['boots'] },
-  date: { styles: ['minimal', 'casual', 'old-money', 'formal'], minFormality: 38, maxFormality: 82, categories: ['shirt', 'jacket', 'jeans', 'cargo', 'sneakers', 'boots', 'accessories'], avoid: ['shorts'] },
-  party: { styles: ['streetwear', 'y2k', 'minimal', 'formal'], minFormality: 35, maxFormality: 88, categories: ['shirt', 'jacket', 'jeans', 'cargo', 'sneakers', 'boots', 'accessories'], avoid: [] },
+  casual: { styles: ['casual', 'minimal', 'streetwear'], minFormality: 15, maxFormality: 75, categories: ['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'shorts', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'sneakers', 'heels'], avoid: [] },
+  college: { styles: ['casual', 'minimal', 'streetwear', 'sporty'], minFormality: 10, maxFormality: 65, categories: ['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'skirt', 'dress', 'blouse', 'kurti', 'saree', 'sneakers'], avoid: ['boots'] },
+  date: { styles: ['minimal', 'casual', 'old-money', 'formal'], minFormality: 38, maxFormality: 82, categories: ['shirt', 'jacket', 'jeans', 'cargo', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'sneakers', 'boots', 'heels', 'handbag', 'accessories'], avoid: ['shorts'] },
+  party: { styles: ['streetwear', 'y2k', 'minimal', 'formal'], minFormality: 35, maxFormality: 88, categories: ['shirt', 'jacket', 'jeans', 'cargo', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'sneakers', 'boots', 'heels', 'handbag', 'accessories'], avoid: [] },
   gym: { styles: ['sporty', 'casual'], minFormality: 0, maxFormality: 45, categories: ['tshirt', 'hoodie', 'shorts', 'sneakers'], avoid: ['jacket', 'boots'] },
-  formal: { styles: ['formal', 'minimal', 'old-money'], minFormality: 65, maxFormality: 100, categories: ['shirt', 'jacket', 'jeans', 'boots', 'accessories'], avoid: ['hoodie', 'shorts'] },
-  travel: { styles: ['casual', 'streetwear', 'techwear', 'minimal'], minFormality: 10, maxFormality: 70, categories: ['tshirt', 'hoodie', 'jacket', 'cargo', 'jeans', 'sneakers', 'boots'], avoid: [] },
-  winter: { styles: ['streetwear', 'minimal', 'techwear', 'casual'], minFormality: 10, maxFormality: 90, categories: ['hoodie', 'jacket', 'jeans', 'cargo', 'boots', 'sneakers'], avoid: ['shorts'] },
-  summer: { styles: ['casual', 'minimal', 'old-money', 'sporty'], minFormality: 5, maxFormality: 75, categories: ['tshirt', 'shirt', 'shorts', 'jeans', 'sneakers', 'accessories'], avoid: ['jacket', 'boots'] },
-  monochrome: { styles: ['minimal', 'streetwear', 'formal'], minFormality: 20, maxFormality: 95, categories: ['tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'sneakers', 'boots'], avoid: [] },
-  luxury: { styles: ['minimal', 'formal', 'old-money'], minFormality: 45, maxFormality: 100, categories: ['shirt', 'jacket', 'jeans', 'boots', 'accessories', 'sneakers'], avoid: ['shorts'] },
-  streetwear: { styles: ['streetwear', 'y2k', 'techwear'], minFormality: 5, maxFormality: 65, categories: ['tshirt', 'hoodie', 'jacket', 'cargo', 'jeans', 'sneakers', 'accessories'], avoid: [] }
+  formal: { styles: ['formal', 'minimal', 'old-money'], minFormality: 65, maxFormality: 100, categories: ['shirt', 'jacket', 'jeans', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'boots', 'heels', 'handbag', 'accessories'], avoid: ['hoodie', 'shorts'] },
+  travel: { styles: ['casual', 'streetwear', 'techwear', 'minimal'], minFormality: 10, maxFormality: 70, categories: ['tshirt', 'hoodie', 'jacket', 'cargo', 'jeans', 'skirt', 'dress', 'sneakers', 'boots', 'heels'], avoid: [] },
+  winter: { styles: ['streetwear', 'minimal', 'techwear', 'casual'], minFormality: 10, maxFormality: 90, categories: ['hoodie', 'jacket', 'jeans', 'cargo', 'boots', 'sneakers', 'dress', 'skirt'], avoid: ['shorts'] },
+  summer: { styles: ['casual', 'minimal', 'old-money', 'sporty'], minFormality: 5, maxFormality: 75, categories: ['tshirt', 'shirt', 'shorts', 'jeans', 'skirt', 'dress', 'blouse', 'sneakers', 'heels', 'accessories'], avoid: ['jacket', 'boots'] },
+  monochrome: { styles: ['minimal', 'streetwear', 'formal'], minFormality: 20, maxFormality: 95, categories: ['tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'dress', 'skirt', 'sneakers', 'boots', 'heels'], avoid: [] },
+  luxury: { styles: ['minimal', 'formal', 'old-money'], minFormality: 45, maxFormality: 100, categories: ['shirt', 'jacket', 'jeans', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'boots', 'heels', 'handbag', 'accessories', 'sneakers'], avoid: ['shorts'] },
+  streetwear: { styles: ['streetwear', 'y2k', 'techwear'], minFormality: 5, maxFormality: 65, categories: ['tshirt', 'hoodie', 'jacket', 'cargo', 'jeans', 'dress', 'skirt', 'sneakers', 'accessories'], avoid: [] }
 }
 
 const styleConflicts: Array<[string, string, number]> = [
@@ -127,10 +127,10 @@ function itemColors(item: WardrobeEngineItem) {
 
 function role(category: string) {
   const normalized = normalizeCategory(category)
-  if (['tshirt', 'shirt', 'hoodie'].includes(normalized)) return 'top'
+  if (['tshirt', 'shirt', 'hoodie', 'blouse', 'dress', 'kurti', 'saree'].includes(normalized)) return 'top'
   if (normalized === 'jacket') return 'layer'
-  if (['jeans', 'cargo', 'shorts'].includes(normalized)) return 'bottom'
-  if (['sneakers', 'boots'].includes(normalized)) return 'shoes'
+  if (['jeans', 'cargo', 'shorts', 'skirt', 'pants'].includes(normalized)) return 'bottom'
+  if (['sneakers', 'boots', 'heels'].includes(normalized)) return 'shoes'
   return 'accessory'
 }
 

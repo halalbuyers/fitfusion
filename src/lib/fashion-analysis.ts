@@ -1,6 +1,6 @@
 import { normalizeColor, normalizeColors } from './color-engine'
 
-export const clothingCategories = ['unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'sneakers', 'boots', 'accessories'] as const
+export const clothingCategories = ['unknown', 'tshirt', 'shirt', 'hoodie', 'jacket', 'jeans', 'cargo', 'shorts', 'dress', 'skirt', 'blouse', 'kurti', 'saree', 'heels', 'handbag', 'sneakers', 'boots', 'accessories'] as const
 export const fashionStyles = ['streetwear', 'minimal', 'formal', 'casual', 'techwear', 'old-money', 'vintage', 'sporty', 'y2k'] as const
 export const seasons = ['summer', 'winter', 'spring', 'autumn', 'all-season'] as const
 export const fits = ['oversized', 'slim', 'regular', 'baggy'] as const
@@ -35,6 +35,13 @@ const categoryAliases: Array<[ClothingCategory, string[]]> = [
   ['cargo', ['cargo', 'cargos']],
   ['jeans', ['jean', 'denim']],
   ['shorts', ['short']],
+  ['dress', ['dress', 'gown', 'maxi', 'midi', 'mini dress']],
+  ['skirt', ['skirt', 'pencil skirt', 'maxi skirt']],
+  ['blouse', ['blouse', 'top', 'camisole', 'halter', 'wrap top']],
+  ['kurti', ['kurti', 'kurta']],
+  ['saree', ['saree', 'sari']],
+  ['heels', ['heel', 'heels', 'stiletto', 'pump']],
+  ['handbag', ['handbag', 'purse', 'clutch', 'tote']],
   ['tshirt', ['tshirt', 't-shirt', 'tee', 't shirt']],
   ['shirt', ['shirt', 'button', 'oxford', 'polo']],
   ['accessories', ['watch', 'cap', 'belt', 'bag', 'scarf', 'chain', 'ring', 'accessory']]
@@ -74,11 +81,17 @@ export function detectCategoryFromFilename(name?: string): ClothingCategory {
   if (lower.includes('jeans') || lower.includes('denim')) return 'jeans'
   if (lower.includes('cargo')) return 'cargo'
   if (lower.includes('tshirt') || lower.includes('t-shirt') || lower.includes('tee')) return 'tshirt'
+  if (lower.includes('dress') || lower.includes('gown') || lower.includes('maxi')) return 'dress'
+  if (lower.includes('skirt')) return 'skirt'
+  if (lower.includes('blouse') || lower.includes('camisole') || lower.includes('halter')) return 'blouse'
+  if (lower.includes('kurti') || lower.includes('kurta')) return 'kurti'
+  if (lower.includes('saree') || lower.includes('sari')) return 'saree'
+  if (lower.includes('heel') || lower.includes('stiletto') || lower.includes('pump')) return 'heels'
   if (lower.includes('shirt') || lower.includes('polo') || lower.includes('oxford')) return 'shirt'
   if (lower.includes('short')) return 'shorts'
   if (lower.includes('sneaker') || lower.includes('shoe') || lower.includes('trainer')) return 'sneakers'
   if (lower.includes('boot')) return 'boots'
-  if (lower.includes('watch') || lower.includes('belt') || lower.includes('cap') || lower.includes('bag')) return 'accessories'
+  if (lower.includes('watch') || lower.includes('belt') || lower.includes('cap') || lower.includes('bag') || lower.includes('purse') || lower.includes('clutch') || lower.includes('tote')) return 'handbag'
 
   return 'unknown'
 }
@@ -145,12 +158,12 @@ function warmthFor(category: ClothingCategory, material?: string) {
 
 function occasionsFor(category: ClothingCategory, style: FashionStyle, formalityScore: number) {
   const occasions = new Set<string>(['casual'])
-  if (['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'sneakers'].includes(category)) occasions.add('college')
-  if (['tshirt', 'shorts', 'sneakers'].includes(category) || style === 'sporty') occasions.add('gym')
+  if (['tshirt', 'shirt', 'hoodie', 'jeans', 'cargo', 'sneakers', 'blouse', 'dress', 'skirt', 'kurti', 'saree'].includes(category)) occasions.add('college')
+  if (['tshirt', 'shorts', 'sneakers', 'dress', 'skirt', 'blouse', 'kurti', 'saree'].includes(category) || style === 'sporty') occasions.add('gym')
   if (formalityScore >= 62) occasions.add('formal')
-  if (['streetwear', 'y2k'].includes(style)) occasions.add('party')
-  if (['hoodie', 'jacket', 'cargo', 'sneakers'].includes(category)) occasions.add('travel')
-  if (style === 'old-money' || style === 'minimal') occasions.add('date')
+  if (['streetwear', 'y2k'].includes(style) || ['dress', 'heels', 'handbag', 'skirt', 'blouse'].includes(category)) occasions.add('party')
+  if (['hoodie', 'jacket', 'cargo', 'sneakers', 'heels'].includes(category)) occasions.add('travel')
+  if (style === 'old-money' || style === 'minimal' || ['dress', 'blouse', 'skirt', 'kurti', 'saree'].includes(category)) occasions.add('date')
   return [...occasions]
 }
 

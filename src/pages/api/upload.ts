@@ -225,7 +225,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || analysis.fit,
         fitType: fieldValue(fields, 'fitType') || fieldValue(fields, 'fit') || analysis.fitType,
         material: fieldValue(fields, 'material') || analysis.material,
-        aiCategory: analysis.category,
+        aiCategory: finalCategory,
         aiColor: analysis.primaryColor,
         categoryConfidence,
         colorConfidence
