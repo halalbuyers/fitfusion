@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { CalendarPlus, CheckCircle2, Heart, Loader2, Send, Sparkles, ThumbsDown, X } from 'lucide-react'
+import { CalendarPlus, CheckCircle2, Heart, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type Clothing = { _id: string; image: string; category: string }
@@ -210,8 +210,8 @@ export default function OutfitsPage() {
                         <X className="h-4 w-4" />
                       </button>
                     )}
-                    <button title="Reject and delete outfit" onClick={() => removeOutfit(outfit)} disabled={busyId === outfit._id} className="icon-button ml-auto h-10 w-10 text-red-100 hover:bg-red-400/15">
-                      <ThumbsDown className="h-4 w-4" />
+                    <button title="Delete outfit" aria-label={`Delete ${outfit.title}`} onClick={() => removeOutfit(outfit)} disabled={busyId === outfit._id} className="icon-button ml-auto h-10 w-10 text-red-100 hover:bg-red-400/15">
+                      {busyId === outfit._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </button>
                   </div>
                 </div>

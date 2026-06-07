@@ -5,7 +5,7 @@ import { usePathname } from 'next/navigation'
 import React from 'react'
 import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
-import { CloudSun, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Wand2 } from 'lucide-react'
+import { CloudSun, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
 
 const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
@@ -13,6 +13,7 @@ const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Outfit Generator', '/outfit-generator', Wand2],
   ['AI Stylist', '/stylist', MessageCircle],
   ['Saved Outfits', '/outfits', Sparkles],
+  ['Community', '/community', Users],
   ['Weather', '/weather', CloudSun],
   ['Profile', '/profile', UserRound],
   ['Admin', '/admin', Shield]
@@ -22,6 +23,7 @@ const mobileNav: Array<[string, string, LucideIcon]> = [
   ['Wardrobe', '/wardrobe', Shirt],
   ['Generate', '/outfit-generator', Wand2],
   ['Stylist', '/stylist', MessageCircle],
+  ['Community', '/community', Users],
   ['Profile', '/profile', UserRound]
 ]
 const MotionSection = motion.section as any
@@ -75,7 +77,7 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
           {children}
         </MotionSection>
       </div>
-      <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-5 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/88 p-1 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:inset-x-3 sm:bottom-3 lg:hidden" aria-label="Mobile navigation">
+      <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-6 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/88 p-1 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:inset-x-3 sm:bottom-3 lg:hidden" aria-label="Mobile navigation">
         {mobileNav.map(([label, href, Icon]) => (
           <Link
             key={href}
