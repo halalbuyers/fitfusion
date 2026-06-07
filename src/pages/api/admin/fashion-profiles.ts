@@ -18,7 +18,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(403).json({ error: 'Unauthorized' })
     }
 
-    const profiles = await FashionProfile.find({ hasCompletedOnboarding: true }).lean()
+    const profiles = await FashionProfile.find({ hasCompletedOnboarding: true }).lean() as Array<any>
 
     const fashionTypeCounts = {
       menswear: profiles.filter(p => p.fashionType === 'menswear').length,
@@ -33,16 +33,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const goalCounts: Record<string, number> = {}
 
     profiles.forEach(p => {
-      p.preferredStyles?.forEach(style => {
+      p.preferredStyles?.forEach((style: string) => {
         styleCounts[style] = (styleCounts[style] || 0) + 1
       })
-      p.favoriteColors?.forEach(color => {
+      p.favoriteColors?.forEach((color: string) => {
         colorCounts[color] = (colorCounts[color] || 0) + 1
       })
-      p.preferredOccasions?.forEach(occasion => {
+      p.preferredOccasions?.forEach((occasion: string) => {
         occasionCounts[occasion] = (occasionCounts[occasion] || 0) + 1
       })
-      p.fashionGoals?.forEach(goal => {
+      p.fashionGoals?.forEach((goal: string) => {
         goalCounts[goal] = (goalCounts[goal] || 0) + 1
       })
     })

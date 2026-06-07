@@ -9,13 +9,13 @@ import {
   ResponsiveContainer, Tooltip, XAxis, YAxis
 } from 'recharts'
 import {
-  Activity, Bell, Bot, CheckCircle2, ChevronDown, CircleDollarSign, CloudSun, Database,
+  Activity, Bell, Bot, CheckCircle2, CircleDollarSign, Database,
   Download, Eye, Flag, Gauge, LineChart as LineChartIcon, Lock, Megaphone, MessageSquare,
   MoreHorizontal, Search, Settings, Shield, Shirt, Sparkles, Trash2, TrendingUp, UserCog,
   Users
 } from 'lucide-react'
 
-type AdminView = 'overview' | 'users' | 'analytics' | 'system' | 'feedback' | 'training' | 'settings'
+type AdminView = 'overview' | 'users' | 'analytics' | 'system' | 'feedback' | 'announcements' | 'training' | 'settings'
 type Kpi = { label: string; value: number | string; growth: number; trend: string; note?: string }
 type ChartPoint = { name: string; value: number }
 type AdminOverview = {
@@ -49,6 +49,7 @@ const nav = [
   { label: 'Analytics', href: '/admin/analytics', icon: LineChartIcon, view: 'analytics' },
   { label: 'System', href: '/admin/system', icon: Database, view: 'system' },
   { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare, view: 'feedback' },
+  { label: 'Announcements', href: '/admin/announcements', icon: Megaphone, view: 'announcements' },
   { label: 'Training', href: '/admin/training-data', icon: Bot, view: 'training' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, view: 'settings' }
 ] as const

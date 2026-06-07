@@ -8,37 +8,6 @@ import {
   sanitizeCategoryForFashionType
 } from './fashion-profile-categories'
 
-// Category definitions for different fashion types are now stored in fashion-profile-categories.ts
-  menswear: {
-    tops: ['tshirt', 'shirt', 'hoodie'],
-    bottoms: ['jeans', 'cargo', 'shorts'],
-    shoes: ['sneakers', 'boots'],
-    layers: ['jacket'],
-    accessories: ['accessories']
-  },
-  womenswear: {
-    tops: ['dress', 'blouse', 'kurti', 'crop-top', 'shirt', 'tshirt'],
-    bottoms: ['jeans', 'skirt', 'shorts', 'pants'],
-    shoes: ['heels', 'sneakers', 'boots', 'flats'],
-    layers: ['jacket', 'cardigan'],
-    accessories: ['accessories', 'handbag']
-  },
-  both: {
-    tops: ['dress', 'blouse', 'kurti', 'tshirt', 'shirt', 'hoodie', 'crop-top'],
-    bottoms: ['jeans', 'cargo', 'shorts', 'skirt', 'pants'],
-    shoes: ['sneakers', 'boots', 'heels', 'flats'],
-    layers: ['jacket', 'cardigan'],
-    accessories: ['accessories', 'handbag']
-  },
-  'prefer-not-to-specify': {
-    tops: ['dress', 'blouse', 'kurti', 'tshirt', 'shirt', 'hoodie', 'crop-top'],
-    bottoms: ['jeans', 'cargo', 'shorts', 'skirt', 'pants'],
-    shoes: ['sneakers', 'boots', 'heels', 'flats'],
-    layers: ['jacket', 'cardigan'],
-    accessories: ['accessories', 'handbag']
-  }
-}
-
 export async function getFashionProfile(userId: string): Promise<IFashionProfile | null> {
   try {
     await mongoose.connect(process.env.MONGODB_URI || '')
@@ -84,7 +53,7 @@ export function filterItemsByFashionProfile(
   if (!profile || !profile.fashionType) return items
 
   const categories = getCategoriesForFashionType(profile.fashionType)
-  const allCategoriesAllowed = [
+  const allCategoriesAllowed: string[] = [
     ...categories.tops,
     ...categories.bottoms,
     ...categories.shoes,

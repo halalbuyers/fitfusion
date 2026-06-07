@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import {
@@ -85,7 +85,7 @@ export default function CommunityPage() {
 
   const feedLabel = useMemo(() => feedOptions.find((item) => item.key === activeFeed)?.label || 'Community', [activeFeed])
 
-  async function loadPosts() {
+  const loadPosts = useCallback(async () => {
     setLoading(true)
     setError('')
     setNotice('')
@@ -102,11 +102,11 @@ export default function CommunityPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [activeFeed, search])
 
   useEffect(() => {
     loadPosts()
-  }, [activeFeed])
+  }, [loadPosts])
 
   async function togglePost(post: Post, action: 'like' | 'save') {
     if (post._id.startsWith('sample-')) {

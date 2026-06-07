@@ -17,6 +17,7 @@ body {
   --panel-bg: rgba(255, 255, 255, 0.04);
   --panel-strong: rgba(0, 0, 0, 0.36);
   --accent: #d7ff55;
+  --announcement-offset: 116px;
   color-scheme: dark;
 }
 
@@ -171,6 +172,10 @@ textarea:focus-visible {
 }
 
 @media (max-width: 640px) {
+  :root {
+    --announcement-offset: 142px;
+  }
+
   .field {
     font-size: 16px;
   }
@@ -197,4 +202,17 @@ textarea:focus-visible {
 
 .animate-float-in {
   animation: floatIn 700ms ease both;
+}
+
+@keyframes marqueeScroll {
+  from {
+    transform: translateX(0%);
+  }
+  to {
+    transform: translateX(-33.3333%);
+  }
+}
+
+.marquee {
+  animation: marqueeScroll linear infinite;
 }

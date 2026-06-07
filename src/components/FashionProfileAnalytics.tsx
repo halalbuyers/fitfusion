@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Loader2, TrendingUp, Users } from 'lucide-react'
 
 type AnalyticsData = {
@@ -15,6 +15,7 @@ type AnalyticsData = {
 }
 
 const colors = ['#d7ff55', '#7dd3fc', '#f0abfc', '#fbbf24', '#c4b5fd', '#34d399', '#ec4899', '#fb923c']
+const MotionDiv = motion.div as any
 
 export function FashionProfileAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null)
@@ -65,7 +66,7 @@ export function FashionProfileAnalytics() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         className="rounded-lg border border-white/10 bg-white/5 p-6"
@@ -77,10 +78,10 @@ export function FashionProfileAnalytics() {
           </div>
           <Users className="h-12 w-12 text-[#d7ff55]" />
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* Fashion Type Distribution */}
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.1 }}
@@ -109,10 +110,10 @@ export function FashionProfileAnalytics() {
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
-      </motion.div>
+      </MotionDiv>
 
       {/* Top Styles */}
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2 }}
@@ -135,10 +136,10 @@ export function FashionProfileAnalytics() {
             <Bar dataKey="value" fill="#d7ff55" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </motion.div>
+      </MotionDiv>
 
       {/* Top Colors */}
-      <motion.div
+      <MotionDiv
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.3 }}
@@ -146,7 +147,7 @@ export function FashionProfileAnalytics() {
       >
         <h3 className="text-lg font-semibold text-white mb-6">Favorite Colors</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {data.topColors.slice(0, 10).map((item, idx) => (
+          {data.topColors.slice(0, 10).map((item) => (
             <div key={item.name} className="flex items-center justify-between p-3 rounded-lg bg-white/5">
               <span className="text-white">{item.name}</span>
               <div className="flex items-center gap-2">
@@ -156,11 +157,11 @@ export function FashionProfileAnalytics() {
             </div>
           ))}
         </div>
-      </motion.div>
+      </MotionDiv>
 
       {/* Top Occasions & Goals */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
@@ -175,9 +176,9 @@ export function FashionProfileAnalytics() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </MotionDiv>
 
-        <motion.div
+        <MotionDiv
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.5 }}
@@ -192,7 +193,7 @@ export function FashionProfileAnalytics() {
               </div>
             ))}
           </div>
-        </motion.div>
+        </MotionDiv>
       </div>
     </div>
   )

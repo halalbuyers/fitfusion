@@ -7,7 +7,7 @@ import { Loader2 } from 'lucide-react'
 
 export function OnboardingGuard({ children }: { children: ReactNode }) {
   const router = useRouter()
-  const pathname = usePathname()
+  const pathname = usePathname() || '/'
   const { userId, isLoaded } = useAuth()
 
   const skipOnboardingRoutes = [

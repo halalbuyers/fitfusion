@@ -2,6 +2,7 @@ import React from 'react'
 import { ClerkProvider } from '@clerk/nextjs'
 import { OnboardingGuard } from '../components/OnboardingGuard'
 import Navbar from '../components/Navbar'
+import AnnouncementBar from '../components/AnnouncementBar'
 import Footer from '../components/Footer'
 import '../styles/globals.css'
 
@@ -25,6 +26,7 @@ export default function RootLayout({
         >
           <OnboardingGuard>
             <div className="min-h-screen flex flex-col bg-[var(--page-bg)] text-[var(--text-main)]">
+              <AnnouncementBar />
               <Navbar />
               <main className="flex-1">{children}</main>
               <Footer />

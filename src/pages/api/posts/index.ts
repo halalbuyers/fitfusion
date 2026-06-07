@@ -47,10 +47,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       let posts = await Post.find(query).populate({
         path: 'outfit',
         populate: { path: 'items.clothing' }
-      }).lean()
+      }).lean() as Array<any>
 
       // Get user's fashion profile if authenticated
-      let fashionProfile = null
+      let fashionProfile: any = null
       if (userId) {
         fashionProfile = await FashionProfile.findOne({ userId }).lean().catch(() => null)
       }
@@ -96,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const images = Array.isArray(body.images) ? body.images.filter(Boolean).map(String) : []
       const hashtags = parseTags(body.hashtags || body.tags || '')
       const tags = parseTags(body.tags || body.hashtags || '')
-      const profile = await User.findOne({ clerkId: userId }).lean()
+      const profile = await User.findOne({ clerkId: userId }).lean() as any
 
       const post = await Post.create({
         userId,

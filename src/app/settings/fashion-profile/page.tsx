@@ -6,6 +6,8 @@ import { motion } from 'framer-motion'
 import { Save, AlertCircle, Check, Loader2, ArrowLeft, RotateCcw } from 'lucide-react'
 import { AppFrame } from '../../../components/AppFrame'
 
+const MotionDiv = motion.div as any
+
 const STYLE_OPTIONS = [
   'Streetwear',
   'Minimalist',
@@ -173,18 +175,18 @@ export default function FashionProfileSettings() {
     >
       <div className="max-w-4xl">
         {error && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             className="mb-6 flex items-center gap-3 rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-red-200"
           >
             <AlertCircle className="h-5 w-5" />
             <span>{error}</span>
-          </motion.div>
+          </MotionDiv>
         )}
 
         {success && (
-          <motion.div
+          <MotionDiv
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
@@ -192,7 +194,7 @@ export default function FashionProfileSettings() {
           >
             <Check className="h-5 w-5" />
             <span>Profile updated successfully</span>
-          </motion.div>
+          </MotionDiv>
         )}
 
         {/* Fashion Type */}

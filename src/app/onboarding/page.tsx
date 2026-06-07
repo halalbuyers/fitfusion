@@ -65,6 +65,7 @@ const FASHION_GOALS = [
 ]
 
 type Step = 'welcome' | 'fashion-type' | 'styles' | 'colors' | 'occasions' | 'goals' | 'finish'
+const MotionDiv = motion.div as any
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -165,7 +166,7 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center p-4">
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-white/5">
-        <motion.div
+        <MotionDiv
           className="h-full bg-gradient-to-r from-[#d7ff55] to-[#a0cc00]"
           initial={{ width: '0%' }}
           animate={{ width: `${progress}%` }}
@@ -176,7 +177,7 @@ export default function OnboardingPage() {
       <div className="w-full max-w-2xl">
         <AnimatePresence mode="wait">
           {step === 'welcome' && (
-            <motion.div
+            <MotionDiv
               key="welcome"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -188,18 +189,18 @@ export default function OnboardingPage() {
                 <Heart className="h-8 w-8 text-black" />
               </div>
               <h1 className="text-5xl font-bold text-white mb-3">Welcome to FitFusion</h1>
-              <p className="text-xl text-white/60 mb-8">Let's personalize your fashion experience in just 5 minutes.</p>
+              <p className="text-xl text-white/60 mb-8">Let&apos;s personalize your fashion experience in just 5 minutes.</p>
               <button
                 onClick={handleNext}
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#d7ff55] to-[#a0cc00] px-8 py-4 text-lg font-semibold text-black transition hover:shadow-lg hover:shadow-[#d7ff55]/50"
               >
                 Get Started <ChevronRight className="h-5 w-5" />
               </button>
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'fashion-type' && (
-            <motion.div
+            <MotionDiv
               key="fashion-type"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -232,11 +233,11 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'styles' && (
-            <motion.div
+            <MotionDiv
               key="styles"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -263,11 +264,11 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'colors' && (
-            <motion.div
+            <MotionDiv
               key="colors"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -294,11 +295,11 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'occasions' && (
-            <motion.div
+            <MotionDiv
               key="occasions"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -325,11 +326,11 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'goals' && (
-            <motion.div
+            <MotionDiv
               key="goals"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -356,11 +357,11 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </motion.div>
+            </MotionDiv>
           )}
 
           {step === 'finish' && (
-            <motion.div
+            <MotionDiv
               key="finish"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -371,14 +372,14 @@ export default function OnboardingPage() {
               {loading ? (
                 <>
                   <div className="mb-8 flex justify-center">
-                    <motion.div
+                    <MotionDiv
                       animate={{ rotate: 360 }}
                       transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
                     >
                       <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                         <Loader2 className="h-8 w-8 text-black" />
                       </div>
-                    </motion.div>
+                    </MotionDiv>
                   </div>
                   <h2 className="text-3xl font-bold text-white mb-3">Creating your profile...</h2>
                   <p className="text-white/60">Personalizing FitFusion for you.</p>
@@ -388,8 +389,8 @@ export default function OnboardingPage() {
                   <div className="mb-8 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                     <Heart className="h-8 w-8 text-black" />
                   </div>
-                  <h2 className="text-3xl font-bold text-white mb-3">You're all set!</h2>
-                  <p className="text-white/60 mb-8">Your FitFusion profile is ready. Let's find you amazing outfits.</p>
+                  <h2 className="text-3xl font-bold text-white mb-3">You&apos;re all set!</h2>
+                  <p className="text-white/60 mb-8">Your FitFusion profile is ready. Let&apos;s find you amazing outfits.</p>
                   <button
                     onClick={handleComplete}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#d7ff55] to-[#a0cc00] px-8 py-4 text-lg font-semibold text-black transition hover:shadow-lg hover:shadow-[#d7ff55]/50"
@@ -398,7 +399,7 @@ export default function OnboardingPage() {
                   </button>
                 </>
               )}
-            </motion.div>
+            </MotionDiv>
           )}
         </AnimatePresence>
 

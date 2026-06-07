@@ -56,7 +56,7 @@ export function isCategoryAllowedForFashionType(category: string | undefined, fa
   const normalizedCategory = normalizeCategory(category)
   const rawCategory = String(category || '').trim().toLowerCase()
   const categories = getCategoriesForFashionType(fashionType)
-  const allowed = [
+  const allowed: string[] = [
     ...categories.tops,
     ...categories.bottoms,
     ...categories.shoes,
