@@ -9,14 +9,11 @@ type Clothing = { _id: string; category: string; primaryColor?: string; colors?:
 type Outfit = { _id?: string; title?: string; score: number; explanation?: string; tags?: string[]; breakdown?: Record<string, number> }
 type Weather = { temperature: number; condition: string; suggestion: string; source: string }
 type Preferences = { preferredStyles: string[]; preferredColors: string[]; favoriteCategories: string[] }
-type Announcement = { _id: string; title: string; body: string; type: 'announcement' | 'maintenance' | 'feature'; createdAt?: string }
-
 export default function DashboardPage() {
   const [wardrobe, setWardrobe] = useState<Clothing[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
   const [weather, setWeather] = useState<Weather | null>(null)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
-  const [announcements, setAnnouncements] = useState<Announcement[]>([])
   const [feedback, setFeedback] = useState({ type: 'feedback', title: '', message: '' })
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [loading, setLoading] = useState(true)
@@ -25,13 +22,12 @@ export default function DashboardPage() {
     let active = true
     async function load() {
       setLoading(true)
-      const [wardrobeRes, outfitsRes, weatherRes, preferencesRes, recommendRes, announcementsRes] = await Promise.allSettled([
+      const [wardrobeRes, outfitsRes, weatherRes, preferencesRes, recommendRes] = await Promise.allSettled([
         fetch('/api/wardrobe').then((res) => res.json()),
         fetch('/api/outfits').then((res) => res.json()),
         fetch('/api/weather').then((res) => res.json()),
         fetch('/api/user/preferences').then((res) => res.json()),
-        fetch('/api/outfits/recommend?occasion=casual&limit=3').then((res) => res.json()),
-        fetch('/api/announcements').then((res) => res.json())
+        fetch('/api/outfits/recommend?occasion=casual&limit=3').then((res) => res.json())
       ])
       if (!active) return
       if (wardrobeRes.status === 'fulfilled' && Array.isArray(wardrobeRes.value)) setWardrobe(wardrobeRes.value)
@@ -39,7 +35,6 @@ export default function DashboardPage() {
       if (recommendRes.status === 'fulfilled' && Array.isArray(recommendRes.value?.outfits) && recommendRes.value.outfits.length) setOutfits((current) => current.length ? current : recommendRes.value.outfits)
       if (weatherRes.status === 'fulfilled') setWeather(weatherRes.value)
       if (preferencesRes.status === 'fulfilled' && preferencesRes.value?.preferredStyles) setPreferences(preferencesRes.value)
-      if (announcementsRes.status === 'fulfilled' && Array.isArray(announcementsRes.value?.announcements)) setAnnouncements(announcementsRes.value.announcements)
       setLoading(false)
     }
     load()
@@ -80,26 +75,6 @@ export default function DashboardPage() {
       eyebrow="Dashboard"
       action={<Link href="/wardrobe" className="rounded-[8px] bg-white px-5 py-3 text-sm font-semibold text-black">Upload clothing</Link>}
     >
-      {announcements.length ? (
-        <section className="mb-6 grid gap-3">
-          {announcements.map((announcement) => (
-            <div key={announcement._id} className="rounded-[8px] border border-[#d7ff55]/20 bg-[#d7ff55]/10 p-4">
-              <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                <div className="flex gap-3">
-                  <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-[8px] bg-[#d7ff55] text-black">
-                    <Bell className="h-4 w-4" />
-                  </div>
-                  <div>
-                    <p className="text-xs uppercase tracking-[0.18em] text-[#d7ff55]">{announcement.type}</p>
-                    <h2 className="mt-1 font-semibold">{announcement.title}</h2>
-                    <p className="mt-1 text-sm leading-6 text-white/58">{announcement.body}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          ))}
-        </section>
-      ) : null}
 
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Wardrobe items" value={loading ? '...' : String(wardrobe.length)} note="Pieces available for local styling" />

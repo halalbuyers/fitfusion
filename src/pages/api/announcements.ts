@@ -24,7 +24,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       body: announcement.body,
       featured: Boolean(announcement.featured),
       displayOrder: Number(announcement.displayOrder || 0),
-      priority: Number(announcement.priority || 0)
+      priority: Number(announcement.priority || 0),
+      publishedAt: announcement.createdAt || new Date().toISOString()
     }))
 
     return res.status(200).json({ announcements: payload })

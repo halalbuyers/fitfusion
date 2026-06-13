@@ -15,7 +15,7 @@ import {
   Users
 } from 'lucide-react'
 
-type AdminView = 'overview' | 'users' | 'analytics' | 'system' | 'feedback' | 'announcements' | 'training' | 'settings'
+type AdminView = 'overview' | 'users' | 'analytics' | 'system' | 'community-updates' | 'training' | 'settings'
 type Kpi = { label: string; value: number | string; growth: number; trend: string; note?: string }
 type ChartPoint = { name: string; value: number }
 type AdminOverview = {
@@ -48,8 +48,7 @@ const nav = [
   { label: 'Users', href: '/admin/users', icon: Users, view: 'users' },
   { label: 'Analytics', href: '/admin/analytics', icon: LineChartIcon, view: 'analytics' },
   { label: 'System', href: '/admin/system', icon: Database, view: 'system' },
-  { label: 'Feedback', href: '/admin/feedback', icon: MessageSquare, view: 'feedback' },
-  { label: 'Announcements', href: '/admin/announcements', icon: Megaphone, view: 'announcements' },
+  { label: 'Community Updates', href: '/admin/community-updates', icon: Megaphone, view: 'community-updates' },
   { label: 'Training', href: '/admin/training-data', icon: Bot, view: 'training' },
   { label: 'Settings', href: '/admin/settings', icon: Settings, view: 'settings' }
 ] as const
@@ -371,7 +370,7 @@ function FeedbackView() {
                 <div><p className="font-medium">{item.title}</p><p className="mt-1 text-sm text-white/48">{item.message}</p></div>
                 <span className="rounded-full bg-white/8 px-2 py-1 text-xs capitalize text-white/55">{item.status}</span>
               </div>
-              <div className="mt-3 flex gap-2"><button onClick={() => update(item._id, { status: 'resolved' })} className="icon-button h-9 px-3 text-xs">Mark Resolved</button><button onClick={() => update(item._id, { reply: 'Thanks, our team is reviewing this.' })} className="icon-button h-9 px-3 text-xs">Reply</button><button onClick={() => update(item._id, { status: 'archived' })} className="icon-button h-9 px-3 text-xs">Archive</button></div>
+              <div className="mt-3 flex flex-wrap gap-2"><button onClick={() => update(item._id, { status: 'resolved' })} className="icon-button h-9 px-3 text-xs">Mark Resolved</button><button onClick={() => update(item._id, { reply: 'Thanks, our team is reviewing this.' })} className="icon-button h-9 px-3 text-xs">Reply</button><button onClick={() => update(item._id, { status: 'archived' })} className="icon-button h-9 px-3 text-xs">Archive</button></div>
             </div>
           ))}
           {!feedback.length ? <Empty label="No feedback yet" /> : null}
@@ -385,6 +384,257 @@ function FeedbackView() {
           <textarea className="field min-h-32" value={draft.message} onChange={(event) => setDraft({ ...draft, message: event.target.value })} placeholder="Message" required />
           <button className="rounded-[8px] bg-[#d7ff55] px-4 py-3 text-sm font-semibold text-black">Publish</button>
         </form>
+      </Card>
+    </div>
+  )
+}
+
+function CommunityUpdatesView() {
+  const [feedback, setFeedback] = useState<Array<any>>([])
+  const [updates, setUpdates] = useState<Array<any>>([])
+  const [status, setStatus] = useState('open')
+  const [draft, setDraft] = useState({ title: '', message: '', type: 'update', suggestedByUsername: '', featured: false, priority: 0, displayOrder: 0, isActive: true })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  useEffect(() => {
+    loadFeedback()
+    loadUpdates()
+  }, [status])
+
+  async function loadFeedback() {
+    fetch(`/api/admin/feedback?status=${status}`).then((res) => res.json()).then((data) => setFeedback(data.feedback || [])).catch(() => setFeedback([]))
+  }
+
+  async function loadUpdates() {
+    fetch('/api/admin/announcements').then((res) => res.json()).then((data) => setUpdates(Array.isArray(data.announcements) ? data.announcements : [])).catch(() => setUpdates([]))
+  }
+
+  async function handlePublish(event: React.FormEvent) {
+    event.preventDefault()
+    setSaving(true)
+    setError('')
+    try {
+      const res = await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: draft.title,
+          body: draft.message,
+          type: draft.type,
+          suggestedByUsername: draft.suggestedByUsername,
+          featured: draft.featured,
+          priority: Number(draft.priority),
+          displayOrder: Number(draft.displayOrder),
+          isActive: Boolean(draft.isActive),
+          status: 'published'
+        })
+      })
+      if (!res.ok) throw new Error('Could not publish update')
+      setDraft({ title: '', message: '', type: 'update', suggestedByUsername: '', featured: false, priority: 0, displayOrder: 0, isActive: true })
+      await loadUpdates()
+    } catch (err: any) {
+      setError(err?.message || 'Unable to publish update')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function updateFeedback(id: string, patch: Record<string, unknown>) {
+    await fetch('/api/admin/feedback', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ id, ...patch }) })
+    setFeedback((current) => current.map((item) => item._id === id ? { ...item, ...patch } : item))
+  }
+
+  async function publishRequest(item: any) {
+    setSaving(true)
+    try {
+      await fetch('/api/admin/announcements', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: item.title,
+          body: item.message || item.description || item.title,
+          type: item.type === 'bug' ? 'fix' : 'feature',
+          suggestedByUsername: item.suggestedByUsername || item.email || 'community',
+          status: 'published'
+        })
+      })
+      await updateFeedback(item._id, { status: 'resolved' })
+      await loadUpdates()
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  async function updateAnnouncement(id: string, patch: Record<string, unknown>) {
+    const res = await fetch(`/api/admin/announcements/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(patch)
+    })
+    if (!res.ok) return
+    setUpdates((current) => current.map((item) => item._id === id ? { ...item, ...patch } : item))
+  }
+
+  const featureRequests = feedback.filter((item) => item.type === 'feature')
+  const bugReports = feedback.filter((item) => item.type === 'bug')
+
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-[1.3fr_0.7fr]">
+        <div className="space-y-6">
+          <div className="glass rounded-[20px] border border-white/10 p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-white/40">Community updates</p>
+                <h2 className="mt-3 text-3xl font-semibold text-white">Feature requests and bug reports</h2>
+              </div>
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="rounded-full bg-white/5 px-3 py-2 text-sm text-white/65">Feedback status</span>
+                <select className="field min-w-[160px]" value={status} onChange={(event) => setStatus(event.target.value)}>
+                  <option value="open">Open</option>
+                  <option value="resolved">Resolved</option>
+                  <option value="archived">Archived</option>
+                  <option value="">All</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div className="grid gap-5 lg:grid-cols-2">
+            <section className="glass rounded-[20px] border border-white/10 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-white/40">Feature requests</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">Ideas from the community</h3>
+                </div>
+                <span className="rounded-full bg-[#d9ff55]/10 px-3 py-2 text-sm text-[#d9ff55]">{featureRequests.length} items</span>
+              </div>
+              <div className="mt-4 grid gap-4">
+                {featureRequests.length ? featureRequests.map((item) => (
+                  <div key={item._id} className="rounded-[16px] border border-white/10 bg-[#0d0f14]/80 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-white">{item.title}</p>
+                        <p className="mt-2 text-sm text-white/55">{item.message}</p>
+                        {item.suggestedByUsername ? <p className="mt-2 text-xs text-white/40">Suggested by @{item.suggestedByUsername}</p> : null}
+                      </div>
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/60">{item.status}</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button onClick={() => updateFeedback(item._id, { status: 'resolved' })} className="icon-button h-9 px-3 text-xs">Mark completed</button>
+                      <button onClick={() => publishRequest(item)} disabled={saving} className="icon-button h-9 px-3 text-xs">Publish update</button>
+                    </div>
+                  </div>
+                )) : <Empty label="No feature requests in this bucket" />}
+              </div>
+            </section>
+
+            <section className="glass rounded-[20px] border border-white/10 p-6">
+              <div className="flex items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs uppercase tracking-[0.28em] text-white/40">Bug reports</p>
+                  <h3 className="mt-2 text-xl font-semibold text-white">Fix priorities</h3>
+                </div>
+                <span className="rounded-full bg-[#8dd3ff]/10 px-3 py-2 text-sm text-[#8dd3ff]">{bugReports.length} items</span>
+              </div>
+              <div className="mt-4 grid gap-4">
+                {bugReports.length ? bugReports.map((item) => (
+                  <div key={item._id} className="rounded-[16px] border border-white/10 bg-[#0d0f14]/80 p-4">
+                    <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                      <div>
+                        <p className="font-semibold text-white">{item.title}</p>
+                        <p className="mt-2 text-sm text-white/55">{item.message}</p>
+                        {item.suggestedByUsername ? <p className="mt-2 text-xs text-white/40">Reported by @{item.suggestedByUsername}</p> : null}
+                      </div>
+                      <span className="rounded-full bg-white/5 px-3 py-1 text-xs uppercase tracking-[0.2em] text-white/60">{item.status}</span>
+                    </div>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      <button onClick={() => updateFeedback(item._id, { status: 'resolved' })} className="icon-button h-9 px-3 text-xs">Mark completed</button>
+                      <button onClick={() => publishRequest(item)} disabled={saving} className="icon-button h-9 px-3 text-xs">Publish fix</button>
+                    </div>
+                  </div>
+                )) : <Empty label="No bug reports in this bucket" />}
+              </div>
+            </section>
+          </div>
+        </div>
+
+        <aside className="space-y-6">
+          <Card>
+            <div className="flex items-center gap-3 text-sm text-white/70">
+              <Sparkles className="h-5 w-5 text-[#d9ff5a]" />
+              <div>
+                <p className="font-semibold text-white">Announcement creator</p>
+                <p className="text-sm text-white/50">Publish product updates, announcements, and credits from one page.</p>
+              </div>
+            </div>
+            <form onSubmit={handlePublish} className="mt-5 grid gap-3">
+              <input className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} placeholder="Update title" required />
+              <textarea className="field min-h-[128px]" value={draft.message} onChange={(event) => setDraft({ ...draft, message: event.target.value })} placeholder="What changed?" required />
+              <input className="field" value={draft.suggestedByUsername} onChange={(event) => setDraft({ ...draft, suggestedByUsername: event.target.value })} placeholder="Credit username" />
+              <select className="field" value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as typeof draft.type })}>
+                <option value="update">Product update</option>
+                <option value="feature">Feature</option>
+                <option value="fix">Bug fix</option>
+                <option value="announcement">Community news</option>
+                <option value="maintenance">Maintenance</option>
+              </select>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <input className="field" type="number" value={draft.displayOrder} onChange={(event) => setDraft({ ...draft, displayOrder: Number(event.target.value) })} placeholder="Display order" />
+                <input className="field" type="number" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: Number(event.target.value) })} placeholder="Priority" />
+              </div>
+              <label className="flex items-center gap-3 text-sm text-white/70">
+                <input type="checkbox" checked={draft.featured} onChange={(event) => setDraft({ ...draft, featured: event.target.checked })} className="h-4 w-4 accent-[#d9ff5a]" />
+                Feature in announcement bar
+              </label>
+              <button type="submit" className="inline-flex w-full items-center justify-center gap-2 rounded-[8px] bg-[#d9ff55] px-4 py-3 text-sm font-semibold text-black transition hover:bg-[#e8ff91] disabled:opacity-60" disabled={saving}>
+                {saving ? 'Publishing...' : 'Publish update'}
+              </button>
+              {error ? <p className="text-sm text-red-300">{error}</p> : null}
+            </form>
+          </Card>
+
+          <Card>
+            <h3 className="text-sm uppercase tracking-[0.28em] text-white/40">Why this page</h3>
+            <ul className="mt-4 space-y-2 text-sm text-white/65">
+              <li>Feature requests and bug reports are managed in one place.</li>
+              <li>Public updates publish directly to the /updates page.</li>
+              <li>Pinned updates appear first in the announcement bar.</li>
+              <li>Resolved requests can be archived or credited.</li>
+            </ul>
+          </Card>
+        </aside>
+      </div>
+
+      <Card>
+        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-white/40">Published updates</p>
+            <h3 className="mt-2 text-2xl font-semibold text-white">Release timeline</h3>
+          </div>
+          <span className="rounded-full bg-white/5 px-3 py-2 text-sm text-white/70">{updates.length} published</span>
+        </div>
+        <div className="mt-5 grid gap-4">
+          {updates.length ? updates.map((update) => (
+            <div key={update._id} className="rounded-[16px] border border-white/10 bg-[#0d0f14]/80 p-5">
+              <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                <div className="min-w-0">
+                  <p className="text-sm uppercase tracking-[0.28em] text-white/50">{update.type}</p>
+                  <h4 className="mt-2 text-lg font-semibold text-white">{update.title}</h4>
+                  <p className="mt-3 text-sm leading-6 text-white/60">{update.description || update.body}</p>
+                  {update.suggestedByUsername ? <p className="mt-2 text-xs text-white/40">Credit @{update.suggestedByUsername}</p> : null}
+                </div>
+                <div className="space-y-2 text-right text-sm text-white/50">
+                  <p>{new Date(update.createdAt || update.publishedAt || Date.now()).toLocaleDateString()}</p>
+                  <button onClick={() => updateAnnouncement(update._id, { featured: !update.featured })} className={`rounded-full px-3 py-2 text-xs ${update.featured ? 'bg-[#d9ff55] text-black' : 'bg-white/5 text-white/70'}`}>
+                    {update.featured ? 'Pinned' : 'Pin update'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )) : <Empty label="No published updates yet." />}
+        </div>
       </Card>
     </div>
   )
@@ -509,7 +759,7 @@ export function AdminDashboard({ view = 'overview' }: { view?: AdminView }) {
     if (view === 'users') return <UsersView />
     if (view === 'analytics') return <Analytics data={data} />
     if (view === 'system') return <System data={data} />
-    if (view === 'feedback') return <FeedbackView />
+    if (view === 'community-updates') return <CommunityUpdatesView />
     if (view === 'training') return <TrainingDataView />
     if (view === 'settings') return <SettingsView data={data} />
     return <Overview data={data} />

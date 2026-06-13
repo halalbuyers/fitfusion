@@ -17,7 +17,7 @@ body {
   --panel-bg: rgba(255, 255, 255, 0.04);
   --panel-strong: rgba(0, 0, 0, 0.36);
   --accent: #d7ff55;
-  --announcement-offset: 116px;
+  --navbar-height: 56px;
   color-scheme: dark;
 }
 
@@ -173,7 +173,7 @@ textarea:focus-visible {
 
 @media (max-width: 640px) {
   :root {
-    --announcement-offset: 142px;
+    --navbar-height: 56px;
   }
 
   .field {
