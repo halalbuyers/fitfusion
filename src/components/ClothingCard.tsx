@@ -1,6 +1,5 @@
 import React from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { Edit3, Heart } from 'lucide-react'
 
 type Props = {
@@ -13,8 +12,6 @@ type Props = {
   onEdit?: () => void
 }
 
-const MotionDiv = motion.div as any
-
 function readableColor(color: string) {
   return color.replace(/-/g, ' ')
 }
@@ -24,12 +21,7 @@ export default function ClothingCard({ image, title, category, colors = [], isFa
   const primary = swatches[0]
 
   return (
-    <MotionDiv
-      whileHover={{ y: -4 }}
-      whileTap={{ scale: 0.985 }}
-      transition={{ duration: 0.18 }}
-      className="group overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.055] shadow-xl shadow-black/20"
-    >
+    <div className="group overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.055] shadow-xl shadow-black/20 transition-transform duration-200 hover:-translate-y-1 active:scale-[0.985]">
       <div className="relative flex aspect-[4/5] w-full items-center justify-center overflow-hidden bg-gradient-to-b from-white/10 to-black/35">
         <Image src={image} alt={title} fill sizes="(min-width: 1280px) 15vw, (min-width: 768px) 28vw, 44vw" className="object-contain p-3 transition duration-500 group-hover:scale-[1.04]" />
         <div className="absolute left-2 top-2 flex max-w-[calc(100%-4.25rem)] flex-wrap gap-1.5">
@@ -66,6 +58,6 @@ export default function ClothingCard({ image, title, category, colors = [], isFa
           </div>
         </div>
       </div>
-    </MotionDiv>
+    </div>
   )
 }

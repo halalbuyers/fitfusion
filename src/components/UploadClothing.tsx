@@ -2,14 +2,12 @@
 
 import React, { useMemo, useState } from 'react'
 import Image from 'next/image'
-import { motion } from 'framer-motion'
 import { AlertTriangle, Check, Cloud, Loader2, RotateCcw, Sparkles, Upload, X } from 'lucide-react'
 import Toast from './Toast'
 import { displayReviewValue, reviewCategories, reviewColors, reviewSeasons, reviewStyles } from '../lib/review-options'
 import { getAllowedCategoriesForFashionType } from '../lib/fashion-profile-categories'
 
 const fits = ['regular', 'oversized', 'slim', 'baggy']
-const MotionSection = motion.section as any
 
 type Draft = {
   image: string
@@ -198,7 +196,6 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       })
       setToast({ message: 'Analysis ready. Review before saving.', type: 'success' })
     } catch (error) {
-      console.error(error)
       setToast({ message: 'Upload failed', type: 'error' })
     } finally {
       setLoading(false)
@@ -244,7 +241,6 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       setToast({ message: correctedByUser ? 'Saved with your corrections' : 'Saved to wardrobe', type: 'success' })
       resetUpload()
     } catch (error) {
-      console.error(error)
       setToast({ message: 'Save failed', type: 'error' })
     } finally {
       setSaving(false)
@@ -327,12 +323,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       </form>
 
       {draft ? (
-        <MotionSection
-          initial={{ opacity: 0, y: 16, scale: 0.98 }}
-          animate={{ opacity: 1, y: 0, scale: 1 }}
-          transition={{ duration: 0.28 }}
-          className="overflow-hidden rounded-[8px] border border-white/12 bg-white/[0.06] shadow-2xl shadow-black/30 backdrop-blur-xl"
-        >
+        <section className="animate-float-in overflow-hidden rounded-[8px] border border-white/12 bg-white/[0.06] shadow-2xl shadow-black/30 backdrop-blur-xl">
           <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="relative min-h-[320px] bg-black/28">
               <Image src={draft.image} alt="Reviewed clothing item" fill sizes="(min-width: 1024px) 32vw, 100vw" unoptimized className="object-contain p-5" />
@@ -407,7 +398,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
               </div>
             </div>
           </div>
-        </MotionSection>
+        </section>
       ) : null}
 
       {toast && <Toast message={toast.message} type={toast.type === 'error' ? 'error' : 'success'} onClose={() => setToast(null)} />}

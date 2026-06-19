@@ -3,7 +3,6 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
-import { motion } from 'framer-motion'
 import type { LucideIcon } from 'lucide-react'
 import { CloudSun, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
 
@@ -26,7 +25,6 @@ const mobileNav: Array<[string, string, LucideIcon]> = [
   ['Community', '/community', Users],
   ['Profile', '/profile', UserRound]
 ]
-const MotionSection = motion.section as any
 
 export function AppFrame({ title, eyebrow, children, action }: { title: string; eyebrow: string; children: React.ReactNode; action?: React.ReactNode }) {
   const pathname = usePathname() || ''
@@ -61,12 +59,7 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
             <p className="mt-2 text-sm leading-5 text-white/64">Build weather-aware outfits from pieces you already own.</p>
           </div>
         </aside>
-        <MotionSection
-          initial={{ opacity: 0, y: 14 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.32, ease: 'easeOut' }}
-          className="min-w-0"
-        >
+        <section className="min-w-0 animate-float-in">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.3em] text-white/35">{eyebrow}</p>
@@ -75,7 +68,7 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
             {action ? <div className="w-full sm:w-auto [&>*]:w-full sm:[&>*]:w-auto">{action}</div> : null}
           </div>
           {children}
-        </MotionSection>
+        </section>
       </div>
       <nav className="fixed inset-x-2 bottom-2 z-40 grid grid-cols-6 gap-1 rounded-[8px] border border-white/10 bg-[var(--page-bg)]/88 p-1 shadow-2xl shadow-black/40 backdrop-blur-2xl sm:inset-x-3 sm:bottom-3 lg:hidden" aria-label="Mobile navigation">
         {mobileNav.map(([label, href, Icon]) => (

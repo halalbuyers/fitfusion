@@ -1,14 +1,10 @@
 "use client"
 
+import dynamic from 'next/dynamic'
+import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
-import { motion } from 'framer-motion'
-import { CommunityUpdatesAdmin } from './CommunityUpdatesAdmin'
-import {
-  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart, Pie, PieChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis
-} from 'recharts'
 import {
   Activity, Bell, Bot, CheckCircle2, CircleDollarSign, Database,
   Download, Eye, Flag, Gauge, LineChart as LineChartIcon, Lock, Megaphone, MessageSquare,
@@ -44,8 +40,6 @@ type AdminUser = {
   lastLogin?: string
 }
 
-const palette = ['#d7ff55', '#7dd3fc', '#f0abfc', '#fbbf24', '#c4b5fd', '#34d399']
-const MotionDiv = motion.div as React.ComponentType<any>
 const nav = [
   { label: 'Overview', href: '/admin', icon: Gauge, view: 'overview' },
   { label: 'Users', href: '/admin/users', icon: Users, view: 'users' },
@@ -156,8 +150,30 @@ function AdminChrome({ view, children }: { view: AdminView; children: React.Reac
 }
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <MotionDiv initial={{ opacity: 0, y: 14 }} animate={{ opacity: 1, y: 0 }} className={`glass rounded-[8px] p-4 ${className}`}>{children}</MotionDiv>
+  return <div className={`glass animate-float-in rounded-[8px] p-4 ${className}`}>{children}</div>
 }
+
+const ChartCard = dynamic(() => import('./AdminChartCard'), {
+  loading: () => (
+    <Card className="min-h-[290px]">
+      <div className="mb-4 h-5 w-44 animate-pulse rounded bg-white/10" />
+      <div className="h-56 animate-pulse rounded-[8px] bg-white/7" />
+    </Card>
+  )
+})
+
+const CommunityUpdatesAdmin = dynamic(() => import('./CommunityUpdatesAdmin').then((mod) => mod.CommunityUpdatesAdmin), {
+  loading: () => (
+    <Card>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {Array.from({ length: 4 }).map((_, index) => (
+          <div key={index} className="h-24 animate-pulse rounded-[8px] bg-white/7" />
+        ))}
+      </div>
+      <div className="mt-5 h-[520px] animate-pulse rounded-[8px] bg-white/7" />
+    </Card>
+  )
+})
 
 function KpiCard({ item, icon: Icon }: { item: Kpi; icon: any }) {
   return (
@@ -171,30 +187,6 @@ function KpiCard({ item, icon: Icon }: { item: Kpi; icon: any }) {
       <p className="mt-5 text-sm text-white/48">{item.label}</p>
       <p className="mt-2 text-3xl font-semibold tracking-tight">{item.value}</p>
       <p className="mt-2 text-xs text-white/38">{item.note || 'vs previous period'}</p>
-    </Card>
-  )
-}
-
-function ChartCard({ title, type, data }: { title: string; type: 'area' | 'bar' | 'pie' | 'line'; data: ChartPoint[] }) {
-  return (
-    <Card className="min-h-[290px]">
-      <div className="mb-4 flex items-center justify-between">
-        <h2 className="font-semibold">{title}</h2>
-        <MoreHorizontal className="h-4 w-4 text-white/35" />
-      </div>
-      <div className="h-56">
-        <ResponsiveContainer width="100%" height="100%">
-          {type === 'area' ? (
-            <AreaChart data={data}><defs><linearGradient id={title} x1="0" x2="0" y1="0" y2="1"><stop offset="0%" stopColor="#d7ff55" stopOpacity={0.45} /><stop offset="100%" stopColor="#d7ff55" stopOpacity={0.02} /></linearGradient></defs><CartesianGrid stroke="rgba(255,255,255,.06)" /><XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><YAxis tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><Tooltip contentStyle={{ background: '#101010', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8 }} /><Area type="monotone" dataKey="value" stroke="#d7ff55" fill={`url(#${title})`} /></AreaChart>
-          ) : type === 'line' ? (
-            <LineChart data={data}><CartesianGrid stroke="rgba(255,255,255,.06)" /><XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><YAxis tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><Tooltip contentStyle={{ background: '#101010', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8 }} /><Line type="monotone" dataKey="value" stroke="#7dd3fc" strokeWidth={2} dot={false} /></LineChart>
-          ) : type === 'pie' ? (
-            <PieChart><Pie data={data} dataKey="value" nameKey="name" innerRadius={52} outerRadius={86} paddingAngle={3}>{data.map((_, index) => <Cell key={index} fill={palette[index % palette.length]} />)}</Pie><Tooltip contentStyle={{ background: '#101010', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8 }} /></PieChart>
-          ) : (
-            <BarChart data={data}><CartesianGrid stroke="rgba(255,255,255,.06)" /><XAxis dataKey="name" tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><YAxis tick={{ fill: 'rgba(255,255,255,.45)', fontSize: 11 }} /><Tooltip contentStyle={{ background: '#101010', border: '1px solid rgba(255,255,255,.12)', borderRadius: 8 }} /><Bar dataKey="value" radius={[6, 6, 0, 0]} fill="#d7ff55" /></BarChart>
-          )}
-        </ResponsiveContainer>
-      </div>
     </Card>
   )
 }
@@ -269,7 +261,7 @@ function UsersView() {
             <tbody>
               {users.map((user) => (
                 <tr key={user._id} className="border-t border-white/8">
-                  <td className="px-4 py-3">{user.avatar ? <img src={user.avatar} alt={user.name} className="h-9 w-9 rounded-full object-cover" /> : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">{user.name?.slice(0, 2).toUpperCase() || 'FF'}</div>}</td>
+                  <td className="px-4 py-3">{user.avatar ? <Image src={user.avatar} alt={user.name} width={36} height={36} sizes="36px" className="h-9 w-9 rounded-full object-cover" /> : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">{user.name?.slice(0, 2).toUpperCase() || 'FF'}</div>}</td>
                   <td className="font-medium"><Link href={`/admin/users/${user.clerkId || user._id}`} className="transition hover:text-[#d7ff55]">{user.name}</Link></td><td className="text-white/52">{user.email}</td>
                   <td><span className="rounded-full bg-white/8 px-2 py-1 text-xs capitalize">{user.role}</span></td>
                   <td>{user.wardrobeCount}</td><td>{user.outfitCount}</td><td className="text-white/45">{formatDate(user.createdAt)}</td><td className="text-white/45">{formatDate(user.lastLogin)}</td>

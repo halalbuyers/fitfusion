@@ -14,12 +14,11 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
     '/login',
     '/register',
     '/onboarding',
-    '/api',
-    '/'
+    '/api'
   ]
 
-  const shouldSkipCheck = skipOnboardingRoutes.some(route => 
-    pathname.startsWith(route)
+  const shouldSkipCheck = pathname === '/' || skipOnboardingRoutes.some(route =>
+    pathname === route || pathname.startsWith(`${route}/`)
   )
 
   useEffect(() => {
@@ -33,13 +32,15 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
         if (!data.hasCompletedOnboarding && pathname !== '/onboarding') {
           router.push('/onboarding')
         }
-      } catch (error) {
-        console.error('Error checking onboarding status:', error)
+      } catch {
+        return
       }
     }
 
     checkOnboarding()
   }, [isLoaded, userId, pathname, shouldSkipCheck, router])
+
+  if (shouldSkipCheck) return children
 
   if (!isLoaded) {
     return (

@@ -1,6 +1,7 @@
 "use client"
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import {
   Archive, BadgeCheck, CalendarDays, CheckCircle2, Eye, Mail, Megaphone, MessageSquare,
@@ -129,7 +130,9 @@ function initials(value?: string) {
 function UserAvatar({ item, className = 'h-10 w-10' }: { item: Pick<FeedbackItem, 'profileImage' | 'username' | 'name' | 'email'>; className?: string }) {
   const label = displayUser(item)
   return item.profileImage ? (
-    <img src={item.profileImage} alt={label} className={`${className} rounded-full object-cover ring-1 ring-white/10`} />
+    <span className={`${className} relative block overflow-hidden rounded-full ring-1 ring-white/10`}>
+      <Image src={item.profileImage} alt={label} fill sizes="56px" className="object-cover" />
+    </span>
   ) : (
     <div className={`${className} flex items-center justify-center rounded-full bg-white/10 text-xs font-semibold text-white/70 ring-1 ring-white/10`}>
       {initials(label).toUpperCase()}

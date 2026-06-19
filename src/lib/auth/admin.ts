@@ -24,9 +24,7 @@ export async function isAdmin(input?: AdminAuthInput) {
         ? { userId: input.userId, sessionClaims: input.sessionClaims }
         : await auth()
 
-    const { userId, sessionClaims } = session
-    console.log('USER ID:', userId)
-    console.log('SESSION CLAIMS:', sessionClaims)
+    const { userId } = session
 
     if (!userId) return false
 
@@ -34,16 +32,8 @@ export async function isAdmin(input?: AdminAuthInput) {
     const user = await client.users.getUser(userId)
     const role = roleFromMetadata(user.publicMetadata)
 
-    console.log('PUBLIC METADATA:', user?.publicMetadata)
-    console.log('ROLE:', role)
-
     return role === 'admin'
-  } catch (error) {
-    console.log('USER ID:', null)
-    console.log('SESSION CLAIMS:', null)
-    console.log('PUBLIC METADATA:', null)
-    console.log('ROLE:', 'user')
-    console.error('Admin role lookup failed:', error)
+  } catch {
     return false
   }
 }

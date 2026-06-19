@@ -1,10 +1,14 @@
 'use client'
 
 import Link from 'next/link'
+import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
-import { SignedIn, SignedOut, SignOutButton, UserButton, useUser } from '@clerk/nextjs'
 import { Moon, Sun } from 'lucide-react'
+
+const NavbarAccount = dynamic(() => import('./NavbarAccount'), {
+  loading: () => <div className="h-10 w-32 rounded-full bg-white/5" />
+})
 
 const navItems = [
   ['Dashboard', '/dashboard'],
@@ -16,11 +20,10 @@ const navItems = [
 ]
 
 export default function Navbar() {
-  const { user } = useUser()
   const pathname = usePathname() || ''
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
-  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/profile', '/admin', '/weather', '/calendar']
+  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
   const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
 
   useEffect(() => {
@@ -65,31 +68,14 @@ export default function Navbar() {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          <SignedOut>
-            <Link href="/login" className="hidden rounded-full border border-white/15 px-4 py-2 text-sm text-white/85 transition hover:border-white/35 hover:text-white sm:block">Sign in</Link>
-            <Link href="/register" className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/88 sm:px-4">Start</Link>
-          </SignedOut>
-          <SignedIn>
-            <Link href="/dashboard" className="hidden text-sm text-white/70 transition hover:text-white sm:block">
-              {user?.firstName ? `Hi, ${user.firstName}` : 'Dashboard'}
-            </Link>
-            <SignOutButton>
-              <button
-                type="button"
-                className="hidden rounded-full border border-white/20 px-4 py-2 text-sm text-white/85 transition hover:border-white/40 hover:text-white sm:block"
-              >
-                Logout
-              </button>
-            </SignOutButton>
-            <UserButton
-              afterSignOutUrl="/"
-              appearance={{
-                elements: {
-                  avatarBox: 'h-9 w-9'
-                }
-              }}
-            />
-          </SignedIn>
+          {isAppRoute ? (
+            <NavbarAccount />
+          ) : (
+            <>
+              <Link href="/login" className="hidden rounded-full border border-white/15 px-4 py-2 text-sm text-white/85 transition hover:border-white/35 hover:text-white sm:block">Sign in</Link>
+              <Link href="/register" className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/88 sm:px-4">Create Your FitFusion Account</Link>
+            </>
+          )}
         </div>
       </div>
     </nav>

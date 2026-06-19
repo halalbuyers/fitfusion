@@ -1,5 +1,6 @@
 "use client"
 
+import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 import { ArrowLeft, BadgeCheck, CalendarDays, Heart, Mail, MessageSquare, Shirt, Sparkles, UserRound } from 'lucide-react'
@@ -99,7 +100,7 @@ export function UserProfileAdmin({ userId }: { userId: string }) {
               <div className="flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
                 <div className="flex min-w-0 items-center gap-4">
                   {user?.avatar ? (
-                    <img src={user.avatar} alt={user.username} className="h-20 w-20 rounded-full object-cover ring-1 ring-white/10" />
+                    <Image src={user.avatar} alt={user.username} width={80} height={80} sizes="80px" className="h-20 w-20 rounded-full object-cover ring-1 ring-white/10" />
                   ) : (
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-white/10 text-xl font-semibold ring-1 ring-white/10">{initials(user?.username)}</div>
                   )}

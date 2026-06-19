@@ -1,7 +1,6 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { motion } from 'framer-motion'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Loader2, TrendingUp, Users } from 'lucide-react'
 
@@ -15,7 +14,6 @@ type AnalyticsData = {
 }
 
 const colors = ['#d7ff55', '#7dd3fc', '#f0abfc', '#fbbf24', '#c4b5fd', '#34d399', '#ec4899', '#fb923c']
-const MotionDiv = motion.div as any
 
 export function FashionProfileAnalytics() {
   const [data, setData] = useState<AnalyticsData | null>(null)
@@ -66,11 +64,7 @@ export function FashionProfileAnalytics() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="rounded-lg border border-white/10 bg-white/5 p-6"
-      >
+      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm text-white/50">Total Onboarded Users</p>
@@ -78,15 +72,10 @@ export function FashionProfileAnalytics() {
           </div>
           <Users className="h-12 w-12 text-[#d7ff55]" />
         </div>
-      </MotionDiv>
+      </div>
 
       {/* Fashion Type Distribution */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="rounded-lg border border-white/10 bg-white/5 p-6"
-      >
+      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.1s' }}>
         <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-6">
           <TrendingUp className="h-5 w-5 text-[#d7ff55]" />
           Fashion Type Distribution
@@ -110,15 +99,10 @@ export function FashionProfileAnalytics() {
             <Tooltip />
           </PieChart>
         </ResponsiveContainer>
-      </MotionDiv>
+      </div>
 
       {/* Top Styles */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="rounded-lg border border-white/10 bg-white/5 p-6"
-      >
+      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.2s' }}>
         <h3 className="text-lg font-semibold text-white mb-6">Most Popular Styles</h3>
         <ResponsiveContainer width="100%" height={300}>
           <BarChart data={data.topStyles}>
@@ -136,15 +120,10 @@ export function FashionProfileAnalytics() {
             <Bar dataKey="value" fill="#d7ff55" radius={[8, 8, 0, 0]} />
           </BarChart>
         </ResponsiveContainer>
-      </MotionDiv>
+      </div>
 
       {/* Top Colors */}
-      <MotionDiv
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-        className="rounded-lg border border-white/10 bg-white/5 p-6"
-      >
+      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.3s' }}>
         <h3 className="text-lg font-semibold text-white mb-6">Favorite Colors</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.topColors.slice(0, 10).map((item) => (
@@ -157,16 +136,11 @@ export function FashionProfileAnalytics() {
             </div>
           ))}
         </div>
-      </MotionDiv>
+      </div>
 
       {/* Top Occasions & Goals */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-          className="rounded-lg border border-white/10 bg-white/5 p-6"
-        >
+        <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.4s' }}>
           <h3 className="text-lg font-semibold text-white mb-6">Preferred Occasions</h3>
           <div className="space-y-3">
             {data.topOccasions.map(item => (
@@ -176,14 +150,9 @@ export function FashionProfileAnalytics() {
               </div>
             ))}
           </div>
-        </MotionDiv>
+        </div>
 
-        <MotionDiv
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="rounded-lg border border-white/10 bg-white/5 p-6"
-        >
+        <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.5s' }}>
           <h3 className="text-lg font-semibold text-white mb-6">Fashion Goals</h3>
           <div className="space-y-3">
             {data.topGoals.map(item => (
@@ -193,7 +162,7 @@ export function FashionProfileAnalytics() {
               </div>
             ))}
           </div>
-        </MotionDiv>
+        </div>
       </div>
     </div>
   )

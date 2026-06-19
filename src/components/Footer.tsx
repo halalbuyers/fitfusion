@@ -6,7 +6,7 @@ import React from 'react'
 
 export default function Footer() {
   const pathname = usePathname() || ''
-  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/profile', '/admin', '/weather', '/calendar']
+  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
   const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
 
   const groups = [

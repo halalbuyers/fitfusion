@@ -1,8 +1,14 @@
 import Link from 'next/link'
+import type { Metadata } from 'next'
 import { ArrowRight, Bug, ShieldCheck, Sparkles, Zap, Lightbulb } from 'lucide-react'
 import { connectToDatabase } from '../../lib/mongodb'
 import AdminAnnouncement from '../../models/AdminAnnouncement'
 import { AppFrame } from '../../components/AppFrame'
+
+export const metadata: Metadata = {
+  title: 'Product Updates | FitFusion',
+  description: 'Read the latest FitFusion product updates, release notes, bug fixes, and community-powered improvements.'
+}
 
 type UpdateItem = {
   _id: string

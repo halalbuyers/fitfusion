@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useAuth } from '@clerk/nextjs'
-import { motion, AnimatePresence } from 'framer-motion'
 import { ChevronRight, ChevronLeft, Loader2, Heart } from 'lucide-react'
 
 const STYLE_OPTIONS = [
@@ -65,7 +64,6 @@ const FASHION_GOALS = [
 ]
 
 type Step = 'welcome' | 'fashion-type' | 'styles' | 'colors' | 'occasions' | 'goals' | 'finish'
-const MotionDiv = motion.div as any
 
 export default function OnboardingPage() {
   const router = useRouter()
@@ -166,24 +164,18 @@ export default function OnboardingPage() {
     <div className="min-h-screen bg-gradient-to-br from-black via-slate-900 to-black flex items-center justify-center p-4">
       {/* Progress bar */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-white/5">
-        <MotionDiv
-          className="h-full bg-gradient-to-r from-[#d7ff55] to-[#a0cc00]"
-          initial={{ width: '0%' }}
-          animate={{ width: `${progress}%` }}
-          transition={{ duration: 0.3 }}
+        <div
+          className="h-full origin-left bg-gradient-to-r from-[#d7ff55] to-[#a0cc00] transition-transform duration-300"
+          style={{ transform: `scaleX(${progress / 100})` }}
         />
       </div>
 
       <div className="w-full max-w-2xl">
-        <AnimatePresence mode="wait">
+        <div>
           {step === 'welcome' && (
-            <MotionDiv
+            <div
               key="welcome"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="text-center"
+              className="animate-float-in text-center"
             >
               <div className="mb-8 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                 <Heart className="h-8 w-8 text-black" />
@@ -196,16 +188,13 @@ export default function OnboardingPage() {
               >
                 Get Started <ChevronRight className="h-5 w-5" />
               </button>
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'fashion-type' && (
-            <MotionDiv
+            <div
               key="fashion-type"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              className="animate-float-in"
             >
               <h2 className="text-3xl font-bold text-white mb-2">What fashion categories do you wear?</h2>
               <p className="text-white/50 mb-8">This helps us personalize your outfit suggestions.</p>
@@ -233,16 +222,13 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'styles' && (
-            <MotionDiv
+            <div
               key="styles"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              className="animate-float-in"
             >
               <h2 className="text-3xl font-bold text-white mb-2">What styles do you prefer?</h2>
               <p className="text-white/50 mb-8">Select at least one. You can choose multiple.</p>
@@ -264,16 +250,13 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'colors' && (
-            <MotionDiv
+            <div
               key="colors"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              className="animate-float-in"
             >
               <h2 className="text-3xl font-bold text-white mb-2">What are your favorite colors?</h2>
               <p className="text-white/50 mb-8">Select your preferred palette.</p>
@@ -295,16 +278,13 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'occasions' && (
-            <MotionDiv
+            <div
               key="occasions"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              className="animate-float-in"
             >
               <h2 className="text-3xl font-bold text-white mb-2">When do you dress up?</h2>
               <p className="text-white/50 mb-8">Help us suggest outfits for your lifestyle.</p>
@@ -326,16 +306,13 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'goals' && (
-            <MotionDiv
+            <div
               key="goals"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
+              className="animate-float-in"
             >
               <h2 className="text-3xl font-bold text-white mb-2">What do you want from FitFusion?</h2>
               <p className="text-white/50 mb-8">Tell us your fashion goals.</p>
@@ -357,29 +334,22 @@ export default function OnboardingPage() {
               </div>
 
               {error && <p className="mt-4 text-red-400">{error}</p>}
-            </MotionDiv>
+            </div>
           )}
 
           {step === 'finish' && (
-            <MotionDiv
+            <div
               key="finish"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.3 }}
-              className="text-center"
+              className="animate-float-in text-center"
             >
               {loading ? (
                 <>
                   <div className="mb-8 flex justify-center">
-                    <MotionDiv
-                      animate={{ rotate: 360 }}
-                      transition={{ duration: 2, repeat: Infinity, ease: 'linear' }}
-                    >
+                    <div className="animate-spin">
                       <div className="inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                         <Loader2 className="h-8 w-8 text-black" />
                       </div>
-                    </MotionDiv>
+                    </div>
                   </div>
                   <h2 className="text-3xl font-bold text-white mb-3">Creating your profile...</h2>
                   <p className="text-white/60">Personalizing FitFusion for you.</p>
@@ -399,9 +369,9 @@ export default function OnboardingPage() {
                   </button>
                 </>
               )}
-            </MotionDiv>
+            </div>
           )}
-        </AnimatePresence>
+        </div>
 
         {step !== 'welcome' && step !== 'finish' && (
           <div className="mt-12 flex items-center justify-between gap-4">

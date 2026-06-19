@@ -1,8 +1,7 @@
 import React from 'react'
-import { ClerkProvider } from '@clerk/nextjs'
-import { OnboardingGuard } from '../components/OnboardingGuard'
+import AppProviders from '../components/AppProviders'
 import Navbar from '../components/Navbar'
-import AnnouncementBar from '../components/AnnouncementBar'
+import AnnouncementSlot from '../components/AnnouncementSlot'
 import Footer from '../components/Footer'
 import '../styles/globals.css'
 
@@ -22,20 +21,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <ClerkProvider
-          publishableKey={
-            process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY as string
-          }
-        >
-          <OnboardingGuard>
-            <div className="min-h-screen flex flex-col bg-[var(--page-bg)] text-[var(--text-main)]">
-              <Navbar />
-              <AnnouncementBar />
-              <main className="flex-1">{children}</main>
-              <Footer />
-            </div>
-          </OnboardingGuard>
-        </ClerkProvider>
+        <AppProviders>
+          <div className="min-h-screen flex flex-col bg-[var(--page-bg)] text-[var(--text-main)]">
+            <Navbar />
+            <AnnouncementSlot />
+            <main className="flex-1">{children}</main>
+            <Footer />
+          </div>
+        </AppProviders>
       </body>
     </html>
   )
