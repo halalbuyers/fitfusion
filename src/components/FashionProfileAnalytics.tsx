@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import ChartFrame from './ChartFrame'
 import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { Loader2, TrendingUp, Users } from 'lucide-react'
 
@@ -80,46 +81,50 @@ export function FashionProfileAnalytics() {
           <TrendingUp className="h-5 w-5 text-[#d7ff55]" />
           Fashion Type Distribution
         </h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <PieChart>
-            <Pie
-              data={fashionTypeData}
-              cx="50%"
-              cy="50%"
-              labelLine={false}
-              label={({ name, value }) => `${name}: ${value}`}
-              outerRadius={80}
-              fill="#8884d8"
-              dataKey="value"
-            >
-              {fashionTypeData.map((entry, index) => (
-                <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
-              ))}
-            </Pie>
-            <Tooltip />
-          </PieChart>
-        </ResponsiveContainer>
+        <ChartFrame className="h-[300px] min-h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <PieChart>
+              <Pie
+                data={fashionTypeData}
+                cx="50%"
+                cy="50%"
+                labelLine={false}
+                label={({ name, value }) => `${name}: ${value}`}
+                outerRadius={80}
+                fill="#8884d8"
+                dataKey="value"
+              >
+                {fashionTypeData.map((entry, index) => (
+                  <Cell key={`cell-${index}`} fill={colors[index % colors.length]} />
+                ))}
+              </Pie>
+              <Tooltip />
+            </PieChart>
+          </ResponsiveContainer>
+        </ChartFrame>
       </div>
 
       {/* Top Styles */}
       <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.2s' }}>
         <h3 className="text-lg font-semibold text-white mb-6">Most Popular Styles</h3>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data.topStyles}>
-            <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
-            <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
-            <YAxis stroke="rgba(255,255,255,0.5)" />
-            <Tooltip 
-              contentStyle={{ 
-                backgroundColor: 'rgba(0,0,0,0.8)', 
-                border: '1px solid rgba(215,255,85,0.5)',
-                borderRadius: '8px'
-              }}
-              cursor={{ fill: 'rgba(215,255,85,0.1)' }}
-            />
-            <Bar dataKey="value" fill="#d7ff55" radius={[8, 8, 0, 0]} />
-          </BarChart>
-        </ResponsiveContainer>
+        <ChartFrame className="h-[300px] min-h-[300px]">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={data.topStyles}>
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+              <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
+              <YAxis stroke="rgba(255,255,255,0.5)" />
+              <Tooltip 
+                contentStyle={{ 
+                  backgroundColor: 'rgba(0,0,0,0.8)', 
+                  border: '1px solid rgba(215,255,85,0.5)',
+                  borderRadius: '8px'
+                }}
+                cursor={{ fill: 'rgba(215,255,85,0.1)' }}
+              />
+              <Bar dataKey="value" fill="#d7ff55" radius={[8, 8, 0, 0]} />
+            </BarChart>
+          </ResponsiveContainer>
+        </ChartFrame>
       </div>
 
       {/* Top Colors */}

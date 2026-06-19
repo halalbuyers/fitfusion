@@ -1,6 +1,7 @@
 'use client'
 
 import { MoreHorizontal } from 'lucide-react'
+import ChartFrame from '../../components/ChartFrame'
 import {
   Area,
   AreaChart,
@@ -29,7 +30,7 @@ export default function AdminChartCard({ title, type, data }: { title: string; t
         <h2 className="font-semibold">{title}</h2>
         <MoreHorizontal className="h-4 w-4 text-white/35" />
       </div>
-      <div className="h-56">
+      <ChartFrame>
         <ResponsiveContainer width="100%" height="100%">
           {type === 'area' ? (
             <AreaChart data={data}>
@@ -70,7 +71,7 @@ export default function AdminChartCard({ title, type, data }: { title: string; t
             </BarChart>
           )}
         </ResponsiveContainer>
-      </div>
+      </ChartFrame>
     </div>
   )
 }
