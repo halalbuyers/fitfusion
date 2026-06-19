@@ -8,7 +8,10 @@ import '../styles/globals.css'
 
 export const metadata = {
   title: 'FitFusion',
-  description: 'AI-powered personal stylist and wardrobe manager'
+  description: 'AI-powered personal stylist and wardrobe manager',
+  verification: {
+    google: 'YXcFOx_Oll1oQDqOaCYkp82pScNttHmsML4IWCLMsCY'
+  }
 }
 
 export default function RootLayout({
