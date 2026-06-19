@@ -14,6 +14,7 @@ export default function Footer() {
     ['Company', ['Community', 'Pricing', 'Admin', 'Profile']],
     ['Deploy', ['MongoDB', 'Cloudinary', 'OpenAI', 'Vercel']]
   ] as const
+  const protectedFooterHrefs = new Set(['/wardrobe', '/outfits', '/calendar', '/ai-stylist', '/community', '/admin', '/profile'])
 
   return (
     <footer className={`border-t border-white/10 bg-[var(--page-bg)] px-4 py-10 sm:px-6 ${isAppRoute ? 'hidden lg:block' : ''}`}>
@@ -32,7 +33,12 @@ export default function Footer() {
             <h3 className="text-sm font-semibold text-white">{title}</h3>
             <div className="mt-4 grid gap-3 text-sm text-white/55">
               {links.map((link) => (
-                <Link key={link} href={`/${link.toLowerCase().replace(' ', '-')}`} className="transition hover:text-white">
+                <Link
+                  key={link}
+                  href={`/${link.toLowerCase().replace(' ', '-')}`}
+                  prefetch={protectedFooterHrefs.has(`/${link.toLowerCase().replace(' ', '-')}`) ? false : undefined}
+                  className="transition hover:text-white"
+                >
                   {link}
                 </Link>
               ))}

@@ -19,6 +19,8 @@ const navItems = [
   ['Pricing', '/pricing']
 ]
 
+const protectedNavHrefs = new Set(['/dashboard', '/wardrobe', '/outfits', '/stylist', '/community'])
+
 export default function Navbar() {
   const pathname = usePathname() || ''
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
@@ -52,6 +54,7 @@ export default function Navbar() {
             <Link
               key={href}
               href={href}
+              prefetch={protectedNavHrefs.has(href) ? false : undefined}
               aria-current={isActive(href) ? 'page' : undefined}
               className={`rounded-[8px] px-3 py-2 transition ${isActive(href) ? 'bg-white text-black' : 'hover:bg-white/8 hover:text-white'}`}
             >

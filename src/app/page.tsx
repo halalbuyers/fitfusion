@@ -29,7 +29,7 @@ export default function Home() {
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/register" className="rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-black transition hover:bg-white/88">Build my wardrobe</Link>
-              <Link href="/dashboard" className="rounded-full border border-white/15 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-white/35">View product</Link>
+              <Link href="/dashboard" prefetch={false} className="rounded-full border border-white/15 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-white/35">View product</Link>
             </div>
           </MotionReveal>
           <MotionReveal delay={0.15}>
