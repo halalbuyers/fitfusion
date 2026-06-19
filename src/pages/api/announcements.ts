@@ -16,16 +16,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         { $or: [{ startsAt: { $exists: false } }, { startsAt: null }, { startsAt: { $lte: now } }] },
         { $or: [{ endsAt: { $exists: false } }, { endsAt: null }, { endsAt: { $gte: now } }] }
       ]
-    }).sort({ featured: -1, displayOrder: 1, priority: -1, createdAt: -1 }).lean()
+    }).sort({ pinned: -1, featured: -1, displayOrder: 1, priority: -1, createdAt: -1 }).lean()
 
     const payload = announcements.map((announcement) => ({
       ...announcement,
       description: announcement.body,
       body: announcement.body,
+      pinned: Boolean(announcement.pinned),
       featured: Boolean(announcement.featured),
       displayOrder: Number(announcement.displayOrder || 0),
       priority: Number(announcement.priority || 0),
-      publishedAt: announcement.createdAt || new Date().toISOString()
+      creditedUsername: announcement.creditedUsername || announcement.suggestedByUsername,
+      suggestedByUsername: announcement.suggestedByUsername || announcement.creditedUsername,
+      publishedAt: announcement.publishedAt || announcement.createdAt || new Date().toISOString()
     }))
 
     return res.status(200).json({ announcements: payload })

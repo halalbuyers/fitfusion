@@ -25,7 +25,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       ...users.map((item) => ({ type: 'User', title: item.name, subtitle: item.email, href: '/admin/users' })),
       ...wardrobe.map((item) => ({ type: 'Wardrobe', title: item.category, subtitle: `${item.primaryColor} / ${item.style}`, href: '/admin/analytics' })),
       ...outfits.map((item) => ({ type: 'Outfit', title: item.title, subtitle: item.occasion, href: '/admin/analytics' })),
-      ...feedback.map((item) => ({ type: 'Feedback', title: item.title, subtitle: item.status, href: '/admin/feedback' }))
+      ...feedback.map((item) => ({ type: 'Feedback', title: item.title, subtitle: item.status, href: '/admin/community-updates' }))
     ]
   })
 }

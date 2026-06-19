@@ -40,6 +40,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     ])
     const wardrobeMap = new Map(wardrobeCounts.map((row) => [row._id, row.value]))
     const outfitMap = new Map(outfitCounts.map((row) => [row._id, row.value]))
+    const clerkImageMap = new Map<string, string>()
+    const client = await clerkClient().catch(() => null)
+    if (client) {
+      const clerkUsers = await Promise.all(users.map((user) => user.clerkId ? client.users.getUser(user.clerkId).catch(() => null) : Promise.resolve(null)))
+      clerkUsers.forEach((clerkUser) => {
+        if (clerkUser?.id) clerkImageMap.set(clerkUser.id, clerkUser.imageUrl || '')
+      })
+    }
 
     return res.status(200).json({
       total,
@@ -50,7 +58,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return {
           _id: String(user._id),
           clerkId: user.clerkId,
-          avatar: '',
+          avatar: (user.clerkId && clerkImageMap.get(user.clerkId)) || user.profilePhoto || '',
           name: user.name,
           email: user.email,
           role: user.role || 'user',

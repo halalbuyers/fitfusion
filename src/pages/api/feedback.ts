@@ -1,5 +1,5 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
-import { getAuth } from '@clerk/nextjs/server'
+import { clerkClient, getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../lib/mongodb'
 import AdminActivityLog from '../../models/AdminActivityLog'
 import AdminFeedback from '../../models/AdminFeedback'
@@ -18,26 +18,39 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const message = String(body.message || '').trim()
     const type = ['feedback', 'bug', 'feature'].includes(body.type) ? body.type : 'feedback'
     const priority = ['low', 'medium', 'high'].includes(body.priority) ? body.priority : 'medium'
+    const category = String(body.category || type || 'feedback').trim()
 
     if (!title || !message) {
       return res.status(400).json({ error: 'Title and message are required' })
     }
 
-    const profile = await User.findOne({ clerkId: userId }).lean().catch(() => null)
+    const [profile, clerkUser] = await Promise.all([
+      User.findOne({ clerkId: userId }).lean().catch(() => null),
+      clerkClient().then((client) => client.users.getUser(userId)).catch(() => null)
+    ])
+    const clerkName = [clerkUser?.firstName, clerkUser?.lastName].filter(Boolean).join(' ').trim()
+    const clerkEmail = clerkUser?.primaryEmailAddress?.emailAddress || clerkUser?.emailAddresses?.[0]?.emailAddress || ''
+    const username = clerkUser?.username || clerkName || profile?.name || clerkEmail.split('@')[0] || profile?.email?.split('@')[0] || userId
+    const email = clerkEmail || profile?.email || ''
+    const profileImage = clerkUser?.imageUrl || profile?.profilePhoto || ''
+
     const feedback = await AdminFeedback.create({
       userId,
-      name: profile?.name,
-      email: profile?.email,
+      username,
+      name: clerkName || profile?.name || username,
+      email,
+      profileImage,
       type,
+      category,
       priority,
       title,
       message,
-      status: 'open'
+      status: 'pending'
     })
 
     await AdminActivityLog.create({
       userId,
-      userEmail: profile?.email,
+      userEmail: email,
       action: 'feedback_update',
       target: String(feedback._id),
       metadata: { submittedByUser: true, type, priority }

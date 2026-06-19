@@ -12,6 +12,7 @@ type UpdateItem = {
   type: 'announcement' | 'maintenance' | 'feature' | 'update' | 'fix' | 'community' | 'security'
   featured: boolean
   suggestedByUsername?: string
+  creditedUsername?: string
   publishedAt: string
 }
 
@@ -57,13 +58,15 @@ export default async function UpdatesPage() {
       description: announcement.description || announcement.body,
       publishedAt: announcement.createdAt ? new Date(announcement.createdAt).toISOString() : new Date().toISOString(),
       featured: Boolean(announcement.featured),
-      suggestedByUsername: announcement.suggestedByUsername || undefined
+      suggestedByUsername: announcement.suggestedByUsername || announcement.creditedUsername || undefined,
+      creditedUsername: announcement.creditedUsername || announcement.suggestedByUsername || undefined
     }))
   } catch (error) {
     updates = []
   }
 
   const featured = updates.find((item) => item.featured) ?? updates[0] ?? null
+  const topCredits = Array.from(new Set(updates.map((item) => item.creditedUsername || item.suggestedByUsername).filter(Boolean))).slice(0, 5)
 
   const groups = updates.reduce<Record<string, { label: string; items: UpdateItem[] }>>((acc, update) => {
     const date = safeDate(update.publishedAt || update.description || update.body)
@@ -129,7 +132,7 @@ export default async function UpdatesPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-[24px] bg-[#0f1219]/80 p-5 text-sm text-white/70">
                           <p className="text-xs uppercase tracking-[0.26em] text-white/40">Suggested by</p>
-                          <p className="mt-2 text-base text-white">@{featured.suggestedByUsername || 'FitFusion team'}</p>
+                          <p className="mt-2 text-base text-white">@{featured.suggestedByUsername || featured.creditedUsername || 'FitFusion team'}</p>
                         </div>
                         <div className="rounded-[24px] bg-[#0f1219]/80 p-5 text-sm text-white/70">
                           <p className="text-xs uppercase tracking-[0.26em] text-white/40">Released</p>
@@ -190,7 +193,7 @@ export default async function UpdatesPage() {
                                 </div>
                                 <div className="space-y-2 text-right text-sm text-white/50">
                                   <p>Suggested by</p>
-                                  <p className="text-white">@{update.suggestedByUsername || 'FitFusion'}</p>
+                                  <p className="text-white">@{update.suggestedByUsername || update.creditedUsername || 'FitFusion'}</p>
                                 </div>
                               </div>
                               <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/60">
@@ -218,9 +221,18 @@ export default async function UpdatesPage() {
               <p className="text-sm uppercase tracking-[0.3em] text-white/50">Community credits</p>
               <h3 className="mt-4 text-xl font-semibold text-white">This feature was built thanks to feedback from</h3>
               <p className="mt-4 text-sm leading-7 text-white/70">Community contributors help shape FitFusion every day. Thank you for helping improve the product.</p>
-              <div className="mt-6 rounded-[24px] bg-[#0f1219]/90 p-5 text-sm leading-7 text-white/70">
-                <p className="font-semibold text-white">@Ahtesham</p>
-                <p className="mt-2">Your suggestions helped make this release possible.</p>
+              <div className="mt-6 grid gap-3 text-sm leading-7 text-white/70">
+                {topCredits.length ? topCredits.map((name) => (
+                  <div key={name} className="rounded-[24px] bg-[#0f1219]/90 p-5">
+                    <p className="font-semibold text-white">@{name}</p>
+                    <p className="mt-2">Thank you for helping improve FitFusion.</p>
+                  </div>
+                )) : (
+                  <div className="rounded-[24px] bg-[#0f1219]/90 p-5">
+                    <p className="font-semibold text-white">@FitFusion</p>
+                    <p className="mt-2">Community suggestions will appear here after credited updates are published.</p>
+                  </div>
+                )}
               </div>
             </div>
             <div className="rounded-[28px] border border-white/10 bg-[#0f1219]/90 p-6 text-sm text-white/70">

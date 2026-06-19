@@ -184,7 +184,11 @@ export default function CommunityPage() {
           {posts.map((post) => {
             const images = blendImages(post.images)
             const hashtags = post.hashtags || []
-            const meta = [post.occasion, post.style, post.season].filter(Boolean)
+            const meta = [
+              { key: 'occasion', value: post.occasion },
+              { key: 'style', value: post.style },
+              { key: 'season', value: post.season }
+            ].filter((item) => Boolean(item.value))
             const createdAt = post.createdAt ? new Date(post.createdAt).toLocaleDateString() : ''
 
             return (
@@ -217,8 +221,8 @@ export default function CommunityPage() {
                       </span>
                     )}
                     {meta.map((item) => (
-                      <span key={item} className="inline-flex items-center gap-1 rounded-full bg-white/5 px-3 py-1">
-                        <Tag className="h-3.5 w-3.5" /> {item}
+                      <span key={`${item.key}-${item.value}`} className="inline-flex items-center gap-1 rounded-full bg-white/5 px-3 py-1">
+                        <Tag className="h-3.5 w-3.5" /> {item.value}
                       </span>
                     ))}
                     {!!post.metrics?.views && (
@@ -258,8 +262,8 @@ export default function CommunityPage() {
 
                 <div className="border-t border-white/10 p-4">
                   <div className="flex flex-wrap gap-2">
-                    {hashtags.slice(0, 6).map((tag) => (
-                      <span key={tag} className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/70">#{tag}</span>
+                    {hashtags.slice(0, 6).map((tag, index) => (
+                      <span key={`${post._id}-tag-${tag}-${index}`} className="rounded-full bg-white/5 px-3 py-1 text-xs text-white/70">#{tag}</span>
                     ))}
                   </div>
 

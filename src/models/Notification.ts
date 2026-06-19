@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from 'mongoose'
 
 export interface INotification extends Document {
   userId: string
-  type: 'style' | 'social' | 'calendar' | 'billing'
+  type: 'style' | 'social' | 'calendar' | 'billing' | 'feedback' | 'update'
   title: string
   body: string
   read: boolean
@@ -10,7 +10,7 @@ export interface INotification extends Document {
 
 const NotificationSchema: Schema = new Schema({
   userId: { type: String, required: true, index: true },
-  type: { type: String, enum: ['style', 'social', 'calendar', 'billing'], default: 'style' },
+  type: { type: String, enum: ['style', 'social', 'calendar', 'billing', 'feedback', 'update'], default: 'style' },
   title: { type: String, required: true },
   body: { type: String, required: true },
   read: { type: Boolean, default: false }
