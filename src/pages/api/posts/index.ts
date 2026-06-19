@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import { connectToDatabase } from '../../../lib/mongodb'
 import Post from '../../../models/Post'
+import Outfit from '../../../models/Outfit'
 import User from '../../../models/User'
 import FashionProfile from '../../../models/FashionProfile'
 import { parseTags } from '../../../lib/api'
@@ -44,10 +45,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         ]
       }
 
-      let posts = await Post.find(query).populate({
-        path: 'outfit',
-        populate: { path: 'items.clothing' }
-      }).lean() as Array<any>
+      let posts: Array<any> = []
+      try {
+        // Ensure the referenced model is registered before populate runs in serverless bundles.
+        void Outfit
+        posts = await Post.find(query).populate({
+          path: 'outfit',
+          populate: { path: 'items.clothing' }
+        }).lean() as Array<any>
+      } catch {
+        posts = await Post.find(query).lean() as Array<any>
+      }
 
       // Get user's fashion profile if authenticated
       let fashionProfile: any = null
@@ -138,6 +146,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (req.method === 'GET') return res.status(200).json([])
       return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
     }
+    if (req.method === 'GET') return res.status(200).json([])
     return res.status(500).json({ error: 'Failed to process posts request.' })
   }
 }

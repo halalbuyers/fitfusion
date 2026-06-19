@@ -8,10 +8,6 @@ if (!cached.mongoose) {
   cached.mongoose = { conn: null, promise: null }
 }
 
-mongoose.connect(process.env.MONGODB_URI!)
-  .then(() => console.log('MongoDB Connected'))
-  .catch(err => console.error(err))
-
 export async function connectToDatabase() {
   if (!MONGODB_URI) {
     throw new Error('Please define the MONGODB_URI environment variable inside .env.local')

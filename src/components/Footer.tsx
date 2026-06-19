@@ -4,17 +4,46 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 
+type FooterLink = {
+  label: string
+  href?: string
+  protected?: boolean
+}
+
+const groups = [
+  {
+    title: 'Product',
+    links: [
+      { label: 'Wardrobe', href: '/wardrobe', protected: true },
+      { label: 'Outfits', href: '/outfits', protected: true },
+      { label: 'Calendar', href: '/calendar', protected: true },
+      { label: 'AI Stylist', href: '/stylist', protected: true }
+    ]
+  },
+  {
+    title: 'Company',
+    links: [
+      { label: 'Community', href: '/community', protected: true },
+      { label: 'Pricing', href: '/pricing' },
+      { label: 'Admin', href: '/admin', protected: true },
+      { label: 'Profile', href: '/profile', protected: true }
+    ]
+  },
+  {
+    title: 'Deploy',
+    links: [
+      { label: 'MongoDB' },
+      { label: 'Cloudinary' },
+      { label: 'OpenAI' },
+      { label: 'Vercel' }
+    ]
+  }
+] satisfies Array<{ title: string; links: FooterLink[] }>
+
 export default function Footer() {
   const pathname = usePathname() || ''
   const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
   const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
-
-  const groups = [
-    ['Product', ['Wardrobe', 'Outfits', 'Calendar', 'AI Stylist']],
-    ['Company', ['Community', 'Pricing', 'Admin', 'Profile']],
-    ['Deploy', ['MongoDB', 'Cloudinary', 'OpenAI', 'Vercel']]
-  ] as const
-  const protectedFooterHrefs = new Set(['/wardrobe', '/outfits', '/calendar', '/ai-stylist', '/community', '/admin', '/profile'])
 
   return (
     <footer className={`border-t border-white/10 bg-[var(--page-bg)] px-4 py-10 sm:px-6 ${isAppRoute ? 'hidden lg:block' : ''}`}>
@@ -28,19 +57,18 @@ export default function Footer() {
             AI wardrobe intelligence for people who want better outfits with less guesswork.
           </p>
         </div>
-        {groups.map(([title, links]) => (
+        {groups.map(({ title, links }) => (
           <div key={title}>
             <h3 className="text-sm font-semibold text-white">{title}</h3>
             <div className="mt-4 grid gap-3 text-sm text-white/55">
-              {links.map((link) => (
-                <Link
-                  key={link}
-                  href={`/${link.toLowerCase().replace(' ', '-')}`}
-                  prefetch={protectedFooterHrefs.has(`/${link.toLowerCase().replace(' ', '-')}`) ? false : undefined}
-                  className="transition hover:text-white"
-                >
-                  {link}
+              {links.map((link) => 'href' in link ? (
+                <Link key={link.label} href={link.href} prefetch={link.protected ? false : undefined} className="transition hover:text-white">
+                  {link.label}
                 </Link>
+              ) : (
+                <span key={link.label} className="text-white/45">
+                  {link.label}
+                </span>
               ))}
             </div>
           </div>
