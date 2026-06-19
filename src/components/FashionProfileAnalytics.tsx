@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import ChartFrame from './ChartFrame'
-import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
+import { BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip } from 'recharts'
 import { Loader2, TrendingUp, Users } from 'lucide-react'
 
 type AnalyticsData = {
@@ -82,8 +82,8 @@ export function FashionProfileAnalytics() {
           Fashion Type Distribution
         </h3>
         <ChartFrame className="h-[300px] min-h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
+          {({ width, height }) => (
+            <PieChart width={width} height={height}>
               <Pie
                 data={fashionTypeData}
                 cx="50%"
@@ -100,7 +100,7 @@ export function FashionProfileAnalytics() {
               </Pie>
               <Tooltip />
             </PieChart>
-          </ResponsiveContainer>
+          )}
         </ChartFrame>
       </div>
 
@@ -108,8 +108,8 @@ export function FashionProfileAnalytics() {
       <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.2s' }}>
         <h3 className="text-lg font-semibold text-white mb-6">Most Popular Styles</h3>
         <ChartFrame className="h-[300px] min-h-[300px]">
-          <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={data.topStyles}>
+          {({ width, height }) => (
+            <BarChart data={data.topStyles} width={width} height={height}>
               <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
               <XAxis dataKey="name" stroke="rgba(255,255,255,0.5)" />
               <YAxis stroke="rgba(255,255,255,0.5)" />
@@ -123,7 +123,7 @@ export function FashionProfileAnalytics() {
               />
               <Bar dataKey="value" fill="#d7ff55" radius={[8, 8, 0, 0]} />
             </BarChart>
-          </ResponsiveContainer>
+          )}
         </ChartFrame>
       </div>
 

@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import Image from 'next/image'
-import MotionReveal from '../components/MotionReveal'
 
 export default function Home() {
   const features = [
@@ -19,7 +18,7 @@ export default function Home() {
     <div className="overflow-hidden bg-[#070707]">
       <section className="premium-grid relative px-4 pb-16 pt-16 sm:px-6 lg:pt-24">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.85fr] lg:items-center">
-          <MotionReveal>
+          <div>
             <p className="text-xs uppercase tracking-[0.35em] text-white/40">AI fashion operating system</p>
             <h1 className="mt-5 max-w-4xl text-balance text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl">
               Your AI-Powered Personal Stylist
@@ -31,8 +30,8 @@ export default function Home() {
               <Link href="/register" className="rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-black transition hover:bg-white/88">Build my wardrobe</Link>
               <Link href="/dashboard" prefetch={false} className="rounded-full border border-white/15 px-6 py-3 text-center text-sm font-semibold text-white transition hover:border-white/35">View product</Link>
             </div>
-          </MotionReveal>
-          <MotionReveal delay={0.15}>
+          </div>
+          <div>
             <div className="glass relative overflow-hidden rounded-[2rem] p-4">
               <div className="relative h-[520px] w-full overflow-hidden rounded-[1.5rem]">
                 <Image
@@ -55,7 +54,7 @@ export default function Home() {
                 <p className="mt-3 text-sm leading-6 text-white/58">Neutral contrast, winter layering, waterproof sneaker recommendation.</p>
               </div>
             </div>
-          </MotionReveal>
+          </div>
         </div>
       </section>
 

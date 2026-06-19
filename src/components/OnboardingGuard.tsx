@@ -30,7 +30,7 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
         const data = await response.json()
 
         if (!data.hasCompletedOnboarding && pathname !== '/onboarding') {
-          router.push('/onboarding')
+          router.replace('/onboarding')
         }
       } catch {
         return

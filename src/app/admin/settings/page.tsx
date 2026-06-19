@@ -1,10 +1,7 @@
-import { redirect } from 'next/navigation'
 import AdminDashboardRoute from '../AdminDashboardRoute'
-import { isAdmin } from '../../../lib/auth/admin'
 
 export const dynamic = 'force-dynamic'
 
-export default async function AdminSettingsPage() {
-  if (!(await isAdmin())) redirect('/')
+export default function AdminSettingsPage() {
   return <AdminDashboardRoute view="settings" />
 }

@@ -11,7 +11,7 @@ export default function ChartFrame({
   children,
   className = 'h-56 min-h-[224px]'
 }: {
-  children: React.ReactNode
+  children: (size: Size) => React.ReactNode
   className?: string
 }) {
   const ref = useRef<HTMLDivElement | null>(null)
@@ -40,7 +40,7 @@ export default function ChartFrame({
 
   return (
     <div ref={ref} className={`min-w-0 ${className}`}>
-      {ready ? children : <div className="h-full min-h-[inherit] animate-pulse rounded-[8px] bg-white/7" />}
+      {ready ? children(size) : <div className="h-full min-h-[inherit] animate-pulse rounded-[8px] bg-white/7" />}
     </div>
   )
 }

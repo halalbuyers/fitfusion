@@ -11,6 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   '/outfit-generator(.*)',
   '/outfits(.*)',
   '/profile(.*)',
+  '/settings(.*)',
   '/stylist(.*)',
   '/wardrobe(.*)',
   '/weather(.*)',
@@ -28,7 +29,7 @@ function loginRedirect(req: Request) {
 }
 
 export default clerkMiddleware(async (auth, req) => {
-  if (isPublicRoute(req)) return
+  if (isPublicRoute(req)) return NextResponse.next()
 
   if (isProtectedRoute(req)) {
     const session = await auth()
@@ -47,8 +48,24 @@ export default clerkMiddleware(async (auth, req) => {
       return NextResponse.redirect(new URL('/', req.url))
     }
   }
+
+  return NextResponse.next()
 })
 
 export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)']
+  matcher: [
+    '/admin/:path*',
+    '/calendar/:path*',
+    '/community/:path*',
+    '/dashboard/:path*',
+    '/my-wardrobe/:path*',
+    '/outfit-generator/:path*',
+    '/outfits/:path*',
+    '/profile/:path*',
+    '/settings/:path*',
+    '/stylist/:path*',
+    '/wardrobe/:path*',
+    '/weather/:path*',
+    '/api/:path*'
+  ]
 }

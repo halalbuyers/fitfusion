@@ -2,27 +2,35 @@
 
 import { SignIn, useAuth } from '@clerk/nextjs'
 import { Loader2 } from 'lucide-react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect } from 'react'
+import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 
 const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY)
 
 export default function LoginClient() {
   const { isLoaded, userId } = useAuth()
-  const router = useRouter()
   const searchParams = useSearchParams()
   const redirectUrl = searchParams?.get('redirect_url') || '/dashboard'
 
-  useEffect(() => {
-    if (isLoaded && userId) {
-      router.replace(redirectUrl)
-    }
-  }, [isLoaded, redirectUrl, router, userId])
-
-  if (hasClerk && (!isLoaded || userId)) {
+  if (hasClerk && !isLoaded) {
     return (
       <div className="grid min-h-[80vh] place-items-center px-4 py-12">
         <Loader2 className="h-8 w-8 animate-spin text-[#d7ff55]" />
+      </div>
+    )
+  }
+
+  if (hasClerk && userId) {
+    return (
+      <div className="grid min-h-[80vh] place-items-center px-4 py-12">
+        <div className="glass w-full max-w-md rounded-2xl p-6 text-center">
+          <p className="text-xs uppercase tracking-[0.3em] text-white/35">Signed in</p>
+          <h1 className="mt-3 text-3xl font-semibold">You are already signed in</h1>
+          <p className="mt-3 text-sm leading-6 text-white/55">Continue to your FitFusion workspace.</p>
+          <Link href={redirectUrl} prefetch={false} className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
+            Continue to FitFusion
+          </Link>
+        </div>
       </div>
     )
   }
