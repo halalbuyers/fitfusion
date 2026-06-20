@@ -38,7 +38,10 @@ export default function OutfitsPage() {
       .then((data) => {
         const next = Array.isArray(data) ? data : []
         setOutfits(next)
-        setPlanDates(Object.fromEntries(next.map((outfit: Outfit) => [outfit._id, outfit.plannedFor?.slice(0, 10) || todayInputValue()])))
+        setPlanDates(next.reduce<Record<string, string>>((dates, outfit: Outfit) => {
+          dates[outfit._id] = outfit.plannedFor?.slice(0, 10) || todayInputValue()
+          return dates
+        }, {}))
       })
       .catch(() => setOutfits([]))
       .finally(() => setLoading(false))

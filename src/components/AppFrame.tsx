@@ -59,7 +59,7 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
             <p className="mt-2 text-sm leading-5 text-white/64">Build weather-aware outfits from pieces you already own.</p>
           </div>
         </aside>
-        <section className="min-w-0 animate-float-in">
+        <section className="min-w-0">
           <div className="mb-6 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
             <div className="min-w-0">
               <p className="text-xs uppercase tracking-[0.3em] text-white/35">{eyebrow}</p>

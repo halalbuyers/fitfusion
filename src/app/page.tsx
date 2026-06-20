@@ -1,6 +1,8 @@
 import Link from 'next/link'
 import Image from 'next/image'
 
+const heroImage = '/images/hero-fashion.webp'
+
 export default function Home() {
   const features = [
     ['AI Wardrobe Analysis', 'Detects categories, colors, seasonality, style codes, and tags from clothing images.'],
@@ -32,18 +34,21 @@ export default function Home() {
             </div>
           </div>
           <div>
-            <div className="glass relative overflow-hidden rounded-[2rem] p-4">
-              <div className="relative h-[520px] w-full overflow-hidden rounded-[1.5rem]">
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/10 bg-white/[0.06] p-4 shadow-2xl shadow-black/30">
+              <div className="relative h-[420px] w-full overflow-hidden rounded-[1.5rem] bg-black/20 sm:h-[520px]">
                 <Image
-                  src="https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80"
+                  src={heroImage}
                   alt="Premium fashion styling"
                   fill
                   sizes="(min-width: 1024px) 42vw, 100vw"
                   className="object-cover"
                   priority
+                  fetchPriority="high"
+                  loading="eager"
+                  unoptimized
                 />
               </div>
-              <div className="absolute bottom-8 left-8 right-8 rounded-2xl border border-white/12 bg-black/62 p-5 backdrop-blur-xl">
+              <div className="absolute bottom-8 left-8 right-8 rounded-2xl border border-white/12 bg-black/72 p-5">
                 <div className="flex items-center justify-between gap-4">
                   <div>
                     <p className="text-sm text-white/50">Today in New York, 48F</p>

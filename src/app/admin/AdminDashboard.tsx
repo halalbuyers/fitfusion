@@ -150,7 +150,7 @@ function AdminChrome({ view, children }: { view: AdminView; children: React.Reac
 }
 
 function Card({ children, className = '' }: { children: React.ReactNode; className?: string }) {
-  return <div className={`glass animate-float-in rounded-[8px] p-4 ${className}`}>{children}</div>
+  return <div className={`glass rounded-[8px] p-4 ${className}`}>{children}</div>
 }
 
 const ChartCard = dynamic(() => import('./AdminChartCard'), {

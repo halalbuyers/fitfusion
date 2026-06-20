@@ -323,7 +323,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
       </form>
 
       {draft ? (
-        <section className="animate-float-in overflow-hidden rounded-[8px] border border-white/12 bg-white/[0.06] shadow-2xl shadow-black/30 backdrop-blur-xl">
+        <section className="overflow-hidden rounded-[8px] border border-white/12 bg-white/[0.06] shadow-2xl shadow-black/30 backdrop-blur-xl">
           <div className="grid gap-0 lg:grid-cols-[0.9fr_1.1fr]">
             <div className="relative min-h-[320px] bg-black/28">
               <Image src={draft.image} alt="Reviewed clothing item" fill sizes="(min-width: 1024px) 32vw, 100vw" unoptimized className="object-contain p-5" />

@@ -293,8 +293,7 @@ export default function OutfitGeneratorPage() {
               return (
                 <article
                   key={outfit.outfitKey || `${outfit.score}-${index}`}
-                  className="animate-float-in overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.045]"
-                  style={{ animationDelay: `${index * 0.04}s` }}
+                  className="overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.045]"
                 >
                   <div className="grid grid-cols-4 gap-px bg-white/10">
                     {visualItems.slice(0, 4).map((item) => (

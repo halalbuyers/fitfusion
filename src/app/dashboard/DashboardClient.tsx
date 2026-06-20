@@ -42,7 +42,13 @@ export default function DashboardPage() {
   }, [])
 
   const analytics = useMemo(() => {
-    const colors = wardrobe.flatMap((item) => item.colors?.length ? item.colors : [item.primaryColor || 'unknown']).filter((color) => color !== 'unknown')
+    const colors = wardrobe.reduce<string[]>((allColors, item) => {
+      const itemColors = item.colors?.length ? item.colors : [item.primaryColor || 'unknown']
+      itemColors.forEach((color) => {
+        if (color !== 'unknown') allColors.push(color)
+      })
+      return allColors
+    }, [])
     const topColor = colors.sort((a, b) => colors.filter((x) => x === b).length - colors.filter((x) => x === a).length)[0] || 'unknown'
     const styles = wardrobe.map((item) => item.style).filter(Boolean) as string[]
     const favoriteStyle = styles.sort((a, b) => styles.filter((x) => x === b).length - styles.filter((x) => x === a).length)[0] || 'minimal'

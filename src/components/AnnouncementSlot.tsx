@@ -7,5 +7,9 @@ const AnnouncementBar = dynamic(() => import('./AnnouncementBar'), {
 })
 
 export default function AnnouncementSlot() {
-  return <AnnouncementBar />
+  return (
+    <div className="h-10">
+      <AnnouncementBar />
+    </div>
+  )
 }

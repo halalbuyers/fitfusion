@@ -175,7 +175,7 @@ export default function OnboardingPage() {
           {step === 'welcome' && (
             <div
               key="welcome"
-              className="animate-float-in text-center"
+              className="text-center"
             >
               <div className="mb-8 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                 <Heart className="h-8 w-8 text-black" />
@@ -192,10 +192,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 'fashion-type' && (
-            <div
-              key="fashion-type"
-              className="animate-float-in"
-            >
+            <div key="fashion-type">
               <h2 className="text-3xl font-bold text-white mb-2">What fashion categories do you wear?</h2>
               <p className="text-white/50 mb-8">This helps us personalize your outfit suggestions.</p>
 
@@ -226,10 +223,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 'styles' && (
-            <div
-              key="styles"
-              className="animate-float-in"
-            >
+            <div key="styles">
               <h2 className="text-3xl font-bold text-white mb-2">What styles do you prefer?</h2>
               <p className="text-white/50 mb-8">Select at least one. You can choose multiple.</p>
 
@@ -254,10 +248,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 'colors' && (
-            <div
-              key="colors"
-              className="animate-float-in"
-            >
+            <div key="colors">
               <h2 className="text-3xl font-bold text-white mb-2">What are your favorite colors?</h2>
               <p className="text-white/50 mb-8">Select your preferred palette.</p>
 
@@ -282,10 +273,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 'occasions' && (
-            <div
-              key="occasions"
-              className="animate-float-in"
-            >
+            <div key="occasions">
               <h2 className="text-3xl font-bold text-white mb-2">When do you dress up?</h2>
               <p className="text-white/50 mb-8">Help us suggest outfits for your lifestyle.</p>
 
@@ -310,10 +298,7 @@ export default function OnboardingPage() {
           )}
 
           {step === 'goals' && (
-            <div
-              key="goals"
-              className="animate-float-in"
-            >
+            <div key="goals">
               <h2 className="text-3xl font-bold text-white mb-2">What do you want from FitFusion?</h2>
               <p className="text-white/50 mb-8">Tell us your fashion goals.</p>
 
@@ -340,7 +325,7 @@ export default function OnboardingPage() {
           {step === 'finish' && (
             <div
               key="finish"
-              className="animate-float-in text-center"
+              className="text-center"
             >
               {loading ? (
                 <>

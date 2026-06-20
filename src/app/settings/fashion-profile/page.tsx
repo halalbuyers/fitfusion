@@ -172,14 +172,14 @@ export default function FashionProfileSettings() {
     >
       <div className="max-w-4xl">
         {error && (
-          <div className="animate-float-in mb-6 flex items-center gap-3 rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-red-200">
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-red-400/30 bg-red-400/10 p-4 text-red-200">
             <AlertCircle className="h-5 w-5" />
             <span>{error}</span>
           </div>
         )}
 
         {success && (
-          <div className="animate-float-in mb-6 flex items-center gap-3 rounded-lg border border-green-400/30 bg-green-400/10 p-4 text-green-200">
+          <div className="mb-6 flex items-center gap-3 rounded-lg border border-green-400/30 bg-green-400/10 p-4 text-green-200">
             <Check className="h-5 w-5" />
             <span>Profile updated successfully</span>
           </div>

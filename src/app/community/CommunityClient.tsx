@@ -242,7 +242,7 @@ export default function CommunityPage() {
                   <div className="relative aspect-[4/3] bg-black/20">
                     <Video className="absolute left-4 top-4 h-5 w-5 text-white/80" />
                     <Image
-                      src={post.videoThumbnail || post.images?.[0] || 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?auto=format&fit=crop&w=800&q=80'}
+                      src={post.videoThumbnail || post.images?.[0] || '/images/hero-fashion.webp'}
                       alt={post.title || 'Community video'}
                       fill
                       className="object-cover"

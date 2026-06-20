@@ -20,6 +20,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
+      <head>
+        <link rel="preload" as="image" href="/images/hero-fashion.webp" fetchPriority="high" />
+        <link rel="preconnect" href="https://res.cloudinary.com" />
+        <link rel="preconnect" href="https://img.clerk.com" />
+        <link rel="dns-prefetch" href="https://res.cloudinary.com" />
+        <link rel="dns-prefetch" href="https://img.clerk.com" />
+      </head>
       <body>
         <AppProviders>
           <div className="min-h-screen flex flex-col bg-[var(--page-bg)] text-[var(--text-main)]">

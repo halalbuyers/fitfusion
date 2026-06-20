@@ -65,7 +65,7 @@ export function FashionProfileAnalytics() {
   return (
     <div className="space-y-8">
       {/* Header */}
-      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6">
+      <div className="rounded-lg border border-white/10 bg-white/5 p-6">
         <div className="flex items-start justify-between gap-4">
           <div>
             <p className="text-sm text-white/50">Total Onboarded Users</p>
@@ -76,7 +76,7 @@ export function FashionProfileAnalytics() {
       </div>
 
       {/* Fashion Type Distribution */}
-      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.1s' }}>
+      <div className="rounded-lg border border-white/10 bg-white/5 p-6">
         <h3 className="flex items-center gap-2 text-lg font-semibold text-white mb-6">
           <TrendingUp className="h-5 w-5 text-[#d7ff55]" />
           Fashion Type Distribution
@@ -105,7 +105,7 @@ export function FashionProfileAnalytics() {
       </div>
 
       {/* Top Styles */}
-      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.2s' }}>
+      <div className="rounded-lg border border-white/10 bg-white/5 p-6">
         <h3 className="text-lg font-semibold text-white mb-6">Most Popular Styles</h3>
         <ChartFrame className="h-[300px] min-h-[300px]">
           {({ width, height }) => (
@@ -128,7 +128,7 @@ export function FashionProfileAnalytics() {
       </div>
 
       {/* Top Colors */}
-      <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.3s' }}>
+      <div className="rounded-lg border border-white/10 bg-white/5 p-6">
         <h3 className="text-lg font-semibold text-white mb-6">Favorite Colors</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {data.topColors.slice(0, 10).map((item) => (
@@ -145,7 +145,7 @@ export function FashionProfileAnalytics() {
 
       {/* Top Occasions & Goals */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.4s' }}>
+        <div className="rounded-lg border border-white/10 bg-white/5 p-6">
           <h3 className="text-lg font-semibold text-white mb-6">Preferred Occasions</h3>
           <div className="space-y-3">
             {data.topOccasions.map(item => (
@@ -157,7 +157,7 @@ export function FashionProfileAnalytics() {
           </div>
         </div>
 
-        <div className="animate-float-in rounded-lg border border-white/10 bg-white/5 p-6" style={{ animationDelay: '0.5s' }}>
+        <div className="rounded-lg border border-white/10 bg-white/5 p-6">
           <h3 className="text-lg font-semibold text-white mb-6">Fashion Goals</h3>
           <div className="space-y-3">
             {data.topGoals.map(item => (
@@ -172,3 +172,4 @@ export function FashionProfileAnalytics() {
     </div>
   )
 }
+

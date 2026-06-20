@@ -189,21 +189,6 @@ textarea:focus-visible {
   text-wrap: balance;
 }
 
-@keyframes floatIn {
-  from {
-    opacity: 0;
-    transform: translateY(18px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.animate-float-in {
-  animation: floatIn 700ms ease both;
-}
-
 @keyframes marqueeScroll {
   from {
     transform: translate3d(0, 0, 0);
@@ -261,6 +246,6 @@ textarea:focus-visible {
 
 @media (prefers-reduced-motion: reduce) {
   .announcement-marquee__track {
-    animation-duration: calc(var(--announcement-marquee-duration) * 2);
+    animation: none;
   }
 }

@@ -43,8 +43,8 @@ export default function Navbar() {
   }
 
   return (
-    <nav className={`sticky top-0 z-50 border-b border-white/10 bg-[var(--page-bg)]/90 px-3 py-3 backdrop-blur-xl sm:px-6 ${isAppRoute ? 'hidden lg:block' : ''}`}>
-      <div className="mx-auto flex max-w-7xl items-center justify-between gap-4">
+    <nav className={`sticky top-0 z-50 h-[var(--navbar-height)] border-b border-white/10 bg-[var(--page-bg)]/90 px-3 backdrop-blur-xl sm:px-6 ${isAppRoute ? 'hidden lg:block' : ''}`}>
+      <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4">
         <Link href="/" className="flex min-w-0 items-center gap-3 text-lg font-semibold tracking-wide">
           <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-black text-black">FF</span>
           <span className="truncate">FitFusion</span>
