@@ -4,11 +4,10 @@ import { ArrowRight, Bug, ShieldCheck, Sparkles, Zap, Lightbulb } from 'lucide-r
 import { connectToDatabase } from '../../lib/mongodb'
 import AdminAnnouncement from '../../models/AdminAnnouncement'
 import { AppFrame } from '../../components/AppFrame'
+import { JsonLd } from '../../components/JsonLd'
+import { breadcrumbJsonLd, pageMetadata } from '../../lib/seo'
 
-export const metadata: Metadata = {
-  title: 'Product Updates',
-  description: 'Read the latest Noir Closet product updates, release notes, bug fixes, and community-powered improvements.'
-}
+export const metadata: Metadata = pageMetadata('Product Updates', 'Read the latest Noir Closet product updates, release notes, bug fixes, and community-powered improvements.', '/updates')
 
 type UpdateItem = {
   _id: string
@@ -88,6 +87,7 @@ export default async function UpdatesPage() {
 
   return (
     <AppFrame title="Product updates" eyebrow="Release notes">
+      <JsonLd data={breadcrumbJsonLd([{ name: 'Home', path: '/' }, { name: 'Updates', path: '/updates' }])} />
       <div className="space-y-10">
         <div className="rounded-[28px] border border-white/10 bg-white/5 p-8 shadow-[0_40px_120px_rgba(0,0,0,0.35)] backdrop-blur-xl">
           <div className="grid gap-6 lg:grid-cols-[1.5fr_0.9fr] lg:items-end">

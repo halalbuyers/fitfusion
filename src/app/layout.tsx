@@ -4,44 +4,54 @@ import AppProviders from '../components/AppProviders'
 import Navbar from '../components/Navbar'
 import AnnouncementSlot from '../components/AnnouncementSlot'
 import Footer from '../components/Footer'
+import { SITE_DESCRIPTION, SITE_KEYWORDS, SITE_NAME, SITE_TITLE, SITE_URL, organizationJsonLd, softwareJsonLd, websiteJsonLd } from '../lib/seo'
 import '../styles/globals.css'
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://noircloset.local'),
+  metadataBase: new URL(SITE_URL),
   title: {
-    default: 'Noir Closet',
-    template: '%s | Noir Closet'
+    default: SITE_TITLE,
+    template: `%s | ${SITE_NAME}`
   },
-  applicationName: 'Noir Closet',
-  description: 'Your AI-Powered Smart Wardrobe. Wear Smarter. Powered by AI.',
-  keywords: ['Noir Closet', 'AI fashion operating system', 'smart wardrobe', 'AI stylist', 'outfit planner'],
-  authors: [{ name: 'Noir Closet' }],
-  creator: 'Noir Closet',
-  publisher: 'Noir Closet',
+  applicationName: SITE_NAME,
+  category: 'Lifestyle',
+  description: SITE_DESCRIPTION,
+  keywords: SITE_KEYWORDS,
+  authors: [{ name: SITE_NAME }],
+  creator: SITE_NAME,
+  publisher: SITE_NAME,
   manifest: '/site.webmanifest',
   icons: {
-    icon: [{ url: '/favicon.svg', type: 'image/svg+xml' }],
-    shortcut: ['/favicon.svg'],
-    apple: [{ url: '/favicon.svg', type: 'image/svg+xml' }]
+    icon: [
+      { url: '/favicon.ico', sizes: 'any' },
+      { url: '/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icon-192.png', sizes: '192x192', type: 'image/png' },
+      { url: '/icon-512.png', sizes: '512x512', type: 'image/png' }
+    ],
+    shortcut: ['/favicon.ico'],
+    apple: [{ url: '/apple-touch-icon.png', sizes: '180x180', type: 'image/png' }]
   },
   openGraph: {
-    title: 'Noir Closet',
-    description: 'Your AI-Powered Smart Wardrobe.',
-    siteName: 'Noir Closet',
+    title: SITE_NAME,
+    description: 'AI Fashion Operating System',
+    siteName: SITE_NAME,
     type: 'website',
-    url: '/'
+    url: '/',
+    images: [{ url: '/og-image.png', width: 1200, height: 630, alt: SITE_NAME }]
   },
   twitter: {
-    card: 'summary',
-    title: 'Noir Closet',
-    description: 'Your AI-Powered Smart Wardrobe.'
+    card: 'summary_large_image',
+    title: SITE_NAME,
+    description: 'AI Fashion Operating System',
+    images: ['/og-image.png']
   },
   robots: {
     index: true,
     follow: true
   },
   verification: {
-    google: 'YXcFOx_Oll1oQDqOaCYkp82pScNttHmsML4IWCLMsCY'
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION || undefined,
+    other: process.env.NEXT_PUBLIC_BING_VERIFICATION ? { 'msvalidate.01': process.env.NEXT_PUBLIC_BING_VERIFICATION } : undefined
   }
 }
 
@@ -60,14 +70,7 @@ export default function RootLayout({
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
-            __html: JSON.stringify({
-              '@context': 'https://schema.org',
-              '@type': 'SoftwareApplication',
-              name: 'Noir Closet',
-              applicationCategory: 'LifestyleApplication',
-              operatingSystem: 'Web',
-              description: 'Your AI-Powered Smart Wardrobe.'
-            })
+            __html: JSON.stringify([organizationJsonLd(), websiteJsonLd(), softwareJsonLd()])
           }}
         />
       </head>

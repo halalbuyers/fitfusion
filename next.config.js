@@ -27,14 +27,6 @@ const nextConfig = {
     OPENAI_API_KEY: process.env.OPENAI_API_KEY,
     WEATHER_API_KEY: process.env.WEATHER_API_KEY
   },
-  async rewrites() {
-    return [
-      {
-        source: '/favicon.ico',
-        destination: '/favicon.svg'
-      }
-    ]
-  },
   async headers() {
     return [
       {
