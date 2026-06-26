@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 
-export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://noircloset.com').replace(/\/$/, '')
+export const SITE_URL = (process.env.NEXT_PUBLIC_SITE_URL || 'https://fitfusion-mu.vercel.app/').replace(/\/$/, '')
 
 export const SITE_NAME = 'Noir Closet'
 export const SITE_TITLE = 'Noir Closet – AI Fashion Operating System'
