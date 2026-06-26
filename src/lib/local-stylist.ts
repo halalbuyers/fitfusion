@@ -2,8 +2,10 @@ import { normalizeCategory, normalizeStyle } from './fashion-analysis'
 import { generateOutfits, type GeneratedOutfit, type WardrobeEngineItem } from './outfit-engine'
 import { analyzeWardrobeGaps } from './wardrobe-gap-engine'
 import type { PersonalizationProfile } from './personalization-engine'
+import { emptyPreferenceProfile } from './preference-engine'
+import { normalizeOccasion, occasionRelationships } from './fashion-knowledge'
 
-export type StylistIntent = 'recommendation' | 'weather' | 'college' | 'date' | 'streetwear' | 'formal' | 'wardrobe-analysis' | 'explanation'
+export type StylistIntent = 'recommendation' | 'weather' | 'office' | 'college' | 'party' | 'wedding' | 'date' | 'travel' | 'gym' | 'festival' | 'streetwear' | 'formal' | 'wardrobe-analysis' | 'explanation'
 
 export type OutfitCardData = {
   top: string
@@ -91,7 +93,13 @@ function inferIntent(message = ''): StylistIntent {
   if (/(missing|gap|need|add|buy|lack|wardrobe analysis|complete my wardrobe)/.test(text)) return 'wardrobe-analysis'
   if (/(why|explain|work|rate|good outfit)/.test(text)) return 'explanation'
   if (/(college|class|campus|lecture)/.test(text)) return 'college'
+  if (/(office|work|business|meeting|interview)/.test(text)) return 'office'
+  if (/(party|club|night out)/.test(text)) return 'party'
+  if (/(wedding|ceremony|reception)/.test(text)) return 'wedding'
   if (/(date|dinner|night out)/.test(text)) return 'date'
+  if (/(travel|airport|trip|flight)/.test(text)) return 'travel'
+  if (/(gym|workout|training)/.test(text)) return 'gym'
+  if (/(festival|concert|gig)/.test(text)) return 'festival'
   if (/(streetwear|street|oversized|cargo)/.test(text)) return 'streetwear'
   if (/(formal|office|interview|wedding|business)/.test(text)) return 'formal'
   if (/(weather|rain|hot|cold|summer|winter|today)/.test(text)) return 'weather'
@@ -100,9 +108,15 @@ function inferIntent(message = ''): StylistIntent {
 
 function occasionForIntent(intent: StylistIntent, fallback = 'casual') {
   if (intent === 'college') return 'college'
+  if (intent === 'office') return 'office'
+  if (intent === 'party') return 'party'
+  if (intent === 'wedding') return 'wedding'
   if (intent === 'date') return 'date'
+  if (intent === 'travel') return 'travel'
+  if (intent === 'gym') return 'gym'
+  if (intent === 'festival') return 'festival'
   if (intent === 'streetwear') return 'streetwear'
-  if (intent === 'formal') return 'formal'
+  if (intent === 'formal') return 'office'
   return fallback
 }
 
@@ -124,8 +138,27 @@ function sentenceForPalette(items: any[]) {
 function sentenceForWeather(weather: string, season?: string) {
   if (weather === 'hot' || season === 'summer') return 'It stays light enough for warm weather and avoids heavy layers.'
   if (weather === 'cold' || season === 'winter') return 'It has enough visual weight for cooler weather, especially if you add the layer.'
-  if (weather === 'rain') return 'For rain, keep the outfit practical with covered footwear and a layer that can handle the weather.'
+  if (weather === 'rain' || weather === 'rainy') return 'For rain, keep the outfit practical with covered footwear and a layer that can handle the weather.'
+  if (weather === 'humid') return 'For humidity, breathable pieces and fewer layers matter more than heavy styling.'
+  if (weather === 'windy') return 'For wind, a controlled layer keeps the outfit practical without making it too heavy.'
   return 'It works well for everyday mild weather.'
+}
+
+function preferenceSentence(preferences?: PersonalizationProfile) {
+  if (!preferences) return ''
+  const style = preferences.favoriteStyles?.[0]
+  const colors = preferences.favoriteColors?.slice(0, 2).join(' and ')
+  const categories = preferences.favoriteCategories?.slice(0, 2).join(' and ')
+  if (style && colors) return `Because you prefer ${style} styling and ${colors} tones, this direction should feel familiar in your wardrobe.`
+  if (style) return `Because you prefer ${style} styling, the outfit keeps a clear style direction.`
+  if (colors) return `Because your learned palette leans ${colors}, the colors stay close to what you usually like.`
+  if (categories) return `Because you often respond well to ${categories}, the recommendation starts from familiar wardrobe anchors.`
+  return ''
+}
+
+function occasionSentence(occasion: string) {
+  const normalized = normalizeOccasion(occasion)
+  return occasionRelationships[normalized]?.reasoning || 'The outfit is built around the selected occasion.'
 }
 
 function cardFromItems(items: any[], fallbackStyle?: string, fallbackReason?: string): OutfitCardData {
@@ -197,7 +230,8 @@ function explainOutfit(outfit: Partial<GeneratedOutfit> & { items?: any[] }, con
     `This outfit works because it has a ${strength} balance of color, silhouette, and context.`,
     `The ${card.top}, ${card.bottom}, and ${card.shoes} sit in a clear ${card.style.toLowerCase()} direction.`,
     sentenceForPalette(items),
-    sentenceForWeather(context.weather || inferWeather(context.message), context.season)
+    sentenceForWeather(context.weather || inferWeather(context.message), context.season),
+    ...(outfit.reasoning || []).slice(0, 2)
   ].join(' ')
   return { reply, intent: 'explanation' as const, outfitCard: card }
 }
@@ -223,7 +257,7 @@ function analyzeWardrobe(wardrobe: WardrobeEngineItem[]) {
 
   if (professionalGaps.length) {
     const top = professionalGaps.slice(0, 3).map((gap) => gap.title.toLowerCase()).join(', ')
-    return `Your wardrobe has useful foundations, but the biggest upgrades would be ${top}. ${professionalGaps[0].reason} These additions would help FitFusion build more varied outfits without repeating the same pieces.`
+    return `Your wardrobe has useful foundations, but the biggest upgrades would be ${top}. ${professionalGaps[0].reason} These additions would help Noir Closet build more varied outfits without repeating the same pieces.`
   }
 
   if (!gaps.length) {
@@ -267,15 +301,19 @@ export function generateStylistResponse(context: StylistContext = {}): StylistRe
     season: context.season,
     temperature: context.temperature,
     preferences: context.preferences ? {
+      ...emptyPreferenceProfile,
       preferredStyles: context.preferences.favoriteStyles,
       preferredColors: context.preferences.favoriteColors,
+      favoriteColors: context.preferences.favoriteColors,
+      favoriteStyles: context.preferences.favoriteStyles,
       avoidedColors: context.preferences.dislikedColors,
       favoriteCategories: context.preferences.favoriteCategories,
       favoriteOccasions: context.preferences.favoriteOccasions,
       dislikedColors: context.preferences.dislikedColors,
       dislikedStyles: context.preferences.dislikedStyles,
-      rejectedOutfitKeys: [],
-      favoriteOutfitKeys: []
+      dislikedCategories: context.preferences.dislikedCategories,
+      dislikedSeasons: context.preferences.dislikedSeasons,
+      dislikedOccasions: context.preferences.dislikedOccasions
     } : undefined,
     limit: 3
   })
@@ -292,14 +330,15 @@ export function generateStylistResponse(context: StylistContext = {}): StylistRe
   const intro = intent === 'weather'
     ? `For today's ${weather} weather, I would keep it practical and polished.`
     : `For a ${occasion.replace('-', ' ')} look, I would build around your ${card.top}.`
+  const preference = preferenceSentence(context.preferences)
   const advice = formatOutfitResponse({
     top: card.top,
     bottom: card.bottom,
     shoes: card.shoes,
     style: card.style,
-    reason: `${card.reason} ${sentenceForWeather(weather, context.season)}`
+    reason: `${card.reason} ${occasionSentence(occasion)} ${sentenceForWeather(weather, context.season)} ${top.reasoning?.slice(0, 2).join(' ') || ''}`
   })
-  const reply = `${intro} ${advice}`
+  const reply = `${intro} ${preference ? `${preference} ` : ''}${advice}`
 
   return { reply, intent, outfitCard: card }
 }

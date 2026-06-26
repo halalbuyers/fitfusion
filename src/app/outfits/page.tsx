@@ -190,6 +190,9 @@ export default function OutfitsPage() {
                 <div className="mt-4 grid gap-2">
                   <div className="flex gap-2">
                     <input
+                      id={`outfit-plan-date-${outfit._id}`}
+                      name={`plannedFor-${outfit._id}`}
+                      aria-label={`Plan date for ${outfit.title}`}
                       type="date"
                       value={planDates[outfit._id] || todayInputValue()}
                       onChange={(e) => setPlanDates((current) => ({ ...current, [outfit._id]: e.target.value }))}

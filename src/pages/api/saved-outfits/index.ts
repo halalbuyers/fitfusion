@@ -33,7 +33,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!outfit?.items?.length) return res.status(400).json({ error: 'Outfit items are required' })
     const saved = await Outfit.create({
       userId,
-      title: outfit.title || 'Saved FitFusion outfit',
+      title: outfit.title || 'Saved Noir Closet outfit',
       occasion: outfit.occasion || 'casual',
       items: outfit.items.map((item: any) => ({ clothing: item.id || item.clothing?._id || item.clothing, role: item.role })),
       score: outfit.score || 0,

@@ -6,6 +6,7 @@ import FashionProfile from '../../../models/FashionProfile'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../../lib/embedding-engine'
 import { buildConfirmedClothingPayload } from '../../../lib/wardrobe-confirmation'
 import { recordTrainingExample } from '../../../lib/training-engine'
+import { recordWardrobeCorrection } from '../../../lib/learning-engine'
 import { sanitizeCategoryForFashionType } from '../../../lib/outfit-engine-profile'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -51,16 +52,25 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   const clothing = await Clothing.create(payloadWithEmbedding)
   if (payloadWithEmbedding.correctedByUser) {
-    await recordTrainingExample({
-      userId,
-      imageUrl: payloadWithEmbedding.image,
-      aiCategory: payloadWithEmbedding.aiCategory,
-      userCategory: payloadWithEmbedding.category,
-      aiColor: payloadWithEmbedding.aiColor,
-      userColor: payloadWithEmbedding.primaryColor,
-      aiStyle: req.body?.aiStyle || req.body?.style,
-      userStyle: payloadWithEmbedding.style
-    }).catch(() => null)
+    await Promise.all([
+      recordTrainingExample({
+        userId,
+        imageUrl: payloadWithEmbedding.image,
+        aiCategory: payloadWithEmbedding.aiCategory,
+        userCategory: payloadWithEmbedding.category,
+        aiColor: payloadWithEmbedding.aiColor,
+        userColor: payloadWithEmbedding.primaryColor,
+        aiStyle: req.body?.aiStyle || req.body?.style,
+        userStyle: payloadWithEmbedding.style
+      }).catch(() => null),
+      recordWardrobeCorrection({
+        userId,
+        predictedCategory: payloadWithEmbedding.aiCategory,
+        correctedCategory: payloadWithEmbedding.category,
+        predictedColor: payloadWithEmbedding.aiColor,
+        correctedColor: payloadWithEmbedding.primaryColor
+      }).catch(() => null)
+    ])
   }
   return res.status(201).json({ clothing, persisted: true })
 }

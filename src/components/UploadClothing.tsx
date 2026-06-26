@@ -264,8 +264,8 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         })}
       </div>
       <form onSubmit={submit} className="grid gap-5">
-        <label className="group relative flex min-h-[260px] cursor-pointer items-center justify-center overflow-hidden rounded-[8px] border border-dashed border-white/15 bg-white/[0.04] transition hover:border-white/35 hover:bg-white/[0.07]">
-          <input type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        <label htmlFor="wardrobe-upload-file" className="group relative flex min-h-[260px] cursor-pointer items-center justify-center overflow-hidden rounded-[8px] border border-dashed border-white/15 bg-white/[0.04] transition hover:border-white/35 hover:bg-white/[0.07]">
+          <input id="wardrobe-upload-file" name="file" type="file" accept="image/*" onChange={handleFile} className="hidden" />
           {preview ? (
             <Image src={preview} alt="Clothing upload preview" fill sizes="(min-width: 1024px) 360px, 90vw" className="object-contain p-4" unoptimized />
           ) : (
@@ -275,44 +275,44 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
               </div>
               <div>
                 <p className="text-sm font-medium text-white">Upload wardrobe image</p>
-                <p className="mt-1 text-xs text-white/45">FitFusion will analyze it, then you confirm before save.</p>
+                <p className="mt-1 text-xs text-white/45">Noir Closet will analyze it, then you confirm before save.</p>
               </div>
             </div>
           )}
         </label>
 
         <div className="grid gap-3 sm:grid-cols-2">
-          <select value={form.category} onChange={(e) => update('category', e.target.value)} className="field">
+          <select id="upload-category" name="category" aria-label="Upload category" value={form.category} onChange={(e) => update('category', e.target.value)} className="field">
             <option value="">Auto category</option>
             {categoryOptions.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
           </select>
-          <select value={form.primaryColor} onChange={(e) => update('primaryColor', e.target.value)} className="field">
+          <select id="upload-primary-color" name="primaryColor" aria-label="Upload primary color" value={form.primaryColor} onChange={(e) => update('primaryColor', e.target.value)} className="field">
             <option value="">Auto color</option>
             {reviewColors.map((item) => <option key={item} value={item}>{item === 'gray' ? 'Grey' : displayReviewValue(item)}</option>)}
           </select>
-          <input value={form.secondaryColors} onChange={(e) => update('secondaryColors', e.target.value)} placeholder="secondary colors" className="field" />
-          <select value={form.style} onChange={(e) => update('style', e.target.value)} className="field">
+          <input id="upload-secondary-colors" name="secondaryColors" aria-label="Upload secondary colors" value={form.secondaryColors} onChange={(e) => update('secondaryColors', e.target.value)} placeholder="secondary colors" className="field" />
+          <select id="upload-style" name="style" aria-label="Upload style" value={form.style} onChange={(e) => update('style', e.target.value)} className="field">
             <option value="">Auto style</option>
             {reviewStyles.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
           </select>
-          <select value={form.season} onChange={(e) => update('season', e.target.value)} className="field">
+          <select id="upload-season" name="season" aria-label="Upload season" value={form.season} onChange={(e) => update('season', e.target.value)} className="field">
             <option value="">Auto season</option>
             {reviewSeasons.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
           </select>
-          <input value={form.occasion} onChange={(e) => update('occasion', e.target.value)} placeholder="casual, college, date night" className="field" />
-          <input value={form.brand} onChange={(e) => update('brand', e.target.value)} placeholder="brand" className="field" />
-          <select value={form.fit} onChange={(e) => update('fit', e.target.value)} className="field">
+          <input id="upload-occasion" name="occasion" aria-label="Upload occasion" value={form.occasion} onChange={(e) => update('occasion', e.target.value)} placeholder="casual, college, date night" className="field" />
+          <input id="upload-brand" name="brand" aria-label="Upload brand" value={form.brand} onChange={(e) => update('brand', e.target.value)} placeholder="brand" className="field" />
+          <select id="upload-fit" name="fit" aria-label="Upload fit" value={form.fit} onChange={(e) => update('fit', e.target.value)} className="field">
             <option value="">Auto fit</option>
             {fits.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
           </select>
-          <input value={form.material} onChange={(e) => update('material', e.target.value)} placeholder="cotton, denim, fleece" className="field" />
+          <input id="upload-material" name="material" aria-label="Upload material" value={form.material} onChange={(e) => update('material', e.target.value)} placeholder="cotton, denim, fleece" className="field" />
         </div>
 
-        <input value={form.tags} onChange={(e) => update('tags', e.target.value)} placeholder="tags separated by commas" className="field" />
+        <input id="upload-tags" name="tags" aria-label="Upload tags" value={form.tags} onChange={(e) => update('tags', e.target.value)} placeholder="tags separated by commas" className="field" />
 
-        <label className="flex items-center justify-between gap-3 rounded-[8px] border border-white/10 bg-white/[0.04] px-3 py-3 text-sm text-white/68">
+        <label htmlFor="upload-auto-save-high-confidence" className="flex items-center justify-between gap-3 rounded-[8px] border border-white/10 bg-white/[0.04] px-3 py-3 text-sm text-white/68">
           <span>Auto-save high confidence items</span>
-          <input type="checkbox" checked={autoSaveHighConfidence} onChange={(e) => setAutoSaveHighConfidence(e.target.checked)} className="h-4 w-4 accent-[#d7ff55]" />
+          <input id="upload-auto-save-high-confidence" name="autoSaveHighConfidence" type="checkbox" checked={autoSaveHighConfidence} onChange={(e) => setAutoSaveHighConfidence(e.target.checked)} className="h-4 w-4 accent-[#d7ff55]" />
         </label>
 
         <button disabled={loading || !file} className="flex h-12 items-center justify-center gap-2 rounded-[8px] bg-white px-4 text-sm font-semibold text-black transition hover:bg-white/85 disabled:cursor-not-allowed disabled:opacity-60">
@@ -343,43 +343,43 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
               </div>
 
               <div className="grid gap-3 sm:grid-cols-2">
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-category" className="grid gap-1 text-xs text-white/45">
                   Category
-                  <select value={review.category} onChange={(e) => updateReview('category', e.target.value)} className="field text-sm">
+                  <select id="review-category" name="reviewCategory" value={review.category} onChange={(e) => updateReview('category', e.target.value)} className="field text-sm">
                     {categoryOptions.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-primary-color" className="grid gap-1 text-xs text-white/45">
                   Primary Color
-                  <select value={review.primaryColor} onChange={(e) => updateReview('primaryColor', e.target.value)} className="field text-sm">
+                  <select id="review-primary-color" name="reviewPrimaryColor" value={review.primaryColor} onChange={(e) => updateReview('primaryColor', e.target.value)} className="field text-sm">
                     {reviewColors.map((item) => <option key={item} value={item}>{item === 'gray' ? 'Grey' : displayReviewValue(item)}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-secondary-colors" className="grid gap-1 text-xs text-white/45">
                   Secondary Colors
-                  <input value={review.secondaryColors} onChange={(e) => updateReview('secondaryColors', e.target.value)} className="field text-sm" />
+                  <input id="review-secondary-colors" name="reviewSecondaryColors" value={review.secondaryColors} onChange={(e) => updateReview('secondaryColors', e.target.value)} className="field text-sm" />
                 </label>
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-style" className="grid gap-1 text-xs text-white/45">
                   Style
-                  <select value={review.style} onChange={(e) => updateReview('style', e.target.value)} className="field text-sm">
+                  <select id="review-style" name="reviewStyle" value={review.style} onChange={(e) => updateReview('style', e.target.value)} className="field text-sm">
                     {reviewStyles.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-season" className="grid gap-1 text-xs text-white/45">
                   Season
-                  <select value={review.season} onChange={(e) => updateReview('season', e.target.value)} className="field text-sm">
+                  <select id="review-season" name="reviewSeason" value={review.season} onChange={(e) => updateReview('season', e.target.value)} className="field text-sm">
                     {reviewSeasons.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
                   </select>
                 </label>
-                <label className="grid gap-1 text-xs text-white/45">
+                <label htmlFor="review-brand" className="grid gap-1 text-xs text-white/45">
                   Brand
-                  <input value={review.brand} onChange={(e) => updateReview('brand', e.target.value)} placeholder="brand" className="field text-sm" />
+                  <input id="review-brand" name="reviewBrand" value={review.brand} onChange={(e) => updateReview('brand', e.target.value)} placeholder="brand" className="field text-sm" />
                 </label>
               </div>
 
-              <label className="grid gap-1 text-xs text-white/45">
+              <label htmlFor="review-tags" className="grid gap-1 text-xs text-white/45">
                 Tags
-                <input value={review.tags} onChange={(e) => updateReview('tags', e.target.value)} className="field text-sm" />
+                <input id="review-tags" name="reviewTags" value={review.tags} onChange={(e) => updateReview('tags', e.target.value)} className="field text-sm" />
               </label>
 
               <div className="flex flex-col gap-2 sm:flex-row">

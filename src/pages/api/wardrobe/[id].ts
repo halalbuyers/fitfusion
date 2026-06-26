@@ -4,6 +4,7 @@ import { connectToDatabase } from '../../../lib/mongodb'
 import Clothing from '../../../models/Clothing'
 import { normalizeCategory, normalizeFit, normalizeSeason, normalizeStyle } from '../../../lib/fashion-analysis'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../../lib/embedding-engine'
+import { recordWardrobeCorrection } from '../../../lib/learning-engine'
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
@@ -30,6 +31,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PATCH') {
     const update = { ...req.body }
+    const previousCategory = String(item.category || item.aiCategory || '')
+    const previousColor = String(item.primaryColor || item.color || item.aiColor || '')
     if (update.category) update.category = normalizeCategory(update.category)
     if (update.style) update.style = normalizeStyle(update.style)
     if (update.season) update.season = normalizeSeason(update.season)
@@ -55,6 +58,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     item.embedding = generateClothingEmbedding(item)
     item.embeddingVersion = EMBEDDING_VERSION
     await item.save()
+    await recordWardrobeCorrection({
+      userId,
+      predictedCategory: item.aiCategory || previousCategory,
+      correctedCategory: item.category,
+      predictedColor: item.aiColor || previousColor,
+      correctedColor: item.primaryColor || item.color
+    }).catch(() => null)
     return res.status(200).json(item)
   }
 

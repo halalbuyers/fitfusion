@@ -24,7 +24,7 @@ Occasion: ${occasion || outfit.occasion || 'casual'}
 Weather: ${weather || 'moderate'}
 Outfit JSON: ${JSON.stringify(outfit).slice(0, 4000)}
 Return one concise paragraph.`
-    const explanation = await generateGeminiText(prompt, 'You are FitFusion, a practical AI stylist. Explain scored outfits; do not generate random combinations.')
+    const explanation = await generateGeminiText(prompt, 'You are Noir Closet, a practical AI stylist. Explain scored outfits; do not generate random combinations.')
     const fallback = localExplanation(outfit, occasion, weather)
     return res.status(200).json({ explanation: ensureNaturalLanguageResponse(explanation.trim(), fallback), method: 'hybrid' })
   } catch {

@@ -26,7 +26,7 @@ function feedbackUser(item: any) {
 }
 
 function feedbackNotificationBody(feature: string) {
-  return `Feature: ${feature}\n\nThank you for helping improve FitFusion.`
+  return `Feature: ${feature}\n\nThank you for helping improve Noir Closet.`
 }
 
 async function notifyFeedbackUser(userId: string | undefined, feature: string, type: 'feedback' | 'update') {

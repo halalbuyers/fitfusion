@@ -3,8 +3,9 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AlertCircle, Check, CloudSun, Heart, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
+import { AlertCircle, Ban, Check, CloudSun, Flame, Heart, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+import Toast from '../../components/Toast'
 
 type Clothing = { _id: string; image: string; category: string; colors?: string[]; primaryColor?: string; style?: string; season?: string }
 type Outfit = {
@@ -18,6 +19,7 @@ type Outfit = {
   breakdown?: Record<string, number>
   outfitKey?: string
   confidence?: number
+  reasoning?: string[]
   method?: string
 }
 
@@ -28,9 +30,17 @@ type WeatherData = {
   source?: string
 }
 
-const occasions = ['casual', 'college', 'date', 'party', 'gym', 'formal', 'travel', 'winter', 'summer', 'monochrome', 'luxury', 'streetwear']
-const weatherOptions = ['hot', 'warm', 'cool', 'cold', 'rainy']
+type OutfitFeedbackReaction = 'love_it' | 'not_my_style' | 'wear_again' | 'never_suggest_again'
+
+const occasions = ['casual', 'office', 'college', 'party', 'wedding', 'date', 'travel', 'gym', 'festival']
+const weatherOptions = ['hot', 'warm', 'cool', 'cold', 'rainy', 'humid', 'windy']
 const seasons = ['summer', 'winter', 'spring', 'autumn', 'all-season']
+const feedbackActions: Array<{ reaction: OutfitFeedbackReaction; label: string; success: string; Icon: typeof Heart }> = [
+  { reaction: 'love_it', label: 'Love It', success: 'Loved. Future outfits will lean into this taste.', Icon: Heart },
+  { reaction: 'not_my_style', label: 'Not My Style', success: 'Noted. Future outfits will reduce similar colors, styles, and categories.', Icon: ThumbsDown },
+  { reaction: 'wear_again', label: 'Wear Again', success: 'Great. This outfit and its items received a strong boost.', Icon: Flame },
+  { reaction: 'never_suggest_again', label: 'Never Suggest Again', success: 'Understood. Similar outfits will be strongly avoided.', Icon: Ban }
+]
 
 function scoreTone(score: number) {
   if (score >= 82) return 'bg-[#d7ff55] text-black'
@@ -56,6 +66,8 @@ export default function OutfitGeneratorPage() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null)
   const [error, setError] = useState('')
   const [notice, setNotice] = useState('')
+  const [feedbackToast, setFeedbackToast] = useState('')
+  const [feedbackBusy, setFeedbackBusy] = useState('')
 
   useEffect(() => {
     fetch('/api/wardrobe').then((res) => res.json()).then((data) => {
@@ -130,29 +142,40 @@ export default function OutfitGeneratorPage() {
     }
   }
 
-  async function rememberOutfit(outfit: Outfit, action: 'favorite' | 'reject') {
-    if (!outfit.outfitKey) return
+  async function sendOutfitFeedback(outfit: Outfit, reaction: OutfitFeedbackReaction) {
+    const action = feedbackActions.find((item) => item.reaction === reaction)
+    const key = `${outfit.outfitKey || outfit.title}-${reaction}`
+    setFeedbackBusy(key)
     setNotice('')
-    await fetch('/api/user/preferences', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(action === 'favorite'
-        ? { favoriteOutfitKey: outfit.outfitKey }
-        : { rejectOutfitKey: outfit.outfitKey })
-    }).catch(() => undefined)
-
-    if (action === 'reject') {
-      setOutfits((current) => current.filter((item) => item.outfitKey !== outfit.outfitKey))
-      setNotice('Rejected outfit removed.')
-    } else {
-      setNotice('Preference saved.')
+    setError('')
+    try {
+      const res = await fetch('/api/outfits/interactions', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          outfitKey: outfit.outfitKey,
+          reaction,
+          action: reaction,
+          outfit
+        })
+      })
+      const data = await res.json().catch(() => ({}))
+      if (!res.ok) throw new Error(data.error || 'Could not save feedback')
+      setFeedbackToast(action?.success || 'Feedback saved. Future outfits will adapt.')
+      if (reaction === 'never_suggest_again') {
+        setOutfits((current) => current.filter((item) => item.outfitKey !== outfit.outfitKey))
+      }
+    } catch (e: any) {
+      setError(e.message || 'Could not save feedback')
+    } finally {
+      setFeedbackBusy('')
     }
   }
 
   async function shareOutfit(outfit: Outfit, index: number) {
     const text = `${outfit.title || `${occasion} fit ${index + 1}`} - ${outfit.score}% style match. ${outfit.explanation}`
     if (navigator.share) {
-      await navigator.share({ title: 'FitFusion outfit', text }).catch(() => undefined)
+      await navigator.share({ title: 'Noir Closet outfit', text }).catch(() => undefined)
       return
     }
     await navigator.clipboard?.writeText(text).catch(() => undefined)
@@ -199,22 +222,22 @@ export default function OutfitGeneratorPage() {
 
               <div>
                 <p className="mb-2 text-xs uppercase tracking-[0.22em] text-white/35">Season</p>
-                <select value={season} onChange={(e) => setSeason(e.target.value)} className="field h-10 py-0 capitalize">
+                <select id="outfit-generator-season" name="season" aria-label="Season" value={season} onChange={(e) => setSeason(e.target.value)} className="field h-10 py-0 capitalize">
                   {seasons.map((item) => <option key={item} value={item}>{item}</option>)}
                 </select>
               </div>
             </div>
 
             <div className="grid gap-4 md:grid-cols-[1fr_160px_150px]">
-              <label className="block">
+              <label htmlFor="outfit-generator-temperature-range" className="block">
                 <span className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.22em] text-white/35">
                   <Thermometer className="h-4 w-4" />
                   Temperature
                 </span>
-                <input value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} min={0} max={45} type="range" className="w-full accent-[#d7ff55]" />
+                <input id="outfit-generator-temperature-range" name="temperatureRange" aria-label="Temperature range" value={temperature} onChange={(e) => setTemperature(Number(e.target.value))} min={0} max={45} type="range" className="w-full accent-[#d7ff55]" />
               </label>
-              <input value={temperature} onChange={(e) => setTemperature(Number(e.target.value || 0))} type="number" min={0} max={45} className="field h-11" />
-              <select value={mode} onChange={(e) => setMode(e.target.value as 'basic' | 'hybrid')} className="field h-11">
+              <input id="outfit-generator-temperature" name="temperature" aria-label="Temperature" value={temperature} onChange={(e) => setTemperature(Number(e.target.value || 0))} type="number" min={0} max={45} className="field h-11" />
+              <select id="outfit-generator-mode" name="mode" aria-label="Generation mode" value={mode} onChange={(e) => setMode(e.target.value as 'basic' | 'hybrid')} className="field h-11">
                 <option value="basic">Local</option>
                 <option value="hybrid">Hybrid AI</option>
               </select>
@@ -320,6 +343,14 @@ export default function OutfitGeneratorPage() {
                     </div>
                     <p className="mt-4 text-sm leading-6 text-white/58">{outfit.explanation}</p>
                     {outfit.colorAnalysis && <p className="mt-2 text-xs text-white/38">{outfit.colorAnalysis}</p>}
+                    {outfit.reasoning?.length ? (
+                      <div className="mt-3 rounded-[8px] border border-white/10 bg-black/22 p-3">
+                        <p className="text-[11px] uppercase tracking-[0.2em] text-white/35">Stylist reasoning</p>
+                        <ul className="mt-2 grid gap-1 text-xs leading-5 text-white/58">
+                          {outfit.reasoning.slice(0, 4).map((reason, reasonIndex) => <li key={`${outfit.outfitKey || index}-reason-${reasonIndex}`}>{reason}</li>)}
+                        </ul>
+                      </div>
+                    ) : null}
 
                     <div className="mt-4 grid grid-cols-2 gap-2 sm:grid-cols-5">
                       {['Top', 'Bottom', 'Shoes', 'Layer', 'Accessories'].map((role) => {
@@ -349,13 +380,10 @@ export default function OutfitGeneratorPage() {
                       ))}
                     </div>
 
-                    <div className="mt-5 grid grid-cols-4 gap-2 sm:grid-cols-[1fr_repeat(4,40px)]">
+                    <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                       <button onClick={() => saveOutfit(outfit, index)} disabled={saving === String(index)} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-[8px] bg-white text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60">
                         {saving === String(index) ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
                         Save
-                      </button>
-                      <button title="Favorite signal" onClick={() => rememberOutfit(outfit, 'favorite')} className="icon-button h-10 w-10">
-                        <Heart className="h-4 w-4" />
                       </button>
                       <button title="Regenerate outfits" onClick={generate} disabled={loading} className="icon-button h-10 w-10 disabled:opacity-50">
                         <RefreshCw className="h-4 w-4" />
@@ -363,9 +391,25 @@ export default function OutfitGeneratorPage() {
                       <button title="Share outfit" onClick={() => shareOutfit(outfit, index)} className="icon-button h-10 w-10">
                         <Share2 className="h-4 w-4" />
                       </button>
-                      <button title="Reject outfit" onClick={() => rememberOutfit(outfit, 'reject')} className="icon-button h-10 w-10">
-                        <ThumbsDown className="h-4 w-4" />
-                      </button>
+                    </div>
+
+                    <div className="mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+                      {feedbackActions.map(({ reaction, label, Icon }) => {
+                        const key = `${outfit.outfitKey || outfit.title}-${reaction}`
+                        const busy = feedbackBusy === key
+                        return (
+                          <button
+                            key={reaction}
+                            type="button"
+                            onClick={() => sendOutfitFeedback(outfit, reaction)}
+                            disabled={Boolean(feedbackBusy)}
+                            className="flex min-h-10 items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-black/24 px-2 text-xs font-medium text-white/70 transition hover:bg-white/10 hover:text-white disabled:cursor-progress disabled:opacity-60"
+                          >
+                            {busy ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Icon className="h-3.5 w-3.5" />}
+                            <span>{label}</span>
+                          </button>
+                        )
+                      })}
                     </div>
                   </div>
                 </article>
@@ -387,6 +431,7 @@ export default function OutfitGeneratorPage() {
           </div>
         )}
       </section>
+      {feedbackToast && <Toast message={feedbackToast} type="success" onClose={() => setFeedbackToast('')} />}
     </AppFrame>
   )
 }

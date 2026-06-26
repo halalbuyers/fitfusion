@@ -88,19 +88,19 @@ export default function EditClothingModal({ item, onClose, onSaved }: Props) {
         </div>
 
         <div className="mt-5 grid gap-3 sm:grid-cols-2">
-          <select className="field" value={form.category || 'unknown'} onChange={(e) => update('category', e.target.value)}>
+          <select id="edit-clothing-category" name="category" aria-label="Clothing category" className="field" value={form.category || 'unknown'} onChange={(e) => update('category', e.target.value)}>
             {['unknown', ...reviewCategories].map((category) => <option key={category} value={category}>{displayReviewValue(category)}</option>)}
           </select>
-          <input className="field" value={form.colors} onChange={(e) => update('colors', e.target.value)} placeholder="colors, comma separated" />
-          <input className="field" value={form.style} onChange={(e) => update('style', e.target.value)} placeholder="style" />
-          <input className="field" value={form.season} onChange={(e) => update('season', e.target.value)} placeholder="season" />
-          <input className="field" value={form.occasion} onChange={(e) => update('occasion', e.target.value)} placeholder="occasion, comma separated" />
-          <input className="field" value={form.brand} onChange={(e) => update('brand', e.target.value)} placeholder="brand" />
-          <input className="field" value={form.fitType} onChange={(e) => update('fitType', e.target.value)} placeholder="fit type" />
-          <input className="field" value={form.material} onChange={(e) => update('material', e.target.value)} placeholder="material" />
+          <input id="edit-clothing-colors" name="colors" aria-label="Clothing colors" className="field" value={form.colors} onChange={(e) => update('colors', e.target.value)} placeholder="colors, comma separated" />
+          <input id="edit-clothing-style" name="style" aria-label="Clothing style" className="field" value={form.style} onChange={(e) => update('style', e.target.value)} placeholder="style" />
+          <input id="edit-clothing-season" name="season" aria-label="Clothing season" className="field" value={form.season} onChange={(e) => update('season', e.target.value)} placeholder="season" />
+          <input id="edit-clothing-occasion" name="occasion" aria-label="Clothing occasion" className="field" value={form.occasion} onChange={(e) => update('occasion', e.target.value)} placeholder="occasion, comma separated" />
+          <input id="edit-clothing-brand" name="brand" aria-label="Clothing brand" className="field" value={form.brand} onChange={(e) => update('brand', e.target.value)} placeholder="brand" />
+          <input id="edit-clothing-fit-type" name="fitType" aria-label="Clothing fit type" className="field" value={form.fitType} onChange={(e) => update('fitType', e.target.value)} placeholder="fit type" />
+          <input id="edit-clothing-material" name="material" aria-label="Clothing material" className="field" value={form.material} onChange={(e) => update('material', e.target.value)} placeholder="material" />
         </div>
 
-        <input className="field mt-3" value={form.tags} onChange={(e) => update('tags', e.target.value)} placeholder="tags, comma separated" />
+        <input id="edit-clothing-tags" name="tags" aria-label="Clothing tags" className="field mt-3" value={form.tags} onChange={(e) => update('tags', e.target.value)} placeholder="tags, comma separated" />
 
         {error && <div className="mt-4 rounded-[8px] border border-red-400/20 bg-red-400/10 p-3 text-sm text-red-100">{error}</div>}
 

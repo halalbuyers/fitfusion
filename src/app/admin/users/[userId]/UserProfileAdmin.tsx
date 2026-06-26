@@ -36,7 +36,7 @@ function formatDate(value?: string | null) {
 }
 
 function initials(value?: string) {
-  const parts = String(value || 'FitFusion').trim().split(/\s+/).filter(Boolean)
+  const parts = String(value || 'Noir Closet').trim().split(/\s+/).filter(Boolean)
   return ((parts[0]?.[0] || 'F') + (parts[1]?.[0] || parts[0]?.[1] || 'F')).toUpperCase()
 }
 

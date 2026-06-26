@@ -158,6 +158,11 @@ export default function CommunityPage() {
         </div>
         <div className="flex items-center gap-2">
           <input
+            id="community-search"
+            name="communitySearch"
+            type="search"
+            autoComplete="off"
+            aria-label="Search community"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
             placeholder="Search hashtags, brands, or styles"
@@ -198,13 +203,13 @@ export default function CommunityPage() {
                     <div className="flex items-center gap-3">
                       <div className="relative h-12 w-12 overflow-hidden rounded-full bg-white/10">
                         {post.author?.avatar ? (
-                          <Image src={post.author.avatar} alt={post.author.name || 'Avatar'} fill className="object-cover" />
+                          <Image src={post.author.avatar} alt={post.author.name || 'Avatar'} fill sizes="48px" className="object-cover" />
                         ) : (
                           <div className="grid h-full w-full place-items-center text-white/60">{post.author?.name?.charAt(0) || 'F'}</div>
                         )}
                       </div>
                       <div>
-                        <p className="font-semibold text-white">{post.author?.name || 'FitFusion Creator'}</p>
+                        <p className="font-semibold text-white">{post.author?.name || 'Noir Closet Creator'}</p>
                         <p className="text-xs text-white/45">@{post.author?.handle || 'styledrop'} · {createdAt}</p>
                       </div>
                     </div>
@@ -234,7 +239,7 @@ export default function CommunityPage() {
 
                   <div className="mt-4 space-y-3">
                     <h3 className="text-xl font-semibold text-white">{post.title || post.caption?.slice(0, 50) || 'Style moment'}</h3>
-                    <p className="text-sm leading-6 text-white/65">{post.caption || 'A polished post from the FitFusion community.'}</p>
+                    <p className="text-sm leading-6 text-white/65">{post.caption || 'A polished post from the Noir Closet community.'}</p>
                   </div>
                 </div>
 
@@ -245,6 +250,7 @@ export default function CommunityPage() {
                       src={post.videoThumbnail || post.images?.[0] || '/images/hero-fashion.webp'}
                       alt={post.title || 'Community video'}
                       fill
+                      sizes="(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw"
                       className="object-cover"
                     />
                   </div>
@@ -252,7 +258,7 @@ export default function CommunityPage() {
                   <div className={`grid ${images.length > 1 ? 'grid-cols-2 gap-px' : ''} bg-white/10`}>
                     {images.map((image, index) => (
                       <div key={`${post._id}-${index}`} className={`relative aspect-square bg-black/25 ${index === 0 && images.length === 1 ? 'col-span-2 row-span-2' : ''}`}>
-                        <Image src={image} alt={post.title || `Post image ${index + 1}`} fill className="object-cover" />
+                        <Image src={image} alt={post.title || `Post image ${index + 1}`} fill sizes={images.length > 1 ? '(min-width: 1280px) 15vw, (min-width: 640px) 22vw, 50vw' : '(min-width: 1280px) 30vw, (min-width: 640px) 45vw, 100vw'} className="object-cover" />
                       </div>
                     ))}
                   </div>

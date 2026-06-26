@@ -22,12 +22,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (req.method === 'PUT') {
     const body = req.body || {}
-    const email = String(body.email || `${userId}@fitfusion.local`)
+    const email = String(body.email || `${userId}@noircloset.local`)
     const profile = await User.findOneAndUpdate(
       { clerkId: userId },
       {
         clerkId: userId,
-        name: String(body.name || 'FitFusion User'),
+        name: String(body.name || 'Noir Closet User'),
         email,
         profilePhoto: String(body.profilePhoto || ''),
         coverPhoto: String(body.coverPhoto || ''),

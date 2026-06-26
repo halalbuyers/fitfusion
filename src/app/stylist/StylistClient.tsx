@@ -1,7 +1,7 @@
 "use client"
 
 import { useMemo, useState } from 'react'
-import { Bot, Footprints, Send, Shirt, Sparkles, UserRound } from 'lucide-react'
+import { Bot, Footprints, Send, Shirt, Sparkles, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 
 type OutfitCardData = {
@@ -47,6 +47,7 @@ export default function StylistPage() {
   ])
   const [input, setInput] = useState('')
   const [isTyping, setIsTyping] = useState(false)
+  const [feedbackByMessage, setFeedbackByMessage] = useState<Record<number, 'liked' | 'disliked'>>({})
 
   const apiMessages = useMemo(() => messages.map((message) => ({
     role: message.role === 'assistant' ? 'assistant' : 'user',
@@ -84,6 +85,15 @@ export default function StylistPage() {
     } finally {
       setIsTyping(false)
     }
+  }
+
+  async function rateAdvice(index: number, action: 'liked' | 'disliked') {
+    setFeedbackByMessage((current) => ({ ...current, [index]: action }))
+    await fetch('/api/ai/stylist-feedback', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action, topic: 'stylist advice' })
+    }).catch(() => undefined)
   }
 
   function OutfitRecommendationCard({ card }: { card: OutfitCardData }) {
@@ -156,11 +166,29 @@ export default function StylistPage() {
                 )}
                 <div className={`max-w-[85%] rounded-[8px] p-4 shadow-lg shadow-black/12 ${message.role === 'user' ? 'bg-white text-black' : 'bg-black/28 text-white'}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold opacity-60">
-                    {message.role === 'user' ? 'You' : 'FitFusion'}
+                    {message.role === 'user' ? 'You' : 'Noir Closet'}
                     {message.method && <span className="rounded bg-white/10 px-1.5 py-0.5 uppercase">{message.method}</span>}
                   </div>
                   <p className="mt-2 whitespace-pre-line text-sm leading-6">{message.content}</p>
                   {message.role === 'assistant' && message.outfitCard && <OutfitRecommendationCard card={message.outfitCard} />}
+                  {message.role === 'assistant' && index > 0 ? (
+                    <div className="mt-3 flex gap-2">
+                      <button
+                        title="Like stylist advice"
+                        onClick={() => rateAdvice(index, 'liked')}
+                        className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'liked' ? 'bg-[#d7ff55] text-black' : ''}`}
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        title="Dislike stylist advice"
+                        onClick={() => rateAdvice(index, 'disliked')}
+                        className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'disliked' ? 'bg-white text-black' : ''}`}
+                      >
+                        <ThumbsDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  ) : null}
                 </div>
                 {message.role === 'user' && (
                   <div className="grid h-9 w-9 shrink-0 place-items-center rounded-[8px] bg-white text-black">
@@ -188,6 +216,10 @@ export default function StylistPage() {
 
           <div className="mt-4 flex gap-3">
             <input
+              id="stylist-message"
+              name="message"
+              autoComplete="off"
+              aria-label="Stylist message"
               value={input}
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()}

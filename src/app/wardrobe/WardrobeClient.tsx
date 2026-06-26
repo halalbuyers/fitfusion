@@ -27,7 +27,7 @@ export default function WardrobePage() {
         <section className="glass h-fit rounded-[8px] p-4 sm:p-5 xl:sticky xl:top-5">
           <h2 className="text-lg font-semibold sm:text-xl">Upload clothing</h2>
           <p className="mt-2 text-sm leading-6 text-white/50">
-            Add a clothing image, review FitFusion&apos;s AI-assisted tags, then save the final item.
+            Add a clothing image, review Noir Closet&apos;s AI-assisted tags, then save the final item.
           </p>
           <div className="mt-5">
             <UploadClothing onUploaded={() => setRefreshKey((key) => key + 1)} />

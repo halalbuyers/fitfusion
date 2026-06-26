@@ -102,11 +102,11 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
         <div className="flex gap-2">
           <div className="relative flex-1 md:w-56">
             <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search closet" className="field h-10 pl-9" />
+            <input id="wardrobe-search" name="wardrobeSearch" type="search" autoComplete="off" aria-label="Search closet" value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Search closet" className="field h-10 pl-9" />
           </div>
           <div className="relative">
             <SlidersHorizontal className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-            <select value={category} onChange={(e) => setCategory(e.target.value)} className="field h-10 pl-9 capitalize">
+            <select id="wardrobe-category-filter" name="wardrobeCategoryFilter" aria-label="Filter wardrobe category" value={category} onChange={(e) => setCategory(e.target.value)} className="field h-10 pl-9 capitalize">
               {categories.map((item) => <option key={item} value={item}>{displayReviewValue(item)}</option>)}
             </select>
           </div>

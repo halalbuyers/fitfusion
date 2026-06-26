@@ -8,6 +8,7 @@ import AdminAnnouncement from '../../models/AdminAnnouncement'
 import AdminFeedback from '../../models/AdminFeedback'
 import AdminSetting from '../../models/AdminSetting'
 import AiRequestLog from '../../models/AiRequestLog'
+import OutfitFeedback from '../../models/OutfitFeedback'
 import OutfitInteraction from '../../models/OutfitInteraction'
 import TrainingExample from '../../models/TrainingExample'
 
@@ -39,6 +40,28 @@ export async function topValues(model: mongoose.Model<any>, field: string, limit
   ])
 }
 
+async function topFeedbackArray(field: 'colors' | 'categories', reactions: string[], limit = 6) {
+  return OutfitFeedback.aggregate([
+    { $match: { reaction: { $in: reactions } } },
+    { $unwind: `$${field}` },
+    { $match: { [field]: { $nin: [null, '', 'unknown', 'other'] } } },
+    { $group: { _id: `$${field}`, value: { $sum: 1 } } },
+    { $sort: { value: -1 } },
+    { $limit: limit },
+    { $project: { _id: 0, name: '$_id', value: 1 } }
+  ]).catch(() => [])
+}
+
+async function topFeedbackScalar(field: 'style' | 'season' | 'occasion', reactions: string[], limit = 6) {
+  return OutfitFeedback.aggregate([
+    { $match: { reaction: { $in: reactions }, [field]: { $nin: [null, '', 'unknown', 'other'] } } },
+    { $group: { _id: `$${field}`, value: { $sum: 1 } } },
+    { $sort: { value: -1 } },
+    { $limit: limit },
+    { $project: { _id: 0, name: '$_id', value: 1 } }
+  ]).catch(() => [])
+}
+
 export async function dailyCounts(model: mongoose.Model<any>, days = 14) {
   const since = daysAgo(days - 1)
   const rows = await model.aggregate([
@@ -64,7 +87,8 @@ export async function getAdminSettings() {
     enableAiStylist: true,
     enableOutfitGenerator: true,
     maintenanceMode: false,
-    registrationEnabled: true
+    registrationEnabled: true,
+    monetizationMode: 'disabled'
   }
 }
 
@@ -99,6 +123,13 @@ export async function getAdminOverview() {
     likedOutfits,
     rejectedOutfits,
     wornOutfits,
+    lovedFeedback,
+    rejectedFeedback,
+    lovedOutfitTypes,
+    rejectedOutfitTypes,
+    feedbackTopColors,
+    feedbackTopStyles,
+    feedbackTopSeasons,
     imageCorrections,
     recentUsers,
     recentItems
@@ -125,9 +156,16 @@ export async function getAdminOverview() {
     AiRequestLog.countDocuments({ status: 'fallback' }).catch(() => 0),
     AiRequestLog.countDocuments({ provider: 'gemini' }).catch(() => 0),
     AiRequestLog.aggregate([{ $group: { _id: null, value: { $avg: '$responseTimeMs' } } }]).catch(() => []),
-    OutfitInteraction.countDocuments({ action: { $in: ['liked', 'favorited', 'saved'] } }).catch(() => 0),
-    OutfitInteraction.countDocuments({ action: 'rejected' }).catch(() => 0),
-    OutfitInteraction.countDocuments({ action: 'worn' }).catch(() => 0),
+    OutfitInteraction.countDocuments({ action: { $in: ['liked', 'favorited', 'saved', 'love_it'] } }).catch(() => 0),
+    OutfitInteraction.countDocuments({ action: { $in: ['rejected', 'not_my_style', 'never_suggest_again'] } }).catch(() => 0),
+    OutfitInteraction.countDocuments({ action: { $in: ['worn', 'wear_again'] } }).catch(() => 0),
+    OutfitFeedback.countDocuments({ reaction: { $in: ['love_it', 'wear_again'] } }).catch(() => 0),
+    OutfitFeedback.countDocuments({ reaction: { $in: ['not_my_style', 'never_suggest_again'] } }).catch(() => 0),
+    topFeedbackScalar('occasion', ['love_it', 'wear_again']),
+    topFeedbackScalar('occasion', ['not_my_style', 'never_suggest_again']),
+    topFeedbackArray('colors', ['love_it', 'wear_again']),
+    topFeedbackScalar('style', ['love_it', 'wear_again']),
+    topFeedbackScalar('season', ['love_it', 'wear_again']),
     TrainingExample.countDocuments().catch(() => 0),
     User.find().sort({ createdAt: -1 }).limit(6).lean(),
     Clothing.find().sort({ createdAt: -1 }).limit(6).lean()
@@ -165,8 +203,15 @@ export async function getAdminOverview() {
         { name: 'Liked/Saved', value: likedOutfits },
         { name: 'Rejected', value: rejectedOutfits },
         { name: 'Worn', value: wornOutfits },
+        { name: 'Loved', value: lovedFeedback },
+        { name: 'Never Again', value: rejectedFeedback },
         { name: 'Image Corrections', value: imageCorrections }
       ],
+      lovedOutfitTypes,
+      rejectedOutfitTypes,
+      feedbackTopColors,
+      feedbackTopStyles,
+      feedbackTopSeasons,
       weather: [
         { name: 'Clear', value: Math.max(1, Math.round(totalOutfitsGenerated * 0.34)) },
         { name: 'Rain', value: Math.round(totalOutfitsGenerated * 0.18) },

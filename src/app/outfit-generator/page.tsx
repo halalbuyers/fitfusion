@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import OutfitGeneratorRoute from './OutfitGeneratorRoute'
 
 export const metadata: Metadata = {
-  title: 'Outfit Generator | FitFusion',
-  description: 'Generate weather-aware outfits from your FitFusion wardrobe for any occasion.'
+  title: 'Outfit Generator',
+  description: 'Generate weather-aware outfits from your Noir Closet wardrobe for any occasion.'
 }
 
 export default function OutfitGeneratorPage() {

@@ -180,7 +180,7 @@ export default function OnboardingPage() {
               <div className="mb-8 inline-flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-[#d7ff55] to-[#a0cc00]">
                 <Heart className="h-8 w-8 text-black" />
               </div>
-              <h1 className="text-5xl font-bold text-white mb-3">Welcome to FitFusion</h1>
+              <h1 className="text-5xl font-bold text-white mb-3">Welcome to Noir Closet</h1>
               <p className="text-xl text-white/60 mb-8">Let&apos;s personalize your fashion experience in just 5 minutes.</p>
               <button
                 onClick={handleNext}
@@ -299,7 +299,7 @@ export default function OnboardingPage() {
 
           {step === 'goals' && (
             <div key="goals">
-              <h2 className="text-3xl font-bold text-white mb-2">What do you want from FitFusion?</h2>
+              <h2 className="text-3xl font-bold text-white mb-2">What do you want from Noir Closet?</h2>
               <p className="text-white/50 mb-8">Tell us your fashion goals.</p>
 
               <div className="grid gap-3">
@@ -337,7 +337,7 @@ export default function OnboardingPage() {
                     </div>
                   </div>
                   <h2 className="text-3xl font-bold text-white mb-3">Creating your profile...</h2>
-                  <p className="text-white/60">Personalizing FitFusion for you.</p>
+                  <p className="text-white/60">Personalizing Noir Closet for you.</p>
                 </>
               ) : (
                 <>
@@ -345,7 +345,7 @@ export default function OnboardingPage() {
                     <Heart className="h-8 w-8 text-black" />
                   </div>
                   <h2 className="text-3xl font-bold text-white mb-3">You&apos;re all set!</h2>
-                  <p className="text-white/60 mb-8">Your FitFusion profile is ready. Let&apos;s find you amazing outfits.</p>
+                  <p className="text-white/60 mb-8">Your Noir Closet profile is ready. Let&apos;s find you amazing outfits.</p>
                   <button
                     onClick={handleComplete}
                     className="inline-flex items-center justify-center gap-2 rounded-full bg-gradient-to-r from-[#d7ff55] to-[#a0cc00] px-8 py-4 text-lg font-semibold text-black transition hover:shadow-lg hover:shadow-[#d7ff55]/50"

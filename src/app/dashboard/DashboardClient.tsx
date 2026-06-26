@@ -9,11 +9,20 @@ type Clothing = { _id: string; category: string; primaryColor?: string; colors?:
 type Outfit = { _id?: string; title?: string; score: number; explanation?: string; tags?: string[]; breakdown?: Record<string, number> }
 type Weather = { temperature: number; condition: string; suggestion: string; source: string }
 type Preferences = { preferredStyles: string[]; preferredColors: string[]; favoriteCategories: string[] }
+type StyleProfile = {
+  personalizationScore: number
+  message: string
+  favoriteColors: string[]
+  favoriteCategories: string[]
+  favoriteStyles: string[]
+  seasonPreference: string[]
+}
 export default function DashboardPage() {
   const [wardrobe, setWardrobe] = useState<Clothing[]>([])
   const [outfits, setOutfits] = useState<Outfit[]>([])
   const [weather, setWeather] = useState<Weather | null>(null)
   const [preferences, setPreferences] = useState<Preferences | null>(null)
+  const [styleProfile, setStyleProfile] = useState<StyleProfile | null>(null)
   const [feedback, setFeedback] = useState({ type: 'feedback', title: '', message: '' })
   const [feedbackStatus, setFeedbackStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle')
   const [loading, setLoading] = useState(true)
@@ -22,12 +31,13 @@ export default function DashboardPage() {
     let active = true
     async function load() {
       setLoading(true)
-      const [wardrobeRes, outfitsRes, weatherRes, preferencesRes, recommendRes] = await Promise.allSettled([
+      const [wardrobeRes, outfitsRes, weatherRes, preferencesRes, recommendRes, styleProfileRes] = await Promise.allSettled([
         fetch('/api/wardrobe').then((res) => res.json()),
         fetch('/api/outfits').then((res) => res.json()),
         fetch('/api/weather').then((res) => res.json()),
         fetch('/api/user/preferences').then((res) => res.json()),
-        fetch('/api/outfits/recommend?occasion=casual&limit=3').then((res) => res.json())
+        fetch('/api/outfits/recommend?occasion=casual&limit=3').then((res) => res.json()),
+        fetch('/api/user/style-profile').then((res) => res.json())
       ])
       if (!active) return
       if (wardrobeRes.status === 'fulfilled' && Array.isArray(wardrobeRes.value)) setWardrobe(wardrobeRes.value)
@@ -35,6 +45,7 @@ export default function DashboardPage() {
       if (recommendRes.status === 'fulfilled' && Array.isArray(recommendRes.value?.outfits) && recommendRes.value.outfits.length) setOutfits((current) => current.length ? current : recommendRes.value.outfits)
       if (weatherRes.status === 'fulfilled') setWeather(weatherRes.value)
       if (preferencesRes.status === 'fulfilled' && preferencesRes.value?.preferredStyles) setPreferences(preferencesRes.value)
+      if (styleProfileRes.status === 'fulfilled' && typeof styleProfileRes.value?.personalizationScore === 'number') setStyleProfile(styleProfileRes.value)
       setLoading(false)
     }
     load()
@@ -85,7 +96,7 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-4">
         <MetricCard label="Wardrobe items" value={loading ? '...' : String(wardrobe.length)} note="Pieces available for local styling" />
         <MetricCard label="Best outfit score" value={analytics.score} note="Highest saved recommendation" />
-        <MetricCard label="Favorite style" value={analytics.favoriteStyle} note="Detected from your closet" />
+        <MetricCard label="AI style memory" value={styleProfile ? `${styleProfile.personalizationScore}%` : 'Learning'} note={styleProfile?.message || 'AI understands your style as you interact'} />
         <MetricCard label="Weather fit" value={weather ? `${weather.temperature}C` : 'Ready'} note={weather?.condition || 'Fallback enabled'} />
       </div>
 
@@ -142,8 +153,8 @@ export default function DashboardPage() {
             </div>
             <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
               <Heart className="h-5 w-5 text-white/65" />
-              <p className="mt-4 text-2xl font-semibold">{preferences?.preferredStyles?.[0] || analytics.favoriteStyle}</p>
-              <p className="text-sm text-white/45">Preference profile</p>
+              <p className="mt-4 text-2xl font-semibold">{styleProfile?.favoriteStyles?.[0] || preferences?.preferredStyles?.[0] || analytics.favoriteStyle}</p>
+              <p className="text-sm text-white/45">{styleProfile?.seasonPreference?.[0] ? `${styleProfile.seasonPreference[0]} preference` : 'Preference profile'}</p>
             </div>
           </div>
           <div className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
@@ -157,6 +168,9 @@ export default function DashboardPage() {
             </div>
             <div className="mt-4 grid gap-3">
               <select
+                id="feedback-type"
+                name="type"
+                aria-label="Feedback type"
                 className="field"
                 value={feedback.type}
                 onChange={(event) => setFeedback((current) => ({ ...current, type: event.target.value }))}
@@ -166,6 +180,9 @@ export default function DashboardPage() {
                 <option value="feature">Feature request</option>
               </select>
               <input
+                id="feedback-title"
+                name="title"
+                aria-label="Feedback title"
                 className="field"
                 value={feedback.title}
                 onChange={(event) => setFeedback((current) => ({ ...current, title: event.target.value }))}
@@ -173,6 +190,9 @@ export default function DashboardPage() {
                 required
               />
               <textarea
+                id="feedback-message"
+                name="message"
+                aria-label="Feedback message"
                 className="field min-h-24 resize-none"
                 value={feedback.message}
                 onChange={(event) => setFeedback((current) => ({ ...current, message: event.target.value }))}

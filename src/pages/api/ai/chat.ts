@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from 'next'
 import { getAuth } from '@clerk/nextjs/server'
 import Clothing from '../../../models/Clothing'
+import FashionProfile from '../../../models/FashionProfile'
 import { connectToDatabase } from '../../../lib/mongodb'
 import AiRequestLog from '../../../models/AiRequestLog'
 import { generateGeminiText, hasGemini } from '../../../ai/gemini'
@@ -19,10 +20,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     let wardrobe: WardrobeItem[] = []
     let preferences = null
+    let fashionProfile: any = null
     try {
       await connectToDatabase()
-      wardrobe = await Clothing.find({ userId }).limit(80).lean()
-      preferences = await getPersonalizationProfile(userId).catch(() => null)
+      const [wardrobeItems, learnedPreferences, profile] = await Promise.all([
+        Clothing.find({ userId }).limit(80).lean(),
+        getPersonalizationProfile(userId).catch(() => null),
+        FashionProfile.findOne({ userId }).lean().catch(() => null)
+      ])
+      wardrobe = wardrobeItems
+      fashionProfile = profile as any
+      preferences = learnedPreferences ? {
+        ...learnedPreferences,
+        favoriteStyles: [...new Set([...(learnedPreferences.favoriteStyles || []), ...(fashionProfile?.preferredStyles || [])])],
+        favoriteColors: [...new Set([...(learnedPreferences.favoriteColors || []), ...(fashionProfile?.favoriteColors || [])])],
+        favoriteOccasions: [...new Set([...(learnedPreferences.favoriteOccasions || []), ...(fashionProfile?.preferredOccasions || [])])]
+      } : null
     } catch {
       wardrobe = []
     }
@@ -45,8 +58,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     let responseText = ''
     try {
       responseText = await generateGeminiText(
-        `${userPrompt || prompt}\n\nLocal FitFusion recommendation:\n${localReply}`,
-        `You are FitFusion, a concise modern AI stylist. Use this wardrobe inventory when advising: ${inventory || 'No persisted wardrobe available'}. Never invent items. Return only natural conversational prose. Never return JSON, objects, arrays, markdown code fences, or stringified data. If the local recommendation is enough, refine it in a premium, practical tone.`
+        `${userPrompt || prompt}\n\nLocal Noir Closet recommendation:\n${localReply}`,
+        `You are Noir Closet, a concise modern AI stylist. Use this wardrobe inventory when advising: ${inventory || 'No persisted wardrobe available'}. User preferences: styles=${preferences?.favoriteStyles?.join(', ') || 'learning'}, colors=${preferences?.favoriteColors?.join(', ') || 'learning'}, fashionType=${fashionProfile?.fashionType || 'unspecified'}. Reference occasion, weather, user preferences, and wardrobe reality. Never invent items. Return only natural conversational prose. Never return JSON, objects, arrays, markdown code fences, or stringified data. If the local recommendation is enough, refine it in a polished, practical tone.`
       )
     } catch {
       responseText = localReply

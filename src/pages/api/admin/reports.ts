@@ -30,7 +30,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   ]
   const format = String(req.query.format || 'csv')
   const body = csv(rows)
-  res.setHeader('Content-Disposition', `attachment; filename="fitfusion-admin-report.${format === 'excel' ? 'xls' : 'csv'}"`)
+  res.setHeader('Content-Disposition', `attachment; filename="noir-closet-admin-report.${format === 'excel' ? 'xls' : 'csv'}"`)
   res.setHeader('Content-Type', format === 'excel' ? 'application/vnd.ms-excel' : 'text/csv')
   return res.status(200).send(body)
 }

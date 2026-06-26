@@ -7,7 +7,7 @@ import { normalizeCategory } from '../lib/fashion-analysis'
 import { buildPreferenceProfile } from '../lib/preference-engine'
 import { getUserLearningMemory } from '../lib/learning-engine'
 import { getPersonalizationProfile } from '../lib/personalization-engine'
-import { generateOutfits, outfitKey, type OutfitRequest } from '../lib/outfit-engine'
+import { generateOutfits, outfitColorSignature, outfitKey, outfitStructureKey, type OutfitRequest } from '../lib/outfit-engine'
 import { generateGeminiText, hasGemini } from './gemini'
 import { filterItemsByFashionProfile, getCategoriesForFashionType } from '../lib/outfit-engine-profile'
 
@@ -20,6 +20,7 @@ export type GeneratedOutfit = {
   breakdown?: Record<string, number>
   outfitKey?: string
   confidence?: number
+  reasoning?: string[]
   method?: 'local' | 'hybrid'
 }
 
@@ -42,6 +43,7 @@ function toApiOutfits(items: any[], request: OutfitRequest): GeneratedOutfit[] {
     breakdown: outfit.breakdown,
     outfitKey: outfit.outfitKey || outfitKey(outfit.items),
     confidence: outfit.confidence,
+    reasoning: outfit.reasoning,
     method: 'local'
   }))
 }
@@ -113,6 +115,7 @@ export async function generateOutfitsForUser(
   const recentOutfits = await Outfit.find({ userId, outfitKey: { $exists: true, $ne: '' } })
     .sort({ createdAt: -1 })
     .limit(20)
+    .populate('items.clothing')
     .select('outfitKey items')
     .lean()
     .catch(() => [])
@@ -134,17 +137,30 @@ export async function generateOutfitsForUser(
     ...recentOutfits.map((outfit: any) => String(outfit.outfitKey)).filter(Boolean),
     ...memory.recentOutfitKeys
   ])]
+  const recentItemCombos = recentOutfits.map((outfit: any) => (outfit.items || []).map((entry: any) => entry?.clothing).filter(Boolean))
+  const recentStructures = [...new Set(recentItemCombos.map((combo: any[]) => combo.length ? outfitStructureKey(combo as any) : '').filter(Boolean))]
+  const recentColorSignatures = [...new Set(recentItemCombos.map((combo: any[]) => combo.length ? outfitColorSignature(combo as any) : '').filter(Boolean))]
   const preferences = {
     ...profile,
     preferredStyles: [...new Set([...profile.preferredStyles, ...personalization.favoriteStyles])],
     preferredColors: [...new Set([...profile.preferredColors, ...personalization.favoriteColors])],
     favoriteCategories: [...new Set([...profile.favoriteCategories, ...personalization.favoriteCategories])],
-    favoriteOccasions: personalization.favoriteOccasions,
-    dislikedColors: personalization.dislikedColors,
-    dislikedStyles: personalization.dislikedStyles,
+    favoriteColors: [...new Set([...profile.favoriteColors, ...personalization.favoriteColors])],
+    favoriteStyles: [...new Set([...profile.favoriteStyles, ...personalization.favoriteStyles])],
+    favoriteSeasons: [...new Set([...profile.favoriteSeasons, ...personalization.favoriteSeasons])],
+    favoriteOccasions: [...new Set([...profile.favoriteOccasions, ...personalization.favoriteOccasions])],
+    dislikedColors: [...new Set([...profile.dislikedColors, ...personalization.dislikedColors])],
+    dislikedStyles: [...new Set([...profile.dislikedStyles, ...personalization.dislikedStyles])],
+    dislikedCategories: [...new Set([...profile.dislikedCategories, ...personalization.dislikedCategories])],
+    dislikedSeasons: [...new Set([...profile.dislikedSeasons, ...personalization.dislikedSeasons])],
+    dislikedOccasions: [...new Set([...profile.dislikedOccasions, ...personalization.dislikedOccasions])],
     avoidedColors: [...new Set([...profile.avoidedColors, ...personalization.dislikedColors])],
     rejectedOutfitKeys: [...new Set([...profile.rejectedOutfitKeys, ...memory.rejectedOutfitKeys])],
-    favoriteOutfitKeys: [...new Set([...profile.favoriteOutfitKeys, ...memory.savedOutfitKeys])]
+    likedOutfitKeys: [...new Set([...profile.likedOutfitKeys, ...memory.savedOutfitKeys])],
+    favoriteOutfitKeys: [...new Set([...profile.favoriteOutfitKeys, ...memory.savedOutfitKeys])],
+    favoriteItems: profile.favoriteItems,
+    rejectedItems: profile.rejectedItems,
+    overusedItems: profile.overusedItems
   }
   const request: OutfitRequest = {
     occasion: options.occasion || 'casual',
@@ -155,6 +171,8 @@ export async function generateOutfitsForUser(
     preferences,
     recentlyGenerated: generationHistory.slice(0, 5),
     generationHistory,
+    recentStructures,
+    recentColorSignatures,
     itemUsageCount,
     rejectedOutfitKeys: preferences.rejectedOutfitKeys,
     previousOutfitKeys: generationHistory,

@@ -1,7 +1,7 @@
 
-# FitFusion
+# Noir Closet
 
-FitFusion is a production-oriented AI wardrobe and outfit recommendation app built with Next.js 15, TypeScript, Tailwind CSS, Clerk, MongoDB/Mongoose, Cloudinary, and OpenAI.
+Noir Closet is a production-oriented AI wardrobe and outfit recommendation app built with Next.js 15, TypeScript, Tailwind CSS, Clerk, MongoDB/Mongoose, Cloudinary, and OpenAI.
 
 ## Features
 
@@ -85,5 +85,5 @@ src/
 - Move upload validation to stricter MIME and size allowlists for public launch.
 - Add moderation automation and admin role checks before exposing admin routes.
 =======
-# fitfusion
+# noir-closet
 Wardrobe

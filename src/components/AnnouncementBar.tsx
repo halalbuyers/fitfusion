@@ -19,7 +19,7 @@ type Announcement = {
   creditedUsername?: string
 }
 
-const STORAGE_KEY = 'fitfusion-announcements-dismissed-feed'
+const STORAGE_KEY = 'noircloset-announcements-dismissed-feed'
 
 export default function AnnouncementBar() {
   const [announcements, setAnnouncements] = useState<Announcement[]>([])

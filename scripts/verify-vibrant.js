@@ -60,7 +60,7 @@ async function main() {
   ]
 
   for (const [name, rgb] of cases) {
-    const file = path.join(os.tmpdir(), `fitfusion-vibrant-${name}-${Date.now()}.png`)
+    const file = path.join(os.tmpdir(), `noircloset-vibrant-${name}-${Date.now()}.png`)
     fs.writeFileSync(file, png(rgb))
     const palette = await Vibrant.from(file).maxColorCount(8).quality(1).getPalette()
     const swatches = Object.entries(palette)

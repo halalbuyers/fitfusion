@@ -11,9 +11,9 @@ export default function Home() {
     ['Social Planning', 'Save looks, plan the week, post outfits, and discover community inspiration.']
   ]
   const faqs = [
-    ['Can FitFusion work without AI keys?', 'Yes. The app includes deterministic fallback logic so demos and local development still work.'],
+    ['Can Noir Closet work without AI keys?', 'Yes. The app includes deterministic fallback logic so demos and local development still work.'],
     ['Is this built for production?', 'The architecture includes protected APIs, Mongoose schemas, Cloudinary upload flow, Clerk auth, and scalable modules.'],
-    ['Can premium features be extended?', 'Yes. Subscription state is modeled and the UI separates advanced analytics, unlimited uploads, and try-on features.']
+    ['Is Noir Closet free during beta?', 'Yes. All authenticated users can use the full product while we focus on AI quality, community, and feedback.']
   ]
 
   return (
@@ -21,12 +21,12 @@ export default function Home() {
       <section className="premium-grid relative px-4 pb-16 pt-16 sm:px-6 lg:pt-24">
         <div className="mx-auto grid max-w-7xl gap-12 lg:grid-cols-[1fr_0.85fr] lg:items-center">
           <div>
-            <p className="text-xs uppercase tracking-[0.35em] text-white/40">AI fashion operating system</p>
+            <p className="text-xs uppercase tracking-[0.35em] text-white/40">AI Fashion Operating System</p>
             <h1 className="mt-5 max-w-4xl text-balance text-5xl font-semibold tracking-tight sm:text-7xl lg:text-8xl">
-              Your AI-Powered Personal Stylist
+              Your AI-Powered Smart Wardrobe
             </h1>
             <p className="mt-6 max-w-2xl text-lg leading-8 text-white/58">
-              Upload your wardrobe, generate weather-aware outfits, chat with a stylist, plan your week, and share looks from one premium fashion-tech workspace.
+              Wear Smarter. Powered by AI. Upload your wardrobe, generate weather-aware outfits, chat with a stylist, plan your week, and share looks from one AI fashion-tech workspace.
             </p>
             <div className="mt-8 flex flex-col gap-3 sm:flex-row">
               <Link href="/register" className="rounded-full bg-white px-6 py-3 text-center text-sm font-semibold text-black transition hover:bg-white/88">Build my wardrobe</Link>
@@ -38,7 +38,7 @@ export default function Home() {
               <div className="relative h-[420px] w-full overflow-hidden rounded-[1.5rem] bg-black/20 sm:h-[520px]">
                 <Image
                   src={heroImage}
-                  alt="Premium fashion styling"
+                  alt="AI fashion styling"
                   fill
                   sizes="(min-width: 1024px) 42vw, 100vw"
                   className="object-cover"
@@ -81,7 +81,7 @@ export default function Home() {
           <div>
             <p className="text-xs uppercase tracking-[0.3em] text-white/35">Outfit engine</p>
             <h2 className="mt-4 text-4xl font-semibold tracking-tight sm:text-6xl">Built for real wardrobe decisions.</h2>
-            <p className="mt-5 text-white/55">FitFusion combines computer vision labels, fashion rules, user saves, weather context, and AI explanations so every outfit feels intentional.</p>
+            <p className="mt-5 text-white/55">Noir Closet combines computer vision labels, fashion rules, user saves, weather context, and AI explanations so every outfit feels intentional.</p>
           </div>
           <div className="grid gap-4 sm:grid-cols-3">
             {['Casual', 'Streetwear', 'Formal', 'Party', 'Gym', 'Travel'].map((occasion, index) => (
@@ -97,7 +97,7 @@ export default function Home() {
 
       <section className="px-4 py-16 sm:px-6">
         <div className="mx-auto grid max-w-7xl gap-6 lg:grid-cols-3">
-          {['"FitFusion made my closet feel ten times bigger."', '"The AI stylist sounds sharper than most shopping apps."', '"Calendar planning is perfect for travel weeks."'].map((quote) => (
+          {['"Noir Closet made my closet feel ten times bigger."', '"The AI stylist sounds sharper than most shopping apps."', '"Calendar planning is perfect for travel weeks."'].map((quote) => (
             <blockquote key={quote} className="glass rounded-2xl p-6 text-lg leading-8 text-white/74">{quote}</blockquote>
           ))}
         </div>

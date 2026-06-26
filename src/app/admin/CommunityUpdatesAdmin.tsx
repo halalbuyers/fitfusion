@@ -123,7 +123,7 @@ function displayUser(item: Pick<FeedbackItem, 'username' | 'name' | 'email'>) {
 }
 
 function initials(value?: string) {
-  const parts = String(value || 'FitFusion').trim().split(/\s+/).filter(Boolean)
+  const parts = String(value || 'Noir Closet').trim().split(/\s+/).filter(Boolean)
   return (parts[0]?.[0] || 'F') + (parts[1]?.[0] || parts[0]?.[1] || 'F')
 }
 
@@ -439,16 +439,16 @@ export function CommunityUpdatesAdmin() {
             <div className="grid gap-3 lg:grid-cols-[1fr_160px_150px]">
               <div className="relative">
                 <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-                <input className="field pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search user, feature, or category" />
+                <input id="community-updates-search" name="communityUpdatesSearch" type="search" autoComplete="off" aria-label="Search user, feature, or category" className="field pl-9" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search user, feature, or category" />
               </div>
-              <select className="field" value={status} onChange={(event) => setStatus(event.target.value)}>
+              <select id="community-updates-status" name="communityUpdatesStatus" aria-label="Filter community updates by status" className="field" value={status} onChange={(event) => setStatus(event.target.value)}>
                 <option value="">All statuses</option>
                 <option value="pending">Pending</option>
                 <option value="completed">Completed</option>
                 <option value="published">Published</option>
                 <option value="rejected">Rejected</option>
               </select>
-              <select className="field" value={sort} onChange={(event) => setSort(event.target.value)}>
+              <select id="community-updates-sort" name="communityUpdatesSort" aria-label="Sort community updates" className="field" value={sort} onChange={(event) => setSort(event.target.value)}>
                 <option value="newest">Newest</option>
                 <option value="oldest">Oldest</option>
                 <option value="priority">Priority</option>
@@ -489,11 +489,11 @@ export function CommunityUpdatesAdmin() {
                       <td className="max-w-[460px] py-4">
                         {isEditing ? (
                           <div className="grid gap-2">
-                            <input className="field min-w-64" value={feedbackEdit.title} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, title: event.target.value })} />
-                            <textarea className="field min-h-20 min-w-64" value={feedbackEdit.message} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, message: event.target.value })} />
+                            <input id={`feedback-edit-title-${item._id}`} name={`feedbackEditTitle-${item._id}`} aria-label="Feedback title" className="field min-w-64" value={feedbackEdit.title} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, title: event.target.value })} />
+                            <textarea id={`feedback-edit-message-${item._id}`} name={`feedbackEditMessage-${item._id}`} aria-label="Feedback message" className="field min-h-20 min-w-64" value={feedbackEdit.message} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, message: event.target.value })} />
                             <div className="grid gap-2 sm:grid-cols-2">
-                              <input className="field min-w-36" value={feedbackEdit.category} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, category: event.target.value })} />
-                              <select className="field min-w-28" value={feedbackEdit.priority} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, priority: event.target.value })}>
+                              <input id={`feedback-edit-category-${item._id}`} name={`feedbackEditCategory-${item._id}`} aria-label="Feedback category" className="field min-w-36" value={feedbackEdit.category} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, category: event.target.value })} />
+                              <select id={`feedback-edit-priority-${item._id}`} name={`feedbackEditPriority-${item._id}`} aria-label="Feedback priority" className="field min-w-28" value={feedbackEdit.priority} onChange={(event) => setFeedbackEdit({ ...feedbackEdit, priority: event.target.value })}>
                                 <option value="low">Low</option>
                                 <option value="medium">Medium</option>
                                 <option value="high">High</option>
@@ -550,29 +550,29 @@ export function CommunityUpdatesAdmin() {
           </div>
           {conversionFeedback ? <p className="mt-3 rounded-[8px] bg-[#d7ff55]/10 p-3 text-sm text-[#e7ff91]">Suggested by @{displayUser(conversionFeedback)}</p> : null}
           <form onSubmit={submitUpdate} className="mt-4 grid gap-3">
-            <input className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} placeholder="Title" required />
-            <textarea className="field min-h-28" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" required />
+            <input id="community-update-title" name="title" aria-label="Update title" className="field" value={draft.title} onChange={(event) => setDraft({ ...draft, title: event.target.value })} placeholder="Title" required />
+            <textarea id="community-update-description" name="description" aria-label="Update description" className="field min-h-28" value={draft.description} onChange={(event) => setDraft({ ...draft, description: event.target.value })} placeholder="Description" required />
             <div className="grid gap-3 sm:grid-cols-2">
-              <select className="field" value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as UpdateType })}>
+              <select id="community-update-type" name="type" aria-label="Update type" className="field" value={draft.type} onChange={(event) => setDraft({ ...draft, type: event.target.value as UpdateType })}>
                 {Object.entries(updateTypeLabels).map(([value, label]) => <option key={value} value={value}>{label}</option>)}
               </select>
-              <select className="field" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as UpdateStatus, published: event.target.value === 'published' })}>
+              <select id="community-update-status" name="status" aria-label="Update status" className="field" value={draft.status} onChange={(event) => setDraft({ ...draft, status: event.target.value as UpdateStatus, published: event.target.value === 'published' })}>
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
                 <option value="archived">Archived</option>
               </select>
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
-              <input className="field" type="number" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: Number(event.target.value) })} placeholder="Priority" />
-              <input className="field" type="date" value={draft.publishedAt} onChange={(event) => setDraft({ ...draft, publishedAt: event.target.value })} />
+              <input id="community-update-priority" name="priority" aria-label="Update priority" className="field" type="number" value={draft.priority} onChange={(event) => setDraft({ ...draft, priority: Number(event.target.value) })} placeholder="Priority" />
+              <input id="community-update-published-at" name="publishedAt" aria-label="Published date" className="field" type="date" value={draft.publishedAt} onChange={(event) => setDraft({ ...draft, publishedAt: event.target.value })} />
             </div>
-            <input className="field" value={draft.credits} onChange={(event) => setDraft({ ...draft, credits: event.target.value, creditedUsername: event.target.value })} placeholder="Credits / suggested by" />
-            <textarea className="field min-h-20" value={draft.releaseNotes} onChange={(event) => setDraft({ ...draft, releaseNotes: event.target.value })} placeholder="Release notes" />
-            <input className="field" value={draft.featuredImage} onChange={(event) => setDraft({ ...draft, featuredImage: event.target.value })} placeholder="Featured image URL" />
+            <input id="community-update-credits" name="credits" aria-label="Credits or suggested by" className="field" value={draft.credits} onChange={(event) => setDraft({ ...draft, credits: event.target.value, creditedUsername: event.target.value })} placeholder="Credits / suggested by" />
+            <textarea id="community-update-release-notes" name="releaseNotes" aria-label="Release notes" className="field min-h-20" value={draft.releaseNotes} onChange={(event) => setDraft({ ...draft, releaseNotes: event.target.value })} placeholder="Release notes" />
+            <input id="community-update-featured-image" name="featuredImage" autoComplete="url" aria-label="Featured image URL" className="field" value={draft.featuredImage} onChange={(event) => setDraft({ ...draft, featuredImage: event.target.value })} placeholder="Featured image URL" />
             <div className="grid gap-2 text-sm text-white/70 sm:grid-cols-3">
-              <label className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input type="checkbox" checked={draft.published} onChange={(event) => setDraft({ ...draft, published: event.target.checked, status: event.target.checked ? 'published' : 'draft' })} className="h-4 w-4 accent-[#d7ff55]" /> Published</label>
-              <label className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input type="checkbox" checked={draft.featured} onChange={(event) => setDraft({ ...draft, featured: event.target.checked })} className="h-4 w-4 accent-[#d7ff55]" /> Feature</label>
-              <label className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input type="checkbox" checked={draft.pinned} onChange={(event) => setDraft({ ...draft, pinned: event.target.checked })} className="h-4 w-4 accent-[#d7ff55]" /> Pin</label>
+              <label htmlFor="community-update-published" className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input id="community-update-published" name="published" type="checkbox" checked={draft.published} onChange={(event) => setDraft({ ...draft, published: event.target.checked, status: event.target.checked ? 'published' : 'draft' })} className="h-4 w-4 accent-[#d7ff55]" /> Published</label>
+              <label htmlFor="community-update-featured" className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input id="community-update-featured" name="featured" type="checkbox" checked={draft.featured} onChange={(event) => setDraft({ ...draft, featured: event.target.checked })} className="h-4 w-4 accent-[#d7ff55]" /> Feature</label>
+              <label htmlFor="community-update-pinned" className="flex items-center gap-2 rounded-[8px] border border-white/8 bg-black/20 p-3"><input id="community-update-pinned" name="pinned" type="checkbox" checked={draft.pinned} onChange={(event) => setDraft({ ...draft, pinned: event.target.checked })} className="h-4 w-4 accent-[#d7ff55]" /> Pin</label>
             </div>
             <button disabled={saving} className="inline-flex items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] px-4 py-3 text-sm font-semibold text-black disabled:opacity-60">
               <Plus className="h-4 w-4" />
@@ -636,7 +636,7 @@ export function CommunityUpdatesAdmin() {
                   <td className="capitalize text-white/62">{String(item.type || 'update').replace('_', ' ')}</td>
                   <td><span className="rounded-full bg-white/8 px-2 py-1 text-xs capitalize text-white/64">{item.status}{item.isActive === false ? ' / inactive' : ''}</span></td>
                   <td>{Number(item.priority || 0)}</td>
-                  <td className="text-white/58">@{item.creditedUsername || item.suggestedByUsername || item.credits || 'FitFusion'}</td>
+                  <td className="text-white/58">@{item.creditedUsername || item.suggestedByUsername || item.credits || 'Noir Closet'}</td>
                   <td className="text-white/45">{formatDate(item.publishedAt || item.createdAt)}</td>
                   <td className="px-4 py-3">
                     <div className="flex flex-wrap gap-2">

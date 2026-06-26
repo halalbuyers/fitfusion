@@ -6,8 +6,8 @@ import AdminAnnouncement from '../../models/AdminAnnouncement'
 import { AppFrame } from '../../components/AppFrame'
 
 export const metadata: Metadata = {
-  title: 'Product Updates | FitFusion',
-  description: 'Read the latest FitFusion product updates, release notes, bug fixes, and community-powered improvements.'
+  title: 'Product Updates',
+  description: 'Read the latest Noir Closet product updates, release notes, bug fixes, and community-powered improvements.'
 }
 
 type UpdateItem = {
@@ -97,7 +97,7 @@ export default async function UpdatesPage() {
               </div>
               <div className="space-y-3">
                 <p className="text-sm uppercase tracking-[0.3em] text-white/50">What&apos;s new</p>
-                <h1 className="text-5xl font-semibold tracking-[-0.04em] text-white sm:text-6xl">Product updates for FitFusion</h1>
+                <h1 className="text-5xl font-semibold tracking-[-0.04em] text-white sm:text-6xl">Product updates for Noir Closet</h1>
                 <p className="max-w-2xl text-base leading-8 text-white/70">Latest product improvements, bug fixes, and community-powered updates delivered in a modern changelog experience.</p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -138,7 +138,7 @@ export default async function UpdatesPage() {
                       <div className="grid gap-3 sm:grid-cols-2">
                         <div className="rounded-[24px] bg-[#0f1219]/80 p-5 text-sm text-white/70">
                           <p className="text-xs uppercase tracking-[0.26em] text-white/40">Suggested by</p>
-                          <p className="mt-2 text-base text-white">@{featured.suggestedByUsername || featured.creditedUsername || 'FitFusion team'}</p>
+                          <p className="mt-2 text-base text-white">@{featured.suggestedByUsername || featured.creditedUsername || 'Noir Closet team'}</p>
                         </div>
                         <div className="rounded-[24px] bg-[#0f1219]/80 p-5 text-sm text-white/70">
                           <p className="text-xs uppercase tracking-[0.26em] text-white/40">Released</p>
@@ -199,7 +199,7 @@ export default async function UpdatesPage() {
                                 </div>
                                 <div className="space-y-2 text-right text-sm text-white/50">
                                   <p>Suggested by</p>
-                                  <p className="text-white">@{update.suggestedByUsername || update.creditedUsername || 'FitFusion'}</p>
+                                  <p className="text-white">@{update.suggestedByUsername || update.creditedUsername || 'Noir Closet'}</p>
                                 </div>
                               </div>
                               <div className="mt-5 flex flex-wrap items-center gap-3 text-sm text-white/60">
@@ -226,16 +226,16 @@ export default async function UpdatesPage() {
             <div className="rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_30px_80px_rgba(0,0,0,0.2)]">
               <p className="text-sm uppercase tracking-[0.3em] text-white/50">Community credits</p>
               <h3 className="mt-4 text-xl font-semibold text-white">This feature was built thanks to feedback from</h3>
-              <p className="mt-4 text-sm leading-7 text-white/70">Community contributors help shape FitFusion every day. Thank you for helping improve the product.</p>
+              <p className="mt-4 text-sm leading-7 text-white/70">Community contributors help shape Noir Closet every day. Thank you for helping improve the product.</p>
               <div className="mt-6 grid gap-3 text-sm leading-7 text-white/70">
                 {topCredits.length ? topCredits.map((name) => (
                   <div key={name} className="rounded-[24px] bg-[#0f1219]/90 p-5">
                     <p className="font-semibold text-white">@{name}</p>
-                    <p className="mt-2">Thank you for helping improve FitFusion.</p>
+                    <p className="mt-2">Thank you for helping improve Noir Closet.</p>
                   </div>
                 )) : (
                   <div className="rounded-[24px] bg-[#0f1219]/90 p-5">
-                    <p className="font-semibold text-white">@FitFusion</p>
+                    <p className="font-semibold text-white">@Noir Closet</p>
                     <p className="mt-2">Community suggestions will appear here after credited updates are published.</p>
                   </div>
                 )}

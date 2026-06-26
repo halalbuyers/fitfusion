@@ -22,7 +22,7 @@ export default function RegisterClient() {
       <div className="grid min-h-[80vh] place-items-center px-4 py-12">
         <div className="glass w-full max-w-md rounded-2xl p-6 text-center">
           <p className="text-xs uppercase tracking-[0.3em] text-white/35">Account ready</p>
-          <h1 className="mt-3 text-3xl font-semibold">You already have a FitFusion session</h1>
+          <h1 className="mt-3 text-3xl font-semibold">You already have a Noir Closet session</h1>
           <p className="mt-3 text-sm leading-6 text-white/55">Continue to your dashboard instead of creating another account.</p>
           <Link href="/dashboard" prefetch={false} className="mt-6 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">
             Continue to Dashboard
@@ -47,9 +47,9 @@ export default function RegisterClient() {
           <p className="text-xs uppercase tracking-[0.3em] text-white/35">Start free</p>
           <h1 className="mt-3 text-3xl font-semibold">Create your wardrobe</h1>
           <div className="mt-6 grid gap-4">
-            <input className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Name" />
-            <input className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Email" />
-            <input className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Password" type="password" />
+            <input id="register-name" name="name" autoComplete="name" aria-label="Name" className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Name" />
+            <input id="register-email" name="email" type="email" autoComplete="email" aria-label="Email" className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Email" />
+            <input id="register-password" name="password" type="password" autoComplete="new-password" aria-label="Password" className="rounded-xl border border-white/10 bg-black/40 px-4 py-3 outline-none focus:border-white/35" placeholder="Password" />
             <button className="rounded-full bg-white px-5 py-3 text-sm font-semibold text-black">Create account</button>
           </div>
           <p className="mt-4 text-sm text-white/45">Add Clerk keys in `.env.local` to enable live signup and Google login.</p>

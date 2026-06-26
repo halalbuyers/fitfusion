@@ -87,7 +87,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <AppFrame title="Profile dashboard" eyebrow="Personalization" action={<Link href="/settings/fashion-profile" className="inline-flex items-center gap-2 rounded-[8px] bg-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/20"><Settings className="h-4 w-4" /> Fashion Preferences</Link>}>
+    <AppFrame title="Profile dashboard" eyebrow="Noir Closet Fashion OS" action={<Link href="/settings/fashion-profile" className="inline-flex items-center gap-2 rounded-[8px] bg-white/10 px-4 py-2 text-sm text-white/70 hover:bg-white/20"><Settings className="h-4 w-4" /> Fashion Preferences</Link>}>
       <div className="grid gap-6 lg:grid-cols-[0.9fr_1.1fr]">
         <section className="glass h-fit rounded-[8px] p-5">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
@@ -95,7 +95,7 @@ export default function ProfilePage() {
               {form.profilePhoto ? <Image src={form.profilePhoto} alt={form.name || 'Profile'} fill sizes="80px" className="object-cover" /> : <UserRound className="h-8 w-8" />}
             </div>
             <div>
-              <h2 className="text-2xl font-semibold">{form.name || user?.fullName || 'FitFusion user'}</h2>
+              <h2 className="text-2xl font-semibold">{form.name || user?.fullName || 'Noir Closet user'}</h2>
               <p className="mt-1 text-sm text-white/45">{form.bio || 'Build your professional fashion profile.'}</p>
             </div>
           </div>
@@ -138,22 +138,25 @@ export default function ProfilePage() {
           ) : (
             <>
               <div className="grid gap-3 sm:grid-cols-2">
-                <input className="field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Full name" />
-                <input className="field" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email" />
-                <input className="field" value={form.profilePhoto} onChange={(e) => update('profilePhoto', e.target.value)} placeholder="Profile photo URL" />
-                <input className="field" value={form.coverPhoto} onChange={(e) => update('coverPhoto', e.target.value)} placeholder="Cover photo URL" />
-                <input className="field" value={form.website} onChange={(e) => update('website', e.target.value)} placeholder="Website or portfolio" />
-                <input className="field" value={form.styleType} onChange={(e) => update('styleType', e.target.value)} placeholder="Style type" />
-                <input className="field" value={form.age} onChange={(e) => update('age', e.target.value)} placeholder="Age" />
-                <input className="field" value={form.gender} onChange={(e) => update('gender', e.target.value)} placeholder="Gender" />
-                <input className="field" value={form.stylePreferences} onChange={(e) => update('stylePreferences', e.target.value)} placeholder="Style preferences" />
-                <input className="field" value={form.favoriteBrands} onChange={(e) => update('favoriteBrands', e.target.value)} placeholder="Favorite brands" />
-                <input className="field" value={form.favoriteColors} onChange={(e) => update('favoriteColors', e.target.value)} placeholder="Favorite colors" />
-                <input className="field" value={form.topSize} onChange={(e) => update('topSize', e.target.value)} placeholder="Top size" />
-                <input className="field" value={form.bottomSize} onChange={(e) => update('bottomSize', e.target.value)} placeholder="Bottom size" />
-                <input className="field" value={form.shoeSize} onChange={(e) => update('shoeSize', e.target.value)} placeholder="Shoe size" />
+                <input id="profile-name" name="name" autoComplete="name" aria-label="Full name" className="field" value={form.name} onChange={(e) => update('name', e.target.value)} placeholder="Full name" />
+                <input id="profile-email" name="email" type="email" autoComplete="email" aria-label="Email" className="field" value={form.email} onChange={(e) => update('email', e.target.value)} placeholder="Email" />
+                <input id="profile-photo" name="profilePhoto" autoComplete="url" aria-label="Profile photo URL" className="field" value={form.profilePhoto} onChange={(e) => update('profilePhoto', e.target.value)} placeholder="Profile photo URL" />
+                <input id="profile-cover-photo" name="coverPhoto" autoComplete="url" aria-label="Cover photo URL" className="field" value={form.coverPhoto} onChange={(e) => update('coverPhoto', e.target.value)} placeholder="Cover photo URL" />
+                <input id="profile-website" name="website" autoComplete="url" aria-label="Website or portfolio" className="field" value={form.website} onChange={(e) => update('website', e.target.value)} placeholder="Website or portfolio" />
+                <input id="profile-style-type" name="styleType" aria-label="Style type" className="field" value={form.styleType} onChange={(e) => update('styleType', e.target.value)} placeholder="Style type" />
+                <input id="profile-age" name="age" aria-label="Age" className="field" value={form.age} onChange={(e) => update('age', e.target.value)} placeholder="Age" />
+                <input id="profile-gender" name="gender" aria-label="Gender" className="field" value={form.gender} onChange={(e) => update('gender', e.target.value)} placeholder="Gender" />
+                <input id="profile-style-preferences" name="stylePreferences" aria-label="Style preferences" className="field" value={form.stylePreferences} onChange={(e) => update('stylePreferences', e.target.value)} placeholder="Style preferences" />
+                <input id="profile-favorite-brands" name="favoriteBrands" aria-label="Favorite brands" className="field" value={form.favoriteBrands} onChange={(e) => update('favoriteBrands', e.target.value)} placeholder="Favorite brands" />
+                <input id="profile-favorite-colors" name="favoriteColors" aria-label="Favorite colors" className="field" value={form.favoriteColors} onChange={(e) => update('favoriteColors', e.target.value)} placeholder="Favorite colors" />
+                <input id="profile-top-size" name="topSize" aria-label="Top size" className="field" value={form.topSize} onChange={(e) => update('topSize', e.target.value)} placeholder="Top size" />
+                <input id="profile-bottom-size" name="bottomSize" aria-label="Bottom size" className="field" value={form.bottomSize} onChange={(e) => update('bottomSize', e.target.value)} placeholder="Bottom size" />
+                <input id="profile-shoe-size" name="shoeSize" aria-label="Shoe size" className="field" value={form.shoeSize} onChange={(e) => update('shoeSize', e.target.value)} placeholder="Shoe size" />
               </div>
               <textarea
+                id="profile-bio"
+                name="bio"
+                aria-label="Bio or style summary"
                 rows={4}
                 className="field mt-3 min-h-[120px]"
                 value={form.bio}

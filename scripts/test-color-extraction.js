@@ -61,7 +61,7 @@ async function ensureFixture(fixture, directory) {
 }
 
 async function main() {
-  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'fitfusion-color-test-'))
+  const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'noircloset-color-test-'))
 
   for (const fixture of fixtures) {
     const filePath = await ensureFixture(fixture, tempDir)

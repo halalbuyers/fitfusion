@@ -1,4 +1,4 @@
-﻿'use client'
+'use client'
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
@@ -24,7 +24,6 @@ const groups = [
     title: 'Company',
     links: [
       { label: 'Community', href: '/community', protected: true },
-      { label: 'Pricing', href: '/pricing' },
       { label: 'Admin', href: '/admin', protected: true },
       { label: 'Profile', href: '/profile', protected: true }
     ]
@@ -50,8 +49,8 @@ export default function Footer() {
       <div className="mx-auto grid max-w-7xl gap-10 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-3 text-lg font-semibold">
-            <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-black text-black">FF</span>
-            FitFusion
+            <span className="grid h-9 w-9 place-items-center rounded-full bg-white text-sm font-black text-black">NC</span>
+            Noir Closet
           </div>
           <p className="mt-4 max-w-sm text-sm leading-6 text-white/55">
             AI wardrobe intelligence for people who want better outfits with less guesswork.
@@ -74,7 +73,7 @@ export default function Footer() {
           </div>
         ))}
       </div>
-      <div className="mx-auto mt-10 max-w-7xl text-xs text-white/35">Copyright 2026 FitFusion. Built for premium AI fashion workflows.</div>
+      <div className="mx-auto mt-10 max-w-7xl text-xs text-white/35">Copyright 2026 Noir Closet. Built for open beta AI fashion workflows.</div>
     </footer>
   )
 }

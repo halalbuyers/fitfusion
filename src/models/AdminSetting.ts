@@ -5,6 +5,7 @@ export interface IAdminSetting extends Document {
   enableOutfitGenerator: boolean
   maintenanceMode: boolean
   registrationEnabled: boolean
+  monetizationMode: 'disabled' | 'enabled'
   updatedBy?: string
 }
 
@@ -13,6 +14,7 @@ const AdminSettingSchema = new Schema({
   enableOutfitGenerator: { type: Boolean, default: true },
   maintenanceMode: { type: Boolean, default: false },
   registrationEnabled: { type: Boolean, default: true },
+  monetizationMode: { type: String, enum: ['disabled', 'enabled'], default: 'disabled' },
   updatedBy: { type: String }
 }, { timestamps: true })
 

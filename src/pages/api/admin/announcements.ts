@@ -7,7 +7,7 @@ const allowedTypes = ['announcement', 'maintenance', 'feature', 'update', 'fix',
 const allowedStatuses = ['draft', 'published', 'archived']
 
 function implementedNotificationBody(feature: string) {
-  return `Feature: ${feature}\n\nThank you for helping improve FitFusion.`
+  return `Feature: ${feature}\n\nThank you for helping improve Noir Closet.`
 }
 
 function normalizePayload(body: any, adminUserId?: string) {

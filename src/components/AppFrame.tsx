@@ -4,16 +4,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { CloudSun, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
+import { CalendarDays, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
 
 const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
   ['Outfit Generator', '/outfit-generator', Wand2],
+  ['Calendar', '/calendar', CalendarDays],
   ['AI Stylist', '/stylist', MessageCircle],
   ['Saved Outfits', '/outfits', Sparkles],
   ['Community', '/community', Users],
-  ['Weather', '/weather', CloudSun],
   ['Profile', '/profile', UserRound],
   ['Admin', '/admin', Shield]
 ]
@@ -21,9 +21,9 @@ const mobileNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
   ['Generate', '/outfit-generator', Wand2],
+  ['Calendar', '/calendar', CalendarDays],
   ['Stylist', '/stylist', MessageCircle],
-  ['Community', '/community', Users],
-  ['Profile', '/profile', UserRound]
+  ['Community', '/community', Users]
 ]
 
 export function AppFrame({ title, eyebrow, children, action }: { title: string; eyebrow: string; children: React.ReactNode; action?: React.ReactNode }) {
@@ -35,9 +35,9 @@ export function AppFrame({ title, eyebrow, children, action }: { title: string; 
       <div className="mx-auto grid max-w-[1480px] gap-5 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="glass sticky top-5 hidden h-[calc(100vh-2.5rem)] rounded-[8px] p-4 lg:block">
           <div className="flex items-center gap-3 px-2 py-2">
-            <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#d7ff55] text-sm font-black text-black">FF</div>
+            <div className="grid h-10 w-10 place-items-center rounded-[8px] bg-[#d7ff55] text-sm font-black text-black">NC</div>
             <div>
-              <p className="text-sm font-semibold">FitFusion</p>
+              <p className="text-sm font-semibold">Noir Closet</p>
               <p className="text-xs text-white/42">Fashion OS</p>
             </div>
           </div>

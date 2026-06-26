@@ -6,6 +6,7 @@ import { analyzeImage } from '../../ai/openai'
 import { connectToDatabase } from '../../lib/mongodb'
 import Clothing from '../../models/Clothing'
 import FashionProfile from '../../models/FashionProfile'
+import UserPreference from '../../models/UserPreference'
 import { getAuth } from '@clerk/nextjs/server'
 import { analyzeClothingText, mergeFashionAnalysis } from '../../lib/fashion-analysis'
 import { parseTags } from '../../lib/api'
@@ -80,6 +81,62 @@ function estimateColorConfidence(input: {
   if (input.warnings?.length) confidence -= 14
   if (extracted !== 'unknown' && ai !== 'unknown' && extracted === ai) confidence += 6
   return Math.max(0, Math.min(100, confidence))
+}
+
+type CorrectionRow = { count?: number; [key: string]: unknown }
+
+function matchingCorrection(
+  corrections: CorrectionRow[] | undefined,
+  predictedKey: string,
+  _correctedKey: string,
+  predictedValue?: string
+) {
+  const predicted = String(predictedValue || '').trim().toLowerCase()
+  if (!predicted || predicted === 'unknown') return null
+  return (corrections || [])
+    .filter((item) => String(item[predictedKey] || '').trim().toLowerCase() === predicted)
+    .sort((a, b) => Number(b.count || 0) - Number(a.count || 0))[0] || null
+}
+
+function applyCorrectionMemory(input: {
+  predictedCategory: string
+  categoryConfidence: number
+  predictedColor: string
+  colorConfidence: number
+  preference: any
+}) {
+  const categoryCorrection = matchingCorrection(
+    input.preference?.correctedCategories,
+    'predictedCategory',
+    'correctedCategory',
+    input.predictedCategory
+  )
+  const colorCorrection = matchingCorrection(
+    input.preference?.correctedColors,
+    'predictedColor',
+    'correctedColor',
+    input.predictedColor
+  )
+  const categoryCorrectionCount = Number(categoryCorrection?.count || 0)
+  const colorCorrectionCount = Number(colorCorrection?.count || 0)
+
+  const category = categoryCorrection && categoryCorrectionCount >= 2
+    ? String(categoryCorrection.correctedCategory)
+    : input.predictedCategory
+  const primaryColor = colorCorrection && colorCorrectionCount >= 2
+    ? String(colorCorrection.correctedColor)
+    : input.predictedColor
+
+  return {
+    category,
+    primaryColor,
+    categoryConfidence: Math.max(0, Math.min(100, input.categoryConfidence + (categoryCorrectionCount ? Math.min(18, categoryCorrectionCount * 6) : 0))),
+    colorConfidence: Math.max(0, Math.min(100, input.colorConfidence + (colorCorrectionCount ? Math.min(18, colorCorrectionCount * 6) : 0))),
+    appliedCorrections: {
+      category: categoryCorrectionCount >= 2 ? categoryCorrection : null,
+      color: colorCorrectionCount >= 2 ? colorCorrection : null
+    }
+  }
 }
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -169,24 +226,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         aiCategory: analysis.category
       })
       let profile: any = null
+      let userPreference: any = null
       try {
         await connectToDatabase()
-        profile = await FashionProfile.findOne({ userId })
+        const [fashionProfile, preference] = await Promise.all([
+          FashionProfile.findOne({ userId }),
+          UserPreference.findOne({ userId }).lean().catch(() => null)
+        ])
+        profile = fashionProfile
+        userPreference = preference
       } catch {
         // Proceed without fashion profile if the database is unavailable during upload analysis
       }
-      const finalCategory = sanitizeCategoryForFashionType(
+      const classifiedCategory = sanitizeCategoryForFashionType(
         fieldValue(fields, 'category') || categoryClassification.category,
         profile?.fashionType || 'prefer-not-to-specify'
       )
-      console.log('CATEGORY RESOLUTION:', {
-        userId,
-        fashionType: profile?.fashionType,
-        manualCategory: fieldValue(fields, 'category'),
-        aiCategory: analysis.category,
-        classifiedCategory: categoryClassification.category,
-        finalCategory
-      })
       const categoryConfidence = estimateCategoryConfidence({
         manualCategory: fieldValue(fields, 'category'),
         aiCategory: analysis.category,
@@ -202,6 +257,30 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         clothingCoverage: extractedColors.region?.clothingCoverage,
         warnings: extractedColors.region?.warnings
       })
+      const correctionMemory = applyCorrectionMemory({
+        predictedCategory: classifiedCategory,
+        categoryConfidence,
+        predictedColor: primaryColor,
+        colorConfidence,
+        preference: userPreference
+      })
+      const finalCategory = sanitizeCategoryForFashionType(
+        fieldValue(fields, 'category') || correctionMemory.category,
+        profile?.fashionType || 'prefer-not-to-specify'
+      )
+      const finalPrimaryColor = knownColor(fieldValue(fields, 'primaryColor'))
+        || knownColor(fieldValue(fields, 'color'))
+        || knownColor(correctionMemory.primaryColor)
+        || primaryColor
+      console.log('CATEGORY RESOLUTION:', {
+        userId,
+        fashionType: profile?.fashionType,
+        manualCategory: fieldValue(fields, 'category'),
+        aiCategory: analysis.category,
+        classifiedCategory: categoryClassification.category,
+        finalCategory,
+        appliedCorrections: correctionMemory.appliedCorrections
+      })
       const resolvedSecondaryColors = secondaryColors.length
         ? secondaryColors
         : colors.length
@@ -214,9 +293,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         userId,
         image: result.secure_url,
         category: finalCategory,
-        primaryColor,
+        primaryColor: finalPrimaryColor,
         secondaryColors: resolvedSecondaryColors,
-        colors: colors.length ? colors : (detectedColors.length ? detectedColors : (primaryColor === 'unknown' ? [] : [primaryColor, ...resolvedSecondaryColors])),
+        colors: colors.length ? colors : (detectedColors.length ? detectedColors : (finalPrimaryColor === 'unknown' ? [] : [finalPrimaryColor, ...resolvedSecondaryColors])),
         style: fieldValue(fields, 'style') || analysis.style || 'casual',
         season: fieldValue(fields, 'season') || analysis.season || 'all-season',
         occasion: occasions.length ? occasions : analysis.occasion || [],
@@ -225,10 +304,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || analysis.fit,
         fitType: fieldValue(fields, 'fitType') || fieldValue(fields, 'fit') || analysis.fitType,
         material: fieldValue(fields, 'material') || analysis.material,
-        aiCategory: finalCategory,
+        aiCategory: classifiedCategory,
         aiColor: analysis.primaryColor,
-        categoryConfidence,
-        colorConfidence
+        categoryConfidence: correctionMemory.categoryConfidence,
+        colorConfidence: correctionMemory.colorConfidence
       }
       const payload = buildConfirmedClothingPayload(reviewedInput)
       console.log('FINAL PAYLOAD COLOR:', {

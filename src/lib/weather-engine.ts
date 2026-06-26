@@ -1,19 +1,25 @@
 import type { ClothingCategory } from './fashion-analysis'
 
+export type WeatherBand = 'hot' | 'warm' | 'cool' | 'cold' | 'mild'
+export type WeatherSignal = WeatherBand | 'rainy' | 'humid' | 'windy'
+
 export type WeatherContext = {
   temperature?: number
-  condition?: 'hot' | 'warm' | 'cool' | 'cold' | 'rainy' | string
+  condition?: 'hot' | 'warm' | 'cool' | 'cold' | 'rainy' | 'humid' | 'windy' | string
   season?: string
 }
 
 export type WeatherRecommendation = {
-  condition: 'hot' | 'warm' | 'cool' | 'cold' | 'mild'
+  condition: WeatherSignal
+  thermalBand: WeatherBand
+  signals: WeatherSignal[]
   targetWarmth: number
   warmthRange: [number, number]
   maxLayers: number
   needsLayer: boolean
   avoidHeavyLayers: boolean
-  suggestedCategories: ClothingCategory[]
+  suggestedCategories: string[]
+  avoidCategories: string[]
   tip: string
 }
 
@@ -31,7 +37,8 @@ type WeatherAwareItem = {
 export type OutfitWeatherValidation = {
   valid: boolean
   reason?: string
-  weather: 'hot' | 'warm' | 'cool' | 'cold' | 'mild'
+  weather: WeatherSignal
+  thermalBand: WeatherBand
   season: string
   layerCount: number
   warmthScore: number
@@ -61,7 +68,10 @@ const CATEGORY_WARMTH: Record<string, number> = {
   puffer: 7
 }
 
-const HOT_DISALLOWED = ['jacket', 'coat', 'puffer', 'parka', 'thermal', 'heavy hoodie']
+const HOT_DISALLOWED = ['jacket', 'coat', 'puffer', 'parka', 'thermal', 'heavy hoodie', 'hoodie', 'sweatshirt', 'sweater']
+const HUMID_DISALLOWED = ['hoodie', 'sweatshirt', 'sweater', 'fleece', 'wool', 'jacket', 'coat', 'puffer', 'parka']
+const RAIN_PREFERRED = ['jacket', 'boots', 'sneakers']
+const WIND_PREFERRED = ['jacket', 'hoodie', 'shirt', 'jeans']
 const SUMMER_PREFERRED = ['tshirt', 'tee', 't-shirt', 'polo', 'shorts', 'shirt', 'lightweight', 'linen', 'sneakers', 'sandals']
 const SUMMER_PENALIZED = ['hoodie', 'jacket', 'coat', 'puffer', 'parka', 'thermal', 'fleece', 'wool']
 
@@ -74,9 +84,9 @@ export function weatherBand(input: WeatherContext = {}): OutfitWeatherValidation
   const season = normalizedCondition(input.season)
   const temp = typeof input.temperature === 'number' ? input.temperature : undefined
   const cold = condition.includes('cold') || condition.includes('winter') || season === 'winter' || (temp !== undefined && temp <= 14)
-  const cool = condition.includes('cool') || (temp !== undefined && temp > 14 && temp <= 20)
-  const warm = condition.includes('warm') || (temp !== undefined && temp > 20 && temp < 27)
-  const hot = condition.includes('hot') || condition.includes('sun') || condition.includes('summer') || season === 'summer' || (temp !== undefined && temp >= 27)
+  const cool = condition.includes('cool') || condition.includes('wind') || (temp !== undefined && temp > 14 && temp <= 20)
+  const warm = condition.includes('warm') || condition.includes('humid') || (temp !== undefined && temp > 20 && temp < 30)
+  const hot = condition.includes('hot') || condition.includes('sun') || condition.includes('summer') || season === 'summer' || (temp !== undefined && temp >= 30)
 
   if (cold) return 'cold'
   if (hot) return 'hot'
@@ -85,63 +95,90 @@ export function weatherBand(input: WeatherContext = {}): OutfitWeatherValidation
   return 'mild'
 }
 
-export function analyzeWeather(input: WeatherContext = {}): WeatherRecommendation {
+function weatherSignals(input: WeatherContext = {}) {
   const condition = normalizedCondition(input.condition)
-  const band = weatherBand(input)
+  const band = weatherBand(input) as WeatherBand
+  const signals = new Set<WeatherSignal>([band])
+  if (condition.includes('rain') || condition.includes('storm') || condition.includes('drizzle')) signals.add('rainy')
+  if (condition.includes('humid') || condition.includes('muggy')) signals.add('humid')
+  if (condition.includes('wind') || condition.includes('breezy')) signals.add('windy')
+  return [...signals]
+}
+
+export function analyzeWeather(input: WeatherContext = {}): WeatherRecommendation {
+  const signals = weatherSignals(input)
+  const band = weatherBand(input) as WeatherBand
   const cold = band === 'cold'
   const cool = band === 'cool'
   const warm = band === 'warm'
   const hot = band === 'hot'
-  const rain = condition.includes('rain') || condition.includes('storm') || condition.includes('drizzle')
+  const rain = signals.includes('rainy')
+  const humid = signals.includes('humid')
+  const windy = signals.includes('windy')
+  const displayCondition = rain ? 'rainy' : humid ? 'humid' : windy ? 'windy' : band
 
   if (cold) {
     return {
-      condition: 'cold',
+      condition: displayCondition,
+      thermalBand: 'cold',
+      signals,
       targetWarmth: 13,
       warmthRange: [9, 18],
-      maxLayers: 4,
+      maxLayers: windy || rain ? 4 : 3,
       needsLayer: true,
       avoidHeavyLayers: false,
       suggestedCategories: ['hoodie', 'jacket', 'boots'],
+      avoidCategories: ['shorts', 'slides', 'sandals'],
       tip: rain ? 'Cold and wet conditions favor a structured outer layer and sturdy footwear.' : 'Cold weather raises the score for hoodies, jackets, and warmer footwear.'
     }
   }
 
   if (hot) {
     return {
-      condition: 'hot',
+      condition: displayCondition,
+      thermalBand: 'hot',
+      signals,
       targetWarmth: 4,
-      warmthRange: [1, 7],
+      warmthRange: humid ? [1, 6] : [1, 7],
       maxLayers: 1,
       needsLayer: false,
       avoidHeavyLayers: true,
-      suggestedCategories: ['tshirt', 'shirt', 'shorts', 'sneakers'],
-      tip: 'Hot weather favors breathable tops, lighter colors, and fewer layers.'
+      suggestedCategories: ['tshirt', 'linen-shirt', 'shirt', 'shorts', 'sneakers', 'sandals'],
+      avoidCategories: HOT_DISALLOWED,
+      tip: 'Hot weather favors breathable tops, linen or light shirts, shorts, and minimal layering.'
     }
   }
 
   if (cool || warm) {
     return {
-      condition: cool ? 'cool' : 'warm',
-      targetWarmth: cool ? 9 : 6,
-      warmthRange: cool ? [6, 13] : [3, 9],
+      condition: displayCondition,
+      thermalBand: cool ? 'cool' : 'warm',
+      signals,
+      targetWarmth: cool ? 9 : humid ? 5 : 6,
+      warmthRange: cool ? [6, 13] : humid ? [2, 8] : [3, 9],
       maxLayers: cool ? 3 : 2,
-      needsLayer: cool || rain,
-      avoidHeavyLayers: warm,
-      suggestedCategories: cool ? ['shirt', 'hoodie', 'jacket', 'jeans', 'sneakers'] : ['tshirt', 'shirt', 'jeans', 'shorts', 'sneakers'],
-      tip: cool ? 'Cool weather benefits from one flexible layer without going full winter.' : 'Warm weather favors breathable pieces and restrained layering.'
+      needsLayer: cool || rain || windy,
+      avoidHeavyLayers: warm || humid,
+      suggestedCategories: cool
+        ? ['shirt', ...(rain || windy ? ['jacket'] : ['hoodie']), 'jeans', 'sneakers']
+        : ['tshirt', 'linen-shirt', 'shirt', 'jeans', 'shorts', 'sneakers'],
+      avoidCategories: humid ? HUMID_DISALLOWED : warm ? ['coat', 'puffer', 'parka', 'thermal'] : [],
+      tip: cool ? 'Cool weather benefits from one flexible layer without going full winter.' : 'Warm or humid weather favors breathable pieces and restrained layering.'
     }
   }
 
   return {
-    condition: 'mild',
+    condition: displayCondition,
+    thermalBand: 'mild',
+    signals,
     targetWarmth: rain ? 8 : 7,
     warmthRange: rain ? [5, 11] : [4, 10],
     maxLayers: rain ? 3 : 2,
-    needsLayer: rain,
+    needsLayer: rain || windy,
     avoidHeavyLayers: false,
-    suggestedCategories: rain ? ['jacket', 'sneakers', 'boots'] : ['tshirt', 'shirt', 'jeans', 'sneakers'],
-    tip: rain ? 'Rainy conditions benefit from an outer layer without overbuilding the outfit.' : 'Mild weather gives the engine more room to prioritize color and style.'
+    suggestedCategories: rain ? RAIN_PREFERRED : windy ? WIND_PREFERRED : ['tshirt', 'shirt', 'jeans', 'sneakers'],
+    avoidCategories: rain ? ['slides', 'sandals'] : [],
+    tip: rain ? 'Rainy conditions benefit from an outer layer and covered footwear without overbuilding the outfit.' : 'Mild weather gives the engine more room to prioritize occasion, color, and style.'
   }
 }
 
@@ -200,10 +237,15 @@ export function weatherPenalty(items: WeatherAwareItem[], weather: WeatherContex
   const season = normalizedCondition(weather.season)
   let penalty = 0
 
-  if (recommendation.condition === 'hot') {
+  if (recommendation.thermalBand === 'hot') {
     penalty += categories.filter((category) => HOT_DISALLOWED.includes(category)).length * 100
-    if (categories.includes('hoodie')) penalty += itemText(items[categories.indexOf('hoodie')]).includes('heavy') ? 100 : 60
     if (outfitLayerCount(items) > recommendation.maxLayers) penalty += 100
+  }
+  if (recommendation.signals.includes('humid')) {
+    penalty += categories.filter((category) => HUMID_DISALLOWED.includes(category)).length * 45
+  }
+  if (recommendation.signals.includes('rainy')) {
+    penalty += categories.filter((category) => ['slides', 'sandals'].includes(category)).length * 40
   }
 
   if (season === 'summer') {
@@ -226,13 +268,15 @@ export function validateOutfitWeather(items: WeatherAwareItem[], weather: Weathe
   const itemSeasons = items.map((item) => normalizedCondition(item.season)).filter(Boolean)
   let reason = ''
 
-  if (recommendation.condition === 'hot') {
+  if (recommendation.thermalBand === 'hot') {
     const disallowed = categories.find((category) => HOT_DISALLOWED.includes(category) || category === 'hoodie')
     if (disallowed) reason = `${disallowed} is too warm for hot weather`
   }
+  if (!reason && recommendation.signals.includes('humid') && categories.some((category) => HUMID_DISALLOWED.includes(category))) reason = 'heavy fabric conflicts with humid weather'
+  if (!reason && recommendation.signals.includes('rainy') && categories.some((category) => ['slides', 'sandals'].includes(category))) reason = 'open footwear conflicts with rainy weather'
   if (!reason && layerCount > recommendation.maxLayers) reason = `layer count ${layerCount} exceeds ${recommendation.maxLayers} for ${recommendation.condition} weather`
   if (!reason && warmthScore > maxWarmth) reason = `warmth score ${warmthScore} exceeds ${maxWarmth} for ${recommendation.condition} weather`
-  if (!reason && warmthScore < minWarmth && recommendation.condition === 'cold') reason = `warmth score ${warmthScore} is below ${minWarmth} for cold weather`
+  if (!reason && warmthScore < minWarmth && recommendation.thermalBand === 'cold') reason = `warmth score ${warmthScore} is below ${minWarmth} for cold weather`
   if (!reason && season === 'summer' && categories.some((category) => SUMMER_PENALIZED.includes(category))) reason = 'heavy winter category conflicts with summer'
   if (!reason && season === 'summer' && itemSeasons.some((itemSeason) => itemSeason === 'winter')) reason = 'winter item conflicts with summer'
   if (!reason && season === 'winter' && categories.includes('shorts')) reason = 'shorts conflict with winter'
@@ -241,6 +285,7 @@ export function validateOutfitWeather(items: WeatherAwareItem[], weather: Weathe
     valid: !reason,
     reason: reason || undefined,
     weather: recommendation.condition,
+    thermalBand: recommendation.thermalBand,
     season,
     layerCount,
     warmthScore
@@ -255,6 +300,9 @@ export function scoreWeatherFit(items: WeatherAwareItem[], weather: WeatherConte
   const categories = items.map(normalizedItemCategory)
   if (recommendation.needsLayer && categories.some((category) => ['hoodie', 'jacket'].includes(category))) score += 10
   if (recommendation.avoidHeavyLayers && categories.some((category) => ['hoodie', 'jacket', 'coat', 'puffer', 'boots'].includes(category))) score -= 45
+  if (recommendation.signals.includes('humid') && categories.some((category) => ['tshirt', 'shirt', 'shorts', 'sandals'].includes(category))) score += 8
+  if (recommendation.signals.includes('rainy') && categories.some((category) => ['jacket', 'boots'].includes(category))) score += 8
+  if (recommendation.signals.includes('windy') && categories.some((category) => ['jacket', 'hoodie'].includes(category))) score += 6
   score -= weatherPenalty(items, weather)
   return Math.max(0, Math.min(100, Math.round(score)))
 }

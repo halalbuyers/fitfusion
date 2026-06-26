@@ -110,9 +110,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         userId,
         author: {
           id: userId,
-          name: profile?.name || 'FitFusion creator',
+          name: profile?.name || 'Noir Closet creator',
           avatar: profile?.profilePhoto || '',
-          handle: profile?.name ? profile.name.toLowerCase().replace(/\s+/g, '') : `fitfusion-${userId.slice(-6)}`
+          handle: profile?.name ? profile.name.toLowerCase().replace(/\s+/g, '') : `noircloset-${userId.slice(-6)}`
         },
         type: ['image', 'carousel', 'video', 'outfit', 'wardrobe', 'style-tip', 'discussion', 'poll', 'before-after'].includes(normalizeText(body.type)) ? normalizeText(body.type) : 'outfit',
         title: normalizeText(body.title),

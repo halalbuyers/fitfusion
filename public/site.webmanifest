@@ -1,0 +1,17 @@
+{
+  "name": "Noir Closet",
+  "short_name": "Noir Closet",
+  "description": "Your AI-Powered Smart Wardrobe.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070707",
+  "theme_color": "#d7ff55",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "64x64",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    }
+  ]
+}

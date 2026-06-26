@@ -11,6 +11,7 @@ import {
   MoreHorizontal, Search, Settings, Shield, Shirt, Sparkles, Trash2, TrendingUp, UserCog,
   Users
 } from 'lucide-react'
+import { FEATURE_FLAGS } from '../../lib/feature-flags'
 
 type AdminView = 'overview' | 'users' | 'analytics' | 'system' | 'community-updates' | 'training' | 'settings'
 type Kpi = { label: string; value: number | string; growth: number; trend: string; note?: string }
@@ -25,7 +26,7 @@ type AdminOverview = {
   activityLogs: Array<any>
   recentUsers: Array<any>
   recentItems: Array<any>
-  settings: Record<string, boolean>
+  settings: Record<string, boolean | string>
 }
 type AdminUser = {
   _id: string
@@ -52,7 +53,7 @@ const nav = [
 
 const emptyOverview: AdminOverview = {
   kpis: [],
-  charts: { userTrend: [], outfitTrend: [], categoryData: [], colorData: [], styleData: [], outfitTypeData: [], aiUsage: [], outfitLearning: [], weather: [], seasons: [] },
+  charts: { userTrend: [], outfitTrend: [], categoryData: [], colorData: [], styleData: [], outfitTypeData: [], aiUsage: [], outfitLearning: [], lovedOutfitTypes: [], rejectedOutfitTypes: [], feedbackTopColors: [], feedbackTopStyles: [], feedbackTopSeasons: [], weather: [], seasons: [] },
   ai: {},
   health: [],
   feedbackOpen: 0,
@@ -91,7 +92,7 @@ function AdminChrome({ view, children }: { view: AdminView; children: React.Reac
           <div className="flex items-center gap-3 px-2 py-2">
             <div className="flex h-9 w-9 items-center justify-center rounded-[8px] bg-[#d7ff55] text-black"><Shield className="h-5 w-5" /></div>
             <div>
-              <p className="text-sm font-semibold">FitFusion</p>
+              <p className="text-sm font-semibold">Noir Closet</p>
               <p className="text-xs text-white/45">Control Center</p>
             </div>
           </div>
@@ -122,7 +123,7 @@ function AdminChrome({ view, children }: { view: AdminView; children: React.Reac
               <div className="relative flex flex-col gap-2 sm:flex-row sm:items-center">
                 <div className="relative">
                   <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-white/35" />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} className="field h-11 w-full pl-9 sm:w-80" placeholder="Search users, outfits, feedback" />
+                  <input id="admin-global-search" name="adminGlobalSearch" type="search" autoComplete="off" aria-label="Search users, outfits, feedback" value={query} onChange={(event) => setQuery(event.target.value)} className="field h-11 w-full pl-9 sm:w-80" placeholder="Search users, outfits, feedback" />
                   {results.length ? (
                     <div className="absolute right-0 top-12 z-50 w-full overflow-hidden rounded-[8px] border border-white/10 bg-[#101010] shadow-2xl sm:w-96">
                       {results.map((result, index) => (
@@ -247,9 +248,9 @@ function UsersView() {
     <div className="grid gap-5">
       <Card>
         <div className="grid gap-3 md:grid-cols-[1fr_180px_180px]">
-          <input className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name or email" />
-          <select className="field" value={role} onChange={(event) => setRole(event.target.value)}><option value="">All roles</option><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select>
-          <select className="field" value={sort} onChange={(event) => setSort(event.target.value)}><option value="createdAt">Created date</option><option value="name">Name</option><option value="email">Email</option><option value="role">Role</option></select>
+          <input id="admin-users-search" name="adminUsersSearch" type="search" autoComplete="off" aria-label="Search users by name or email" className="field" value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search by name or email" />
+          <select id="admin-users-role" name="adminUsersRole" aria-label="Filter users by role" className="field" value={role} onChange={(event) => setRole(event.target.value)}><option value="">All roles</option><option value="user">User</option><option value="moderator">Moderator</option><option value="admin">Admin</option></select>
+          <select id="admin-users-sort" name="adminUsersSort" aria-label="Sort users" className="field" value={sort} onChange={(event) => setSort(event.target.value)}><option value="createdAt">Created date</option><option value="name">Name</option><option value="email">Email</option><option value="role">Role</option></select>
         </div>
       </Card>
       <Card className="overflow-hidden p-0">
@@ -261,7 +262,7 @@ function UsersView() {
             <tbody>
               {users.map((user) => (
                 <tr key={user._id} className="border-t border-white/8">
-                  <td className="px-4 py-3">{user.avatar ? <Image src={user.avatar} alt={user.name} width={36} height={36} sizes="36px" className="h-9 w-9 rounded-full object-cover" /> : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">{user.name?.slice(0, 2).toUpperCase() || 'FF'}</div>}</td>
+                  <td className="px-4 py-3">{user.avatar ? <Image src={user.avatar} alt={user.name} width={36} height={36} sizes="36px" className="h-9 w-9 rounded-full object-cover" /> : <div className="flex h-9 w-9 items-center justify-center rounded-full bg-white/10 text-xs">{user.name?.slice(0, 2).toUpperCase() || 'NC'}</div>}</td>
                   <td className="font-medium"><Link href={`/admin/users/${user.clerkId || user._id}`} className="transition hover:text-[#d7ff55]">{user.name}</Link></td><td className="text-white/52">{user.email}</td>
                   <td><span className="rounded-full bg-white/8 px-2 py-1 text-xs capitalize">{user.role}</span></td>
                   <td>{user.wardrobeCount}</td><td>{user.outfitCount}</td><td className="text-white/45">{formatDate(user.createdAt)}</td><td className="text-white/45">{formatDate(user.lastLogin)}</td>
@@ -294,6 +295,15 @@ function Analytics({ data }: { data: AdminOverview }) {
         <ChartCard title="Most Used Colors" type="pie" data={data.charts.colorData || []} />
         <ChartCard title="Most Used Styles" type="bar" data={data.charts.styleData || []} />
         <ChartCard title="Most Generated Outfit Types" type="pie" data={data.charts.outfitTypeData || []} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-2">
+        <ChartCard title="Most Loved Outfit Types" type="bar" data={data.charts.lovedOutfitTypes || []} />
+        <ChartCard title="Most Rejected Outfit Types" type="bar" data={data.charts.rejectedOutfitTypes || []} />
+      </div>
+      <div className="grid gap-5 xl:grid-cols-3">
+        <ChartCard title="Feedback Top Colors" type="pie" data={data.charts.feedbackTopColors || []} />
+        <ChartCard title="Feedback Top Styles" type="bar" data={data.charts.feedbackTopStyles || []} />
+        <ChartCard title="Feedback Top Seasons" type="bar" data={data.charts.feedbackTopSeasons || []} />
       </div>
       <div className="grid gap-5 xl:grid-cols-3">
         <AiPanel data={data.ai} />
@@ -373,10 +383,15 @@ function TrainingDataView() {
 }
 
 function SettingsView({ data }: { data: AdminOverview }) {
-  const [settings, setSettings] = useState<Record<string, boolean>>(data.settings || {})
+  const [settings, setSettings] = useState<Record<string, boolean | string>>(data.settings || {})
   useEffect(() => setSettings(data.settings || {}), [data.settings])
   async function toggle(key: string) {
     const next = { ...settings, [key]: !settings[key] }
+    setSettings(next)
+    await fetch('/api/admin/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) })
+  }
+  async function setMonetizationMode(mode: 'disabled' | 'enabled') {
+    const next = { ...settings, monetizationMode: mode }
     setSettings(next)
     await fetch('/api/admin/settings', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(next) })
   }
@@ -389,6 +404,21 @@ function SettingsView({ data }: { data: AdminOverview }) {
           <Toggle label="Enable Outfit Generator" active={settings.enableOutfitGenerator !== false} onClick={() => toggle('enableOutfitGenerator')} />
           <Toggle label="Maintenance Mode" active={Boolean(settings.maintenanceMode)} onClick={() => toggle('maintenanceMode')} />
           <Toggle label="Registration Control" active={settings.registrationEnabled !== false} onClick={() => toggle('registrationEnabled')} />
+        </div>
+      </Card>
+      <Card>
+        <h2 className="font-semibold">Monetization Mode</h2>
+        <div className="mt-5 rounded-[8px] border border-[#d7ff55]/20 bg-[#d7ff55]/10 p-4">
+          <p className="text-2xl font-semibold text-[#d7ff55]">{settings.monetizationMode === 'enabled' ? 'Enabled' : 'Disabled'}</p>
+          <p className="mt-2 text-sm leading-6 text-white/55">Payments and paid feature gates are paused for the free beta.</p>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2">
+          <button type="button" onClick={() => setMonetizationMode('disabled')} className={`h-10 rounded-[8px] text-sm font-semibold transition ${settings.monetizationMode !== 'enabled' ? 'bg-[#d7ff55] text-black' : 'bg-white/8 text-white/70 hover:bg-white/12'}`}>Disabled</button>
+          <button type="button" onClick={() => setMonetizationMode('enabled')} className={`h-10 rounded-[8px] text-sm font-semibold transition ${settings.monetizationMode === 'enabled' ? 'bg-white text-black' : 'bg-white/8 text-white/70 hover:bg-white/12'}`}>Enabled</button>
+        </div>
+        <div className="mt-4 grid gap-2 text-sm text-white/62">
+          <NotificationLine icon={CircleDollarSign} label="Payments" value={FEATURE_FLAGS.enablePayments ? 'Enabled' : 'Disabled'} />
+          <NotificationLine icon={Sparkles} label="Paid feature gates" value={FEATURE_FLAGS.enablePremium ? 'Enabled' : 'Disabled'} />
         </div>
       </Card>
       <Card>

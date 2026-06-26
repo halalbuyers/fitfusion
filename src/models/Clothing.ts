@@ -21,6 +21,7 @@ export interface IClothing extends Document {
   material?: string
   favorite: boolean
   isFavorite: boolean
+  itemPreferenceScore: number
   wearCount: number
   usageCount: number
   lastWornAt: Date | null
@@ -54,6 +55,7 @@ const ClothingSchema: Schema = new Schema({
   material: { type: String },
   favorite: { type: Boolean, default: false, index: true },
   isFavorite: { type: Boolean, default: false, index: true },
+  itemPreferenceScore: { type: Number, default: 0, index: true },
   wearCount: { type: Number, default: 0 },
   usageCount: { type: Number, default: 0 },
   lastWornAt: { type: Date, default: null },
