@@ -21,8 +21,6 @@ export const SITE_KEYWORDS = [
 export const PUBLIC_ROUTES = [
   { path: '/', label: 'Home', priority: 1 },
   { path: '/about', label: 'About', priority: 0.8 },
-  { path: '/community', label: 'Community', priority: 0.7 },
-  { path: '/calendar', label: 'Calendar', priority: 0.6 },
   { path: '/stylist', label: 'AI Stylist', priority: 0.6 },
   { path: '/pricing', label: 'Pricing', priority: 0.4 },
   { path: '/updates', label: 'Updates', priority: 0.7 },
