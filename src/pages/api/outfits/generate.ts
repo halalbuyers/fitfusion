@@ -12,8 +12,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const started = Date.now()
-    const { occasion, weather, temperature, season, preferences, mode = 'basic', limit } = req.body || {}
-    const outfits = await generateOutfitsForUser(userId, { occasion, weather, temperature, season, preferences, mode, limit })
+    const { occasion, weather, temperature, season, preferences, mode = 'basic', limit, rain, windKph, humidity, uvIndex, timeOfDay, boldFashion } = req.body || {}
+    const outfits = await generateOutfitsForUser(userId, { occasion, weather, temperature, season, preferences, mode, limit, rain, windKph, humidity, uvIndex, timeOfDay, boldFashion })
     await connectToDatabase().then(() => AiRequestLog.create({
       userId,
       kind: 'outfit',

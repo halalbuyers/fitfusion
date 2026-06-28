@@ -43,6 +43,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       tags: outfit.tags || [],
       outfitKey: outfit.outfitKey,
       confidence: outfit.confidence,
+      confidenceLabel: outfit.confidenceLabel,
+      weatherMatch: outfit.weatherMatch,
+      missingEssentials: outfit.missingEssentials,
       method: outfit.method || 'local',
       isFavorite: true,
       plannedFor: plannedFor ? new Date(plannedFor) : undefined

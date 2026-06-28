@@ -12,6 +12,9 @@ export interface IOutfit extends Document {
   tags: string[]
   outfitKey?: string
   confidence?: number
+  confidenceLabel?: string
+  weatherMatch?: Record<string, any>
+  missingEssentials?: Array<Record<string, any>>
   method?: string
   isFavorite: boolean
   plannedFor?: Date
@@ -30,6 +33,9 @@ const OutfitSchema: Schema = new Schema({
   tags: { type: [String], default: [] },
   outfitKey: { type: String, index: true },
   confidence: { type: Number, default: 0 },
+  confidenceLabel: { type: String },
+  weatherMatch: { type: Schema.Types.Mixed, default: undefined },
+  missingEssentials: { type: [Schema.Types.Mixed], default: undefined },
   method: { type: String, default: 'local' },
   isFavorite: { type: Boolean, default: false, index: true },
   plannedFor: { type: Date }

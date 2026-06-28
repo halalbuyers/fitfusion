@@ -10,6 +10,7 @@ import { getPersonalizationProfile } from '../lib/personalization-engine'
 import { generateOutfits, outfitColorSignature, outfitKey, outfitStructureKey, type OutfitRequest } from '../lib/outfit-engine'
 import { generateGeminiText, hasGemini } from './gemini'
 import { filterItemsByFashionProfile, getCategoriesForFashionType } from '../lib/outfit-engine-profile'
+import type { MissingWardrobeEssential } from '../lib/ai/recommendationEngine'
 
 export type GeneratedOutfit = {
   items: { id: string; role?: string }[]
@@ -20,16 +21,20 @@ export type GeneratedOutfit = {
   breakdown?: Record<string, number>
   outfitKey?: string
   confidence?: number
+  confidenceLabel?: string
+  weatherMatch?: { score: number; label: string; condition: string; reasons: string[]; prefer: string[]; avoid: string[] }
+  missingEssentials?: MissingWardrobeEssential[]
   reasoning?: string[]
   method?: 'local' | 'hybrid'
 }
 
 function roleForCategory(category?: string) {
   const value = normalizeCategory(category)
-  if (['shirt', 'tshirt', 'hoodie'].includes(value)) return 'top'
-  if (value === 'jacket') return 'layer'
-  if (['jeans', 'cargo', 'shorts'].includes(value)) return 'bottom'
-  if (['boots', 'sneakers'].includes(value)) return 'shoes'
+  const text = String(category || '').toLowerCase()
+  if (['shirt', 'tshirt', 'hoodie', 'blouse', 'dress', 'kurti', 'saree'].includes(value) || text.includes('shirt') || text.includes('tee')) return 'top'
+  if (value === 'jacket' || text.includes('jacket') || text.includes('blazer') || text.includes('coat')) return 'layer'
+  if (['jeans', 'cargo', 'shorts', 'skirt'].includes(value) || text.includes('trouser') || text.includes('pant') || text.includes('chino')) return 'bottom'
+  if (['boots', 'sneakers', 'heels'].includes(value) || text.includes('shoe') || text.includes('loafer') || text.includes('sandal')) return 'shoes'
   return 'accessory'
 }
 
@@ -43,6 +48,9 @@ function toApiOutfits(items: any[], request: OutfitRequest): GeneratedOutfit[] {
     breakdown: outfit.breakdown,
     outfitKey: outfit.outfitKey || outfitKey(outfit.items),
     confidence: outfit.confidence,
+    confidenceLabel: outfit.confidenceLabel,
+    weatherMatch: outfit.weatherMatch,
+    missingEssentials: outfit.missingEssentials,
     reasoning: outfit.reasoning,
     method: 'local'
   }))
@@ -85,7 +93,21 @@ Return ONLY JSON: [{"candidateIndex":0,"explanation":"...","tags":["..."]}]`
 
 export async function generateOutfitsForUser(
   userId: string,
-  options: { occasion?: string; weather?: string; temperature?: number; season?: string; preferences?: string[]; mode?: 'basic' | 'hybrid'; limit?: number } = {}
+  options: {
+    occasion?: string
+    weather?: string
+    temperature?: number
+    season?: string
+    preferences?: string[]
+    mode?: 'basic' | 'hybrid'
+    limit?: number
+    rain?: boolean | number
+    windKph?: number
+    humidity?: number
+    uvIndex?: number
+    timeOfDay?: string
+    boldFashion?: boolean
+  } = {}
 ): Promise<GeneratedOutfit[]> {
   try {
     await connectToDatabase()
@@ -167,6 +189,12 @@ export async function generateOutfitsForUser(
     weather: options.weather,
     temperature: options.temperature,
     season: options.season,
+    rain: options.rain,
+    windKph: options.windKph,
+    humidity: options.humidity,
+    uvIndex: options.uvIndex,
+    timeOfDay: options.timeOfDay,
+    boldFashion: options.boldFashion,
     stylePreference: options.preferences?.[0] || preferences.preferredStyles[0],
     preferences,
     recentlyGenerated: generationHistory.slice(0, 5),

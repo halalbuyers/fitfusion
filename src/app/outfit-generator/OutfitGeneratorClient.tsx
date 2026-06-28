@@ -3,7 +3,7 @@
 import React, { useEffect, useMemo, useState } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { AlertCircle, Ban, Check, CloudSun, Flame, Heart, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
+import { AlertCircle, AlertTriangle, Ban, Brain, Check, CloudSun, Flame, Heart, Lightbulb, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Star, Target, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 import Toast from '../../components/Toast'
 
@@ -19,6 +19,9 @@ type Outfit = {
   breakdown?: Record<string, number>
   outfitKey?: string
   confidence?: number
+  confidenceLabel?: string
+  weatherMatch?: { score: number; label: string; condition: string; reasons: string[]; prefer: string[]; avoid: string[] }
+  missingEssentials?: Array<{ title: string; reason: string; priority: 'high' | 'medium' | 'low'; estimatedCombinationIncrease: number }>
   reasoning?: string[]
   method?: string
 }
@@ -32,7 +35,7 @@ type WeatherData = {
 
 type OutfitFeedbackReaction = 'love_it' | 'not_my_style' | 'wear_again' | 'never_suggest_again'
 
-const occasions = ['casual', 'office', 'college', 'party', 'wedding', 'date', 'travel', 'gym', 'festival']
+const occasions = ['casual', 'college', 'office', 'formal', 'wedding', 'party', 'gym', 'travel', 'home', 'streetwear']
 const weatherOptions = ['hot', 'warm', 'cool', 'cold', 'rainy', 'humid', 'windy']
 const seasons = ['summer', 'winter', 'spring', 'autumn', 'all-season']
 const feedbackActions: Array<{ reaction: OutfitFeedbackReaction; label: string; success: string; Icon: typeof Heart }> = [
@@ -49,7 +52,7 @@ function scoreTone(score: number) {
 }
 
 function metricLabel(key: string) {
-  return key.replace('Score', '').replace(/([A-Z])/g, ' $1').trim()
+  return key.replace(/^ai/, 'AI ').replace('Score', '').replace(/([A-Z])/g, ' $1').trim()
 }
 
 export default function OutfitGeneratorPage() {
@@ -338,10 +341,38 @@ export default function OutfitGeneratorPage() {
                       </div>
                       <div className="grid shrink-0 gap-1 text-right">
                         <span className={`rounded-[8px] px-3 py-2 text-lg font-black ${scoreTone(outfit.score)}`}>{outfit.score}</span>
-                        <span className="text-[11px] text-white/38">{outfit.confidence ?? 0}% confidence</span>
+                        <span className="text-[11px] text-white/38">Outfit score</span>
                       </div>
                     </div>
-                    <p className="mt-4 text-sm leading-6 text-white/58">{outfit.explanation}</p>
+
+                    <div className="mt-4 grid gap-2 sm:grid-cols-4">
+                      <div className="rounded-[8px] border border-[#d7ff55]/20 bg-[#d7ff55]/10 p-3">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-[#e8ff91]"><Star className="h-3.5 w-3.5" /> Score</div>
+                        <p className="mt-2 text-lg font-semibold text-white">{outfit.score}/100</p>
+                      </div>
+                      <div className="rounded-[8px] border border-white/10 bg-black/22 p-3">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-white/38"><CloudSun className="h-3.5 w-3.5" /> Weather</div>
+                        <p className="mt-2 text-lg font-semibold text-white">{outfit.weatherMatch?.score ?? Math.round(Number(outfit.breakdown?.weatherScore || 0))}%</p>
+                      </div>
+                      <div className="rounded-[8px] border border-white/10 bg-black/22 p-3">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-white/38"><Target className="h-3.5 w-3.5" /> Occasion</div>
+                        <p className="mt-2 text-lg font-semibold capitalize text-white">{outfit.occasion || occasion}</p>
+                      </div>
+                      <div className="rounded-[8px] border border-white/10 bg-black/22 p-3">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.16em] text-white/38"><Brain className="h-3.5 w-3.5" /> Confidence</div>
+                        <p className="mt-2 text-lg font-semibold text-white">{outfit.confidence ?? 0}%</p>
+                        <p className="mt-1 text-[11px] text-white/42">{outfit.confidenceLabel || 'Confidence'}</p>
+                      </div>
+                    </div>
+
+                    <div className="mt-4 rounded-[8px] border border-white/10 bg-black/22 p-3">
+                      <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-white/35">
+                        <Lightbulb className="h-3.5 w-3.5 text-[#d7ff55]" />
+                        Why this outfit?
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-white/58">{outfit.explanation}</p>
+                      {outfit.weatherMatch?.label && <p className="mt-2 text-xs text-white/38">{outfit.weatherMatch.label}</p>}
+                    </div>
                     {outfit.colorAnalysis && <p className="mt-2 text-xs text-white/38">{outfit.colorAnalysis}</p>}
                     {outfit.reasoning?.length ? (
                       <div className="mt-3 rounded-[8px] border border-white/10 bg-black/22 p-3">
@@ -379,6 +410,26 @@ export default function OutfitGeneratorPage() {
                         </div>
                       ))}
                     </div>
+
+                    {outfit.missingEssentials?.length ? (
+                      <div className="mt-4 rounded-[8px] border border-amber-300/15 bg-amber-300/10 p-3">
+                        <div className="flex items-center gap-2 text-[11px] uppercase tracking-[0.2em] text-amber-100/70">
+                          <AlertTriangle className="h-3.5 w-3.5" />
+                          Missing wardrobe essentials
+                        </div>
+                        <div className="mt-3 grid gap-2">
+                          {outfit.missingEssentials.slice(0, 3).map((item) => (
+                            <div key={item.title} className="flex items-start justify-between gap-3 rounded-[8px] bg-black/22 p-2">
+                              <div>
+                                <p className="text-sm font-medium text-white">{item.title}</p>
+                                <p className="mt-1 text-xs leading-5 text-white/45">{item.reason}</p>
+                              </div>
+                              <span className="shrink-0 rounded-[8px] bg-white/8 px-2 py-1 text-[11px] text-white/58">+{item.estimatedCombinationIncrease}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ) : null}
 
                     <div className="mt-5 grid gap-2 sm:grid-cols-[1fr_auto_auto]">
                       <button onClick={() => saveOutfit(outfit, index)} disabled={saving === String(index)} className="flex h-10 flex-1 items-center justify-center gap-2 rounded-[8px] bg-white text-sm font-semibold text-black transition hover:bg-white/90 disabled:opacity-60">
