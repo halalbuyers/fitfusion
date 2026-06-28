@@ -1,8 +1,18 @@
 "use client"
 
+import Image from 'next/image'
 import { useMemo, useState } from 'react'
-import { Bot, Footprints, Send, Shirt, Sparkles, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react'
+import { Bot, Footprints, Loader2, Send, Shirt, Sparkles, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+
+type OutfitCardItem = {
+  id?: string
+  label: string
+  role: string
+  image?: string
+  category?: string
+  color?: string
+}
 
 type OutfitCardData = {
   top: string
@@ -10,6 +20,10 @@ type OutfitCardData = {
   shoes: string
   style: string
   reason: string
+  score?: number
+  items?: OutfitCardItem[]
+  missing?: Array<{ title: string; estimatedNewCombinations?: number; estimatedImprovementPercent?: number }>
+  followUps?: string[]
 }
 
 type Message = {
@@ -17,13 +31,17 @@ type Message = {
   content: string
   method?: string
   outfitCard?: OutfitCardData
+  suggestions?: string[]
+  memorySummary?: string
 }
 
 const starters = [
-  'What should I wear to college today?',
-  'Make me a date night outfit.',
-  'Suggest a rainy day streetwear fit.',
-  'What items am I missing from my wardrobe?'
+  'What should I wear today?',
+  'Create a luxury outfit.',
+  'Help me pack for a trip.',
+  'Style my black hoodie.',
+  'What am I missing?',
+  'Show my least worn clothes.'
 ]
 
 function cleanAssistantText(value: unknown) {
@@ -42,7 +60,8 @@ export default function StylistPage() {
   const [messages, setMessages] = useState<Message[]>([
     {
       role: 'assistant',
-      content: 'Tell me the occasion, weather, or vibe. I will use your saved wardrobe first and only lean on AI if it is available.'
+      content: 'I remember your wardrobe, preferences, recent outfits, and style feedback. Ask naturally, and I will style only from pieces you own unless I clearly mark something as a purchase suggestion.',
+      suggestions: starters
     }
   ])
   const [input, setInput] = useState('')
@@ -53,6 +72,21 @@ export default function StylistPage() {
     role: message.role === 'assistant' ? 'assistant' : 'user',
     content: message.content
   })), [messages])
+
+  function revealAssistantMessage(message: Message) {
+    const fullText = message.content
+    const words = fullText.split(' ')
+    const index = messages.length + 1
+    setMessages((current) => [...current, { ...message, content: '' }])
+    let cursor = 0
+    const timer = window.setInterval(() => {
+      cursor += 3
+      setMessages((current) => current.map((entry, entryIndex) => (
+        entryIndex === index ? { ...entry, content: words.slice(0, cursor).join(' ') } : entry
+      )))
+      if (cursor >= words.length) window.clearInterval(timer)
+    }, 28)
+  }
 
   async function send(text = input) {
     const prompt = text.trim()
@@ -70,18 +104,21 @@ export default function StylistPage() {
       })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Stylist failed')
-      setMessages((current) => [...current, {
+      revealAssistantMessage({
         role: 'assistant',
         content: cleanAssistantText(data.reply),
         method: data.method,
-        outfitCard: data.outfitCard
-      }])
+        outfitCard: data.outfitCard,
+        suggestions: data.suggestions,
+        memorySummary: data.memorySummary
+      })
     } catch {
-      setMessages((current) => [...current, {
+      revealAssistantMessage({
         role: 'assistant',
-        content: 'I hit a connection issue, so here is the fallback: use a neutral top, balanced bottoms, clean shoes, and add a jacket if the weather is cold or rainy.',
-        method: 'fallback'
-      }])
+        content: 'I hit a connection issue, so here is the fallback: use a neutral top, balanced bottoms, clean shoes, and add a jacket only if the weather needs it.',
+        method: 'fallback',
+        suggestions: starters
+      })
     } finally {
       setIsTyping(false)
     }
@@ -92,7 +129,7 @@ export default function StylistPage() {
     await fetch('/api/ai/stylist-feedback', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ action, topic: 'stylist advice' })
+      body: JSON.stringify({ action, topic: messages[index]?.content?.slice(0, 80) || 'stylist advice' })
     }).catch(() => undefined)
   }
 
@@ -105,12 +142,24 @@ export default function StylistPage() {
 
     return (
       <div className="mt-4 overflow-hidden rounded-[8px] border border-white/10 bg-white/[0.045]">
+        {card.items?.length ? (
+          <div className="grid grid-cols-4 gap-px bg-white/10">
+            {card.items.slice(0, 4).map((item, index) => (
+              <div key={item.id || `${item.label}-${index}`} className="relative aspect-square bg-black/40">
+                {item.image ? <Image src={item.image} alt={item.label} fill sizes="140px" className="object-contain p-2.5" /> : <div className="grid h-full place-items-center text-white/25"><Shirt className="h-5 w-5" /></div>}
+              </div>
+            ))}
+          </div>
+        ) : null}
         <div className="flex items-center justify-between border-b border-white/10 px-4 py-3">
           <div>
             <p className="text-xs font-semibold uppercase text-white/40">Outfit card</p>
             <h3 className="mt-1 text-sm font-semibold">{card.style}</h3>
           </div>
-          <Sparkles className="h-4 w-4 text-[#d7ff55]" />
+          <div className="flex items-center gap-2 text-[#d7ff55]">
+            {typeof card.score === 'number' ? <span className="text-xs font-semibold">{card.score}/100</span> : null}
+            <Sparkles className="h-4 w-4" />
+          </div>
         </div>
         <div className="grid gap-2 p-3">
           {rows.map(([label, value, Icon]) => (
@@ -125,30 +174,44 @@ export default function StylistPage() {
             </div>
           ))}
           <div className="rounded-[8px] bg-[#d7ff55]/10 px-3 py-3 text-sm leading-6 text-white/68">
-            <span className="font-semibold text-white">Reason: </span>{card.reason}
+            <span className="font-semibold text-white">Why it works: </span>{card.reason}
           </div>
+          {card.missing?.length ? (
+            <div className="rounded-[8px] border border-amber-300/15 bg-amber-300/10 px-3 py-3">
+              <p className="text-[11px] uppercase tracking-[0.18em] text-amber-100/70">Purchase suggestions</p>
+              <div className="mt-2 grid gap-1">
+                {card.missing.slice(0, 2).map((item) => (
+                  <p key={item.title} className="text-xs text-white/58">{item.title} {item.estimatedNewCombinations ? `· +${item.estimatedNewCombinations} combinations` : ''}</p>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     )
   }
 
   return (
-    <AppFrame title="AI stylist chat" eyebrow="Wardrobe-aware assistant">
-      <div className="mx-auto grid max-w-5xl gap-5 lg:grid-cols-[0.72fr_1.28fr]">
+    <AppFrame title="AI stylist chat" eyebrow="Persistent personal stylist">
+      <div className="mx-auto grid max-w-6xl gap-5 lg:grid-cols-[0.68fr_1.32fr]">
         <aside className="rounded-[8px] border border-white/10 bg-white/[0.035] p-5">
           <div className="flex items-center gap-3">
             <div className="grid h-11 w-11 place-items-center rounded-[8px] bg-[#d7ff55] text-black">
               <Sparkles className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-semibold">Stylist mode</h2>
-              <p className="text-sm text-white/42">Local engine plus optional AI polish</p>
+              <h2 className="font-semibold">Personal stylist V2</h2>
+              <p className="text-sm text-white/42">Memory, wardrobe, weather, and outfit history</p>
             </div>
           </div>
-          <p className="mt-5 text-xs uppercase tracking-[0.2em] text-white/35">Suggested prompts</p>
-          <div className="mt-3 grid gap-2">
+          <div className="mt-5 rounded-[8px] border border-white/10 bg-black/22 p-3">
+            <p className="text-xs uppercase tracking-[0.2em] text-white/35">Memory</p>
+            <p className="mt-2 text-sm leading-6 text-white/55">{messages.slice().reverse().find((message) => message.memorySummary)?.memorySummary || 'Learning from your wardrobe and feedback.'}</p>
+          </div>
+          <p className="mt-5 text-xs uppercase tracking-[0.2em] text-white/35">Suggested questions</p>
+          <div className="mt-3 flex flex-wrap gap-2">
             {starters.map((starter) => (
-              <button key={starter} onClick={() => send(starter)} className="rounded-[8px] border border-white/10 bg-black/20 px-3 py-3 text-left text-sm leading-5 text-white/65 transition hover:bg-white/8 hover:text-white">
+              <button key={starter} onClick={() => send(starter)} className="rounded-[8px] border border-white/10 bg-black/20 px-3 py-2 text-left text-xs leading-5 text-white/65 transition hover:bg-white/8 hover:text-white">
                 {starter}
               </button>
             ))}
@@ -156,7 +219,7 @@ export default function StylistPage() {
         </aside>
 
         <section className="rounded-[8px] border border-white/10 bg-white/[0.045] p-3 shadow-2xl shadow-black/20 sm:p-4">
-          <div className="hide-scrollbar grid max-h-[68vh] min-h-[430px] content-start gap-4 overflow-y-auto pr-1">
+          <div className="hide-scrollbar grid max-h-[70vh] min-h-[500px] content-start gap-4 overflow-y-auto pr-1">
             {messages.map((message, index) => (
               <div key={index} className={`flex gap-3 ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                 {message.role === 'assistant' && (
@@ -164,27 +227,28 @@ export default function StylistPage() {
                     <Bot className="h-4 w-4" />
                   </div>
                 )}
-                <div className={`max-w-[85%] rounded-[8px] p-4 shadow-lg shadow-black/12 ${message.role === 'user' ? 'bg-white text-black' : 'bg-black/28 text-white'}`}>
+                <div className={`max-w-[88%] rounded-[8px] p-4 shadow-lg shadow-black/12 transition ${message.role === 'user' ? 'bg-white text-black' : 'bg-black/28 text-white'}`}>
                   <div className="flex items-center gap-2 text-xs font-semibold opacity-60">
                     {message.role === 'user' ? 'You' : 'Noir Closet'}
                     {message.method && <span className="rounded bg-white/10 px-1.5 py-0.5 uppercase">{message.method}</span>}
                   </div>
-                  <p className="mt-2 whitespace-pre-line text-sm leading-6">{message.content}</p>
+                  <p className="mt-2 whitespace-pre-line text-sm leading-6">{message.content || (message.role === 'assistant' ? 'Thinking through your wardrobe...' : '')}</p>
                   {message.role === 'assistant' && message.outfitCard && <OutfitRecommendationCard card={message.outfitCard} />}
+                  {message.role === 'assistant' && (message.outfitCard?.followUps?.length || message.suggestions?.length) ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {(message.outfitCard?.followUps || message.suggestions || []).slice(0, 4).map((suggestion) => (
+                        <button key={suggestion} onClick={() => send(suggestion)} className="rounded-[8px] border border-white/10 bg-white/7 px-2.5 py-1.5 text-xs text-white/62 transition hover:bg-white/12 hover:text-white">
+                          {suggestion}
+                        </button>
+                      ))}
+                    </div>
+                  ) : null}
                   {message.role === 'assistant' && index > 0 ? (
                     <div className="mt-3 flex gap-2">
-                      <button
-                        title="Like stylist advice"
-                        onClick={() => rateAdvice(index, 'liked')}
-                        className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'liked' ? 'bg-[#d7ff55] text-black' : ''}`}
-                      >
+                      <button title="Like stylist advice" onClick={() => rateAdvice(index, 'liked')} className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'liked' ? 'bg-[#d7ff55] text-black' : ''}`}>
                         <ThumbsUp className="h-3.5 w-3.5" />
                       </button>
-                      <button
-                        title="Dislike stylist advice"
-                        onClick={() => rateAdvice(index, 'disliked')}
-                        className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'disliked' ? 'bg-white text-black' : ''}`}
-                      >
+                      <button title="Dislike stylist advice" onClick={() => rateAdvice(index, 'disliked')} className={`icon-button h-8 w-8 ${feedbackByMessage[index] === 'disliked' ? 'bg-white text-black' : ''}`}>
                         <ThumbsDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
@@ -202,19 +266,23 @@ export default function StylistPage() {
                 <div className="grid h-9 w-9 place-items-center rounded-[8px] bg-white/10">
                   <Bot className="h-4 w-4" />
                 </div>
-                <div className="flex items-center gap-2 rounded-[8px] bg-black/28 p-4 text-sm text-white/55">
-                  <span className="flex gap-1" aria-label="Stylist is typing">
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:120ms]" />
-                    <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:240ms]" />
-                  </span>
-                  Styling from your wardrobe
+                <div className="grid gap-2 rounded-[8px] bg-black/28 p-4 text-sm text-white/55">
+                  <div className="flex items-center gap-2">
+                    <span className="flex gap-1" aria-label="Stylist is typing">
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:120ms]" />
+                      <span className="h-1.5 w-1.5 animate-bounce rounded-full bg-white/60 [animation-delay:240ms]" />
+                    </span>
+                    Checking wardrobe memory
+                  </div>
+                  <div className="h-3 w-56 animate-pulse rounded bg-white/10" />
+                  <div className="h-3 w-40 animate-pulse rounded bg-white/10" />
                 </div>
               </div>
             )}
           </div>
 
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 flex flex-col gap-3 sm:flex-row">
             <input
               id="stylist-message"
               name="message"
@@ -224,10 +292,10 @@ export default function StylistPage() {
               onChange={(e) => setInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && send()}
               className="field h-12 flex-1"
-              placeholder="Ask for a winter streetwear outfit..."
+              placeholder="I have an interview tomorrow..."
             />
-            <button onClick={() => send()} disabled={isTyping || !input.trim()} className="flex h-12 items-center gap-2 rounded-[8px] bg-white px-5 text-sm font-semibold text-black disabled:opacity-50">
-              <Send className="h-4 w-4" />
+            <button onClick={() => send()} disabled={isTyping || !input.trim()} className="flex h-12 items-center justify-center gap-2 rounded-[8px] bg-white px-5 text-sm font-semibold text-black disabled:opacity-50">
+              {isTyping ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />}
               Send
             </button>
           </div>
