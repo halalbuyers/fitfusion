@@ -17,6 +17,15 @@ export type WardrobeConfirmationInput = {
   fit?: string
   fitType?: string
   material?: string
+  gender?: string
+  sleeveLength?: string
+  neckType?: string
+  pattern?: string
+  quality?: string
+  thumbnail?: string
+  blurDataUrl?: string
+  visionConfidence?: number
+  vision?: Record<string, any>
   occasion?: string[] | string
   aiCategory?: string
   aiColor?: string
@@ -84,6 +93,15 @@ export function buildConfirmedClothingPayload(input: WardrobeConfirmationInput) 
     formalityScore: analysis.formalityScore,
     warmthScore: analysis.warmthScore,
     material: input.material || analysis.material,
+    gender: input.gender,
+    sleeveLength: input.sleeveLength,
+    neckType: input.neckType,
+    pattern: input.pattern,
+    quality: input.quality,
+    thumbnail: input.thumbnail,
+    blurDataUrl: input.blurDataUrl,
+    visionConfidence: cleanNumber(input.visionConfidence),
+    vision: input.vision,
     aiCategory,
     aiColor,
     categoryConfidence: cleanNumber(input.categoryConfidence),

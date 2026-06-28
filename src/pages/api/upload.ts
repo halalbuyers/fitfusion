@@ -10,12 +10,20 @@ import UserPreference from '../../models/UserPreference'
 import { getAuth } from '@clerk/nextjs/server'
 import { analyzeClothingText, mergeFashionAnalysis } from '../../lib/fashion-analysis'
 import { parseTags } from '../../lib/api'
-import { extractImageColors, type ExtractedImageColors } from '../../lib/image-color-extraction'
+import type { ExtractedImageColors } from '../../lib/image-color-extraction'
 import { classifyClothingCategory } from '../../lib/local-category-classifier'
 import { EMBEDDING_VERSION, generateClothingEmbedding } from '../../lib/embedding-engine'
 import { buildConfirmedClothingPayload } from '../../lib/wardrobe-confirmation'
 import { normalizeReviewCategory, normalizeReviewColor } from '../../lib/review-options'
 import { sanitizeCategoryForFashionType } from '../../lib/outfit-engine-profile'
+import { detectClothingAttributes } from '../../lib/vision/clothingDetector'
+import { extractVisionColors } from '../../lib/vision/colorExtractor'
+import { detectVisionStyle } from '../../lib/vision/styleDetector'
+import { detectVisionOccasions, detectVisionSeason } from '../../lib/vision/seasonDetector'
+import { detectVisibleBrand } from '../../lib/vision/brandDetector'
+import { detectVisionDuplicates } from '../../lib/vision/duplicateDetector'
+import { optimizeClothingImage } from '../../lib/vision/imageOptimizer'
+import { confidenceLabel, estimateQuality, generateSmartTags } from '../../lib/vision/metadataGenerator'
 
 export const config = {
   api: { bodyParser: false }
@@ -146,7 +154,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   const userId = auth.userId
   if (!userId) return res.status(401).json({ error: 'Unauthorized' })
 
-  const form = formidable({ multiples: false })
+  const form = formidable({ multiples: true })
   
   try {
     const { fields, files } = await new Promise<{ fields: any, files: any }>((resolve, reject) => {
@@ -159,7 +167,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const file = Array.isArray(files.file) ? files.file[0] : files.file
     if (!file) return res.status(400).json({ error: 'No file provided' })
 
-      const extractedColors: ExtractedImageColors = await extractImageColors(file.filepath, {
+      const optimizedImage = await optimizeClothingImage(file.filepath).catch(() => null)
+      const analysisPath = optimizedImage?.optimizedPath || file.filepath
+      const extractedColors: ExtractedImageColors = await extractVisionColors(analysisPath, {
         category: fieldValue(fields, 'category'),
         filename: file.originalFilename || ''
       }).catch((error) => {
@@ -173,8 +183,11 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           region: undefined
         }
       })
-      const result: any = await uploadToCloudinary(file.filepath)
+      const result: any = await uploadToCloudinary(analysisPath)
       try { fs.unlinkSync(file.filepath) } catch {}
+      if (optimizedImage?.optimizedPath && optimizedImage.optimizedPath !== file.filepath) {
+        try { fs.unlinkSync(optimizedImage.optimizedPath) } catch {}
+      }
 
       const manualText = [
         fieldValue(fields, 'category'),
@@ -190,6 +203,35 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       const fallbackAnalysis = analyzeClothingText(manualText)
       const aiAnalysis = await analyzeImage(result.secure_url).catch(() => fallbackAnalysis)
       const analysis = mergeFashionAnalysis(fallbackAnalysis, aiAnalysis)
+      const clothingDetection = detectClothingAttributes({
+        filename: file.originalFilename || '',
+        manualText,
+        ai: analysis
+      })
+      const visionStyle = detectVisionStyle({
+        category: clothingDetection.category,
+        material: clothingDetection.material,
+        pattern: clothingDetection.pattern,
+        tags: analysis.tags,
+        aiStyle: analysis.style
+      })
+      const visionSeason = detectVisionSeason({
+        category: clothingDetection.category,
+        material: clothingDetection.material,
+        sleeveLength: clothingDetection.sleeveLength,
+        warmthScore: analysis.warmthScore
+      })
+      const visionOccasions = detectVisionOccasions({
+        category: clothingDetection.category,
+        style: visionStyle,
+        material: clothingDetection.material,
+        formalityScore: analysis.formalityScore
+      })
+      const brandDetection = detectVisibleBrand({
+        filename: file.originalFilename || '',
+        tags: analysis.tags,
+        manualBrand: fieldValue(fields, 'brand')
+      })
       console.log('AI COLORS:', {
         fallback: {
           primaryColor: fallbackAnalysis.primaryColor,
@@ -227,14 +269,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       })
       let profile: any = null
       let userPreference: any = null
+      let existingWardrobe: any[] = []
       try {
         await connectToDatabase()
-        const [fashionProfile, preference] = await Promise.all([
+        const [fashionProfile, preference, wardrobeItems] = await Promise.all([
           FashionProfile.findOne({ userId }),
-          UserPreference.findOne({ userId }).lean().catch(() => null)
+          UserPreference.findOne({ userId }).lean().catch(() => null),
+          Clothing.find({ userId }).limit(1000).lean().catch(() => [])
         ])
         profile = fashionProfile
         userPreference = preference
+        existingWardrobe = wardrobeItems
       } catch {
         // Proceed without fashion profile if the database is unavailable during upload analysis
       }
@@ -288,6 +333,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           : extractedColors.secondaryColors.length
             ? extractedColors.secondaryColors
             : analysis.secondaryColors || []
+      const smartOccasions = occasions.length ? occasions : (analysis.occasion?.length ? analysis.occasion : visionOccasions)
+      const smartTags = generateSmartTags({
+        category: finalCategory,
+        primaryColor: finalPrimaryColor,
+        secondaryColors: resolvedSecondaryColors,
+        style: fieldValue(fields, 'style') || visionStyle || analysis.style,
+        season: fieldValue(fields, 'season') || visionSeason || analysis.season,
+        occasion: smartOccasions,
+        fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || clothingDetection.fit,
+        material: fieldValue(fields, 'material') || clothingDetection.material || analysis.material,
+        pattern: clothingDetection.pattern,
+        sleeveLength: clothingDetection.sleeveLength
+      })
+      const visionConfidence = Math.max(0, Math.min(100, Math.round((
+        correctionMemory.categoryConfidence +
+        correctionMemory.colorConfidence +
+        clothingDetection.confidence +
+        (brandDetection.brand ? brandDetection.confidence : 62)
+      ) / 4)))
+      const quality = estimateQuality({
+        confidence: visionConfidence,
+        coverage: extractedColors.region?.clothingCoverage,
+        warnings: [...(extractedColors.region?.warnings || []), ...(optimizedImage?.warnings || [])]
+      })
+      const thumbnail = result.secure_url && result.public_id
+        ? cloudinary.url(result.public_id, { width: 360, height: 360, crop: 'fit', quality: 'auto', fetch_format: 'auto', secure: true })
+        : result.secure_url
 
       const reviewedInput = {
         userId,
@@ -296,20 +368,36 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         primaryColor: finalPrimaryColor,
         secondaryColors: resolvedSecondaryColors,
         colors: colors.length ? colors : (detectedColors.length ? detectedColors : (finalPrimaryColor === 'unknown' ? [] : [finalPrimaryColor, ...resolvedSecondaryColors])),
-        style: fieldValue(fields, 'style') || analysis.style || 'casual',
-        season: fieldValue(fields, 'season') || analysis.season || 'all-season',
-        occasion: occasions.length ? occasions : analysis.occasion || [],
-        tags: tags.length ? tags : analysis.tags || [],
-        brand: fieldValue(fields, 'brand'),
-        fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || analysis.fit,
-        fitType: fieldValue(fields, 'fitType') || fieldValue(fields, 'fit') || analysis.fitType,
-        material: fieldValue(fields, 'material') || analysis.material,
+        style: fieldValue(fields, 'style') || visionStyle || analysis.style || 'casual',
+        season: fieldValue(fields, 'season') || visionSeason || analysis.season || 'all-season',
+        occasion: smartOccasions,
+        tags: tags.length ? [...new Set([...tags, ...smartTags])] : [...new Set([...(analysis.tags || []), ...smartTags])],
+        brand: fieldValue(fields, 'brand') || brandDetection.brand,
+        fit: fieldValue(fields, 'fit') || fieldValue(fields, 'fitType') || clothingDetection.fit || analysis.fit,
+        fitType: fieldValue(fields, 'fitType') || fieldValue(fields, 'fit') || clothingDetection.fit || analysis.fitType,
+        material: fieldValue(fields, 'material') || clothingDetection.material || analysis.material,
+        gender: clothingDetection.gender,
+        sleeveLength: clothingDetection.sleeveLength,
+        neckType: clothingDetection.neckType,
+        pattern: clothingDetection.pattern,
+        quality,
+        thumbnail,
+        blurDataUrl: optimizedImage?.blurDataUrl,
+        visionConfidence,
+        vision: {
+          clothingDetection,
+          brandDetection,
+          imageOptimization: optimizedImage ? { cropBox: optimizedImage.cropBox, warnings: optimizedImage.warnings } : null,
+          palette: (extractedColors as any).palette || [],
+          confidenceLabel: confidenceLabel(visionConfidence)
+        },
         aiCategory: classifiedCategory,
         aiColor: analysis.primaryColor,
         categoryConfidence: correctionMemory.categoryConfidence,
         colorConfidence: correctionMemory.colorConfidence
       }
       const payload = buildConfirmedClothingPayload(reviewedInput)
+      const duplicateMatches = detectVisionDuplicates(payload, existingWardrobe)
       console.log('FINAL PAYLOAD COLOR:', {
         primaryColor: payload.primaryColor,
         secondaryColors: payload.secondaryColors,
@@ -334,7 +422,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(201).json({
           clothing,
           prediction: payload,
-          analysis: { ...analysis, extractedColors, categoryClassification },
+          analysis: { ...analysis, extractedColors, categoryClassification, clothingDetection, brandDetection, duplicateMatches },
           autoSaved: true,
           persisted: true
         })
@@ -342,8 +430,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         const message = String(dbError?.message || '')
         if (message.includes('ECONNREFUSED') || message.includes('querySrv') || message.includes('MONGODB_URI')) {
           return res.status(201).json({
-            clothing: { ...payloadWithEmbedding, _id: `temp-${Date.now()}` },
-            analysis: { ...analysis, extractedColors, categoryClassification },
+          clothing: { ...payloadWithEmbedding, _id: `temp-${Date.now()}` },
+            analysis: { ...analysis, extractedColors, categoryClassification, clothingDetection, brandDetection, duplicateMatches },
             persisted: false,
             warning: 'Saved to cloud image storage, but database is currently unavailable.'
           })
@@ -366,12 +454,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           fit: payload.fit,
           fitType: payload.fitType,
           material: payload.material || '',
+          gender: payload.gender || '',
+          sleeveLength: payload.sleeveLength || '',
+          neckType: payload.neckType || '',
+          pattern: payload.pattern || '',
+          quality: payload.quality || '',
+          thumbnail: payload.thumbnail || '',
+          blurDataUrl: payload.blurDataUrl || '',
+          visionConfidence: payload.visionConfidence || visionConfidence,
+          vision: payload.vision,
+          duplicateMatches,
           aiCategory: payload.aiCategory,
           aiColor: payload.aiColor,
           categoryConfidence,
           colorConfidence
         },
-        analysis: { ...analysis, extractedColors, categoryClassification },
+        analysis: { ...analysis, extractedColors, categoryClassification, clothingDetection, brandDetection, duplicateMatches },
         autoSaved: false,
         persisted: false,
         requiresReview: true

@@ -19,6 +19,15 @@ export interface IClothing extends Document {
   formalityScore: number
   warmthScore: number
   material?: string
+  gender?: string
+  sleeveLength?: string
+  neckType?: string
+  pattern?: string
+  quality?: string
+  thumbnail?: string
+  blurDataUrl?: string
+  visionConfidence?: number
+  vision?: Record<string, any>
   favorite: boolean
   isFavorite: boolean
   itemPreferenceScore: number
@@ -53,6 +62,15 @@ const ClothingSchema: Schema = new Schema({
   formalityScore: { type: Number, default: 45, min: 0, max: 100 },
   warmthScore: { type: Number, default: 45, min: 0, max: 100 },
   material: { type: String },
+  gender: { type: String },
+  sleeveLength: { type: String },
+  neckType: { type: String },
+  pattern: { type: String },
+  quality: { type: String },
+  thumbnail: { type: String },
+  blurDataUrl: { type: String },
+  visionConfidence: { type: Number, default: 0, min: 0, max: 100 },
+  vision: { type: Schema.Types.Mixed },
   favorite: { type: Boolean, default: false, index: true },
   isFavorite: { type: Boolean, default: false, index: true },
   itemPreferenceScore: { type: Number, default: 0, index: true },

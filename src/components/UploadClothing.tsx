@@ -11,6 +11,8 @@ const fits = ['regular', 'oversized', 'slim', 'baggy']
 
 type Draft = {
   image: string
+  thumbnail?: string
+  blurDataUrl?: string
   category: string
   primaryColor: string
   secondaryColors: string[]
@@ -23,6 +25,14 @@ type Draft = {
   fit?: string
   fitType?: string
   material?: string
+  gender?: string
+  sleeveLength?: string
+  neckType?: string
+  pattern?: string
+  quality?: string
+  visionConfidence?: number
+  vision?: any
+  duplicateMatches?: Array<{ id: string; score: number; reason: string; category?: string; primaryColor?: string; image?: string }>
   aiCategory: string
   aiColor: string
   categoryConfidence: number
@@ -37,6 +47,12 @@ type ReviewForm = {
   season: string
   tags: string
   brand: string
+  material: string
+  gender: string
+  sleeveLength: string
+  neckType: string
+  pattern: string
+  quality: string
 }
 
 function toCsv(values?: string[]) {
@@ -82,6 +98,8 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [file, setFile] = useState<File | null>(null)
+  const [queue, setQueue] = useState<File[]>([])
+  const [batchProgress, setBatchProgress] = useState({ total: 0, done: 0, phase: '' })
   const [preview, setPreview] = useState<string | null>(null)
   const [draft, setDraft] = useState<Draft | null>(null)
   const [autoSaveHighConfidence, setAutoSaveHighConfidence] = useState(false)
@@ -106,7 +124,13 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
     style: '',
     season: '',
     tags: '',
-    brand: ''
+    brand: '',
+    material: '',
+    gender: '',
+    sleeveLength: '',
+    neckType: '',
+    pattern: '',
+    quality: ''
   })
 
   const correctedByUser = useMemo(() => {
@@ -131,18 +155,32 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
   }
 
   function handleFile(e: React.ChangeEvent<HTMLInputElement>) {
-    const selected = e.target.files?.[0]
+    const files = Array.from(e.target.files || [])
+    const selected = files[0]
     if (!selected) return
+    setQueue(files)
     setFile(selected)
     setPreview(URL.createObjectURL(selected))
     setDraft(null)
   }
 
+  function handleDrop(event: React.DragEvent<HTMLLabelElement>) {
+    event.preventDefault()
+    const files = Array.from(event.dataTransfer.files || []).filter((item) => item.type.startsWith('image/'))
+    if (!files.length) return
+    setQueue(files)
+    setFile(files[0])
+    setPreview(URL.createObjectURL(files[0]))
+    setDraft(null)
+  }
+
   function resetUpload() {
     setFile(null)
+    setQueue([])
     setPreview(null)
     setDraft(null)
-    setReview({ category: '', primaryColor: '', secondaryColors: '', style: '', season: '', tags: '', brand: '' })
+    setBatchProgress({ total: 0, done: 0, phase: '' })
+    setReview({ category: '', primaryColor: '', secondaryColors: '', style: '', season: '', tags: '', brand: '', material: '', gender: '', sleeveLength: '', neckType: '', pattern: '', quality: '' })
   }
 
   React.useEffect(() => {
@@ -162,28 +200,39 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
 
   async function submit(e: React.FormEvent) {
     e.preventDefault()
-    if (!file) {
+    const uploadFiles = queue.length ? queue : file ? [file] : []
+    if (!uploadFiles.length) {
       setToast({ message: 'Choose an image first', type: 'error' })
       return
     }
-    const body = new FormData()
-    body.append('file', file)
-    body.append('autoSaveHighConfidence', String(autoSaveHighConfidence))
-    Object.entries(form).forEach(([key, value]) => {
-      if (value) body.append(key, value)
-    })
     setLoading(true)
+    setBatchProgress({ total: uploadFiles.length, done: 0, phase: 'Uploading' })
     try {
-      const res = await fetch('/api/upload', { method: 'POST', body })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Upload failed')
-      if (data.autoSaved) {
-        onUploaded?.(data)
-        setToast({ message: 'High-confidence item saved automatically', type: 'success' })
+      let lastDraft: Draft | null = null
+      for (let index = 0; index < uploadFiles.length; index += 1) {
+        const body = new FormData()
+        body.append('file', uploadFiles[index])
+        body.append('autoSaveHighConfidence', String(autoSaveHighConfidence))
+        Object.entries(form).forEach(([key, value]) => {
+          if (value) body.append(key, value)
+        })
+        setBatchProgress({ total: uploadFiles.length, done: index, phase: 'Analyzing' })
+        const res = await fetch('/api/upload', { method: 'POST', body })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || 'Upload failed')
+        if (data.autoSaved) {
+          onUploaded?.(data)
+        } else {
+          lastDraft = data.draft as Draft
+        }
+      }
+      setBatchProgress({ total: uploadFiles.length, done: uploadFiles.length, phase: 'Complete' })
+      if (!lastDraft) {
+        setToast({ message: uploadFiles.length > 1 ? 'Batch saved automatically' : 'High-confidence item saved automatically', type: 'success' })
         resetUpload()
         return
       }
-      const nextDraft = data.draft as Draft
+      const nextDraft = lastDraft
       setDraft(nextDraft)
       setReview({
         category: nextDraft.category || 'other',
@@ -192,9 +241,15 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         style: nextDraft.style || 'casual',
         season: nextDraft.season || 'all-season',
         tags: toCsv(nextDraft.tags),
-        brand: nextDraft.brand || ''
+        brand: nextDraft.brand || '',
+        material: nextDraft.material || '',
+        gender: nextDraft.gender || '',
+        sleeveLength: nextDraft.sleeveLength || '',
+        neckType: nextDraft.neckType || '',
+        pattern: nextDraft.pattern || '',
+        quality: nextDraft.quality || ''
       })
-      setToast({ message: 'Analysis ready. Review before saving.', type: 'success' })
+      setToast({ message: uploadFiles.length > 1 ? 'Batch analyzed. Review the latest item before saving.' : 'Analysis ready. Review before saving.', type: 'success' })
     } catch (error) {
       setToast({ message: 'Upload failed', type: 'error' })
     } finally {
@@ -227,7 +282,16 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
           occasion: draft.occasion,
           fit: draft.fit,
           fitType: draft.fitType,
-          material: draft.material,
+          material: review.material || draft.material,
+          gender: review.gender || draft.gender,
+          sleeveLength: review.sleeveLength || draft.sleeveLength,
+          neckType: review.neckType || draft.neckType,
+          pattern: review.pattern || draft.pattern,
+          quality: review.quality || draft.quality,
+          thumbnail: draft.thumbnail,
+          blurDataUrl: draft.blurDataUrl,
+          visionConfidence: draft.visionConfidence,
+          vision: draft.vision,
           aiCategory: draft.aiCategory,
           aiColor: draft.aiColor,
           categoryConfidence: draft.categoryConfidence,
@@ -264,8 +328,8 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         })}
       </div>
       <form onSubmit={submit} className="grid gap-5">
-        <label htmlFor="wardrobe-upload-file" className="group relative flex min-h-[260px] cursor-pointer items-center justify-center overflow-hidden rounded-[8px] border border-dashed border-white/15 bg-white/[0.04] transition hover:border-white/35 hover:bg-white/[0.07]">
-          <input id="wardrobe-upload-file" name="file" type="file" accept="image/*" onChange={handleFile} className="hidden" />
+        <label htmlFor="wardrobe-upload-file" onDragOver={(event) => event.preventDefault()} onDrop={handleDrop} className="group relative flex min-h-[260px] cursor-pointer items-center justify-center overflow-hidden rounded-[8px] border border-dashed border-white/15 bg-white/[0.04] transition hover:border-white/35 hover:bg-white/[0.07]">
+          <input id="wardrobe-upload-file" name="file" type="file" accept="image/*" multiple onChange={handleFile} className="hidden" />
           {preview ? (
             <Image src={preview} alt="Clothing upload preview" fill sizes="(min-width: 1024px) 360px, 90vw" className="object-contain p-4" unoptimized />
           ) : (
@@ -275,11 +339,23 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
               </div>
               <div>
                 <p className="text-sm font-medium text-white">Upload wardrobe image</p>
-                <p className="mt-1 text-xs text-white/45">Noir Closet will analyze it, then you confirm before save.</p>
+                <p className="mt-1 text-xs text-white/45">Drag, drop, or select multiple pieces. Noir Closet will analyze details before save.</p>
               </div>
             </div>
           )}
         </label>
+
+        {queue.length > 1 || batchProgress.phase ? (
+          <div className="rounded-[8px] border border-white/10 bg-black/22 p-3">
+            <div className="flex items-center justify-between text-xs text-white/52">
+              <span>{batchProgress.phase || 'Queued'} {queue.length ? `· ${queue.length} files` : ''}</span>
+              <span>{batchProgress.done}/{batchProgress.total || queue.length}</span>
+            </div>
+            <div className="mt-2 h-2 overflow-hidden rounded-full bg-white/8">
+              <div className="h-full rounded-full bg-[#d7ff55] transition-all" style={{ width: `${((batchProgress.done || 0) / Math.max(1, batchProgress.total || queue.length)) * 100}%` }} />
+            </div>
+          </div>
+        ) : null}
 
         <div className="grid gap-3 sm:grid-cols-2">
           <select id="upload-category" name="category" aria-label="Upload category" value={form.category} onChange={(e) => update('category', e.target.value)} className="field">
@@ -375,7 +451,40 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
                   Brand
                   <input id="review-brand" name="reviewBrand" value={review.brand} onChange={(e) => updateReview('brand', e.target.value)} placeholder="brand" className="field text-sm" />
                 </label>
+                <label htmlFor="review-material" className="grid gap-1 text-xs text-white/45">
+                  Material
+                  <input id="review-material" name="reviewMaterial" value={review.material} onChange={(e) => updateReview('material', e.target.value)} placeholder="cotton, denim, wool" className="field text-sm" />
+                </label>
+                <label htmlFor="review-pattern" className="grid gap-1 text-xs text-white/45">
+                  Pattern
+                  <input id="review-pattern" name="reviewPattern" value={review.pattern} onChange={(e) => updateReview('pattern', e.target.value)} placeholder="solid, striped, graphic" className="field text-sm" />
+                </label>
+                <label htmlFor="review-quality" className="grid gap-1 text-xs text-white/45">
+                  Quality
+                  <input id="review-quality" name="reviewQuality" value={review.quality} onChange={(e) => updateReview('quality', e.target.value)} placeholder="good" className="field text-sm" />
+                </label>
               </div>
+
+              <div className="grid gap-3 rounded-[8px] border border-white/10 bg-black/22 p-3 sm:grid-cols-4">
+                {[
+                  ['Vision', `${draft.visionConfidence || Math.round((draft.categoryConfidence + draft.colorConfidence) / 2)}%`],
+                  ['Sleeve', draft.sleeveLength || 'unknown'],
+                  ['Neck', draft.neckType || 'unknown'],
+                  ['Fit', draft.fit || draft.fitType || 'regular']
+                ].map(([label, value]) => (
+                  <div key={label}>
+                    <p className="text-[10px] uppercase tracking-[0.16em] text-white/35">{label}</p>
+                    <p className="mt-1 text-sm capitalize text-white/72">{value}</p>
+                  </div>
+                ))}
+              </div>
+
+              {draft.duplicateMatches?.length ? (
+                <div className="rounded-[8px] border border-amber-300/20 bg-amber-300/10 p-3">
+                  <p className="text-sm font-semibold text-amber-100">This looks similar to an item already in your wardrobe.</p>
+                  <p className="mt-1 text-xs leading-5 text-white/52">You can keep both, but Noir Closet detected {draft.duplicateMatches[0].score}% similarity with another {draft.duplicateMatches[0].primaryColor || ''} {draft.duplicateMatches[0].category || 'item'}.</p>
+                </div>
+              ) : null}
 
               <label htmlFor="review-tags" className="grid gap-1 text-xs text-white/45">
                 Tags
