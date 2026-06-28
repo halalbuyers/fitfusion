@@ -4,13 +4,14 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { CalendarDays, LayoutDashboard, MessageCircle, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
+import { CalendarDays, LayoutDashboard, MessageCircle, Plane, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
 
 const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
   ['Outfit Generator', '/outfit-generator', Wand2],
   ['Calendar', '/calendar', CalendarDays],
+  ['Trips', '/trips', Plane],
   ['AI Stylist', '/stylist', MessageCircle],
   ['Saved Outfits', '/outfits', Sparkles],
   ['Community', '/community', Users],
@@ -22,8 +23,8 @@ const mobileNav: Array<[string, string, LucideIcon]> = [
   ['Wardrobe', '/wardrobe', Shirt],
   ['Generate', '/outfit-generator', Wand2],
   ['Calendar', '/calendar', CalendarDays],
-  ['Stylist', '/stylist', MessageCircle],
-  ['Community', '/community', Users]
+  ['Trips', '/trips', Plane],
+  ['Stylist', '/stylist', MessageCircle]
 ]
 
 export function AppFrame({ title, eyebrow, children, action }: { title: string; eyebrow: string; children: React.ReactNode; action?: React.ReactNode }) {
