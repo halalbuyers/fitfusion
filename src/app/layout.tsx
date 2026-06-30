@@ -1,5 +1,6 @@
 import React from 'react'
 import type { Metadata } from 'next'
+import Analytics from '@/components/GoogleAnalytics'
 import AppProviders from '../components/AppProviders'
 import Navbar from '../components/Navbar'
 import AnnouncementSlot from '../components/AnnouncementSlot'
@@ -83,6 +84,7 @@ export default function RootLayout({
             <Footer />
           </div>
         </AppProviders>
+        <Analytics />
       </body>
     </html>
   )
