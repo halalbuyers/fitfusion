@@ -3,6 +3,7 @@
 import React, { useState } from 'react'
 import { Loader2, Save, X } from 'lucide-react'
 import Toast from './Toast'
+import { readApiJson } from '../lib/api'
 import { displayReviewValue, reviewCategories } from '../lib/review-options'
 
 type Props = {
@@ -61,8 +62,7 @@ export default function EditClothingModal({ item, onClose, onSaved }: Props) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
-      if (!res.ok) throw new Error('Save failed')
-      const updated = await res.json()
+      const updated = await readApiJson<any>(res, 'Save failed')
       onSaved(updated)
       setToast({ message: 'Wardrobe item updated', type: 'success' })
       setTimeout(onClose, 500)

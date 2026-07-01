@@ -1,7 +1,9 @@
 "use client"
 
 import Image from 'next/image'
+import Link from 'next/link'
 import { useEffect, useMemo, useRef, useState } from 'react'
+import { useAuth } from '@clerk/nextjs'
 import {
   CalendarDays,
   Camera,
@@ -26,6 +28,7 @@ import {
 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 import Toast from '../../components/Toast'
+import { readApiJson } from '../../lib/api'
 
 type Avatar = {
   _id: string
@@ -95,6 +98,29 @@ const lightings = ['golden hour', 'indoor', 'studio', 'night', 'soft light', 'na
 const themes = ['magazine cover', 'luxury fashion', 'instagram reel cover', 'street fashion', 'studio portrait', 'lookbook', 'travel', 'night city']
 const occasions = ['casual', 'office', 'formal', 'travel', 'party', 'wedding', 'gym', 'streetwear']
 const weather = ['warm', 'hot', 'cool', 'cold', 'rainy', 'windy']
+
+function friendlyError(message?: string) {
+  const text = String(message || '').toLowerCase()
+  if (text.includes('unauthorized') || text.includes('sign in')) return 'Please sign in to use Virtual Try-On.'
+  if (text.includes('session')) return 'Your session has expired. Please sign in again.'
+  if (text.includes('database')) return 'AI service is temporarily unavailable.'
+  if (text.includes('avatar')) return message || 'Create or upload an avatar first.'
+  if (text.includes('wardrobe')) return message || 'Add wardrobe items before rendering.'
+  if (text.includes('render') || text.includes('outfit')) return message || 'Unable to render outfit.'
+  return message && !message.includes('Unexpected token') ? message : 'Something went wrong. Please try again.'
+}
+
+async function readApi<T>(res: Response): Promise<T> {
+  try {
+    return await readApiJson<T>(res, 'Something went wrong. Please try again.')
+  } catch (error) {
+    throw new Error(friendlyError(error instanceof Error ? error.message : 'Something went wrong. Please try again.'))
+  }
+}
+
+function logTryOnError(error: unknown) {
+  if (process.env.NODE_ENV !== 'production') console.error('[Virtual Try-On]', error)
+}
 
 function todayInput(offset = 1) {
   const date = new Date()
@@ -187,6 +213,7 @@ function AvatarComposite({ look, slider = 100, compact = false }: { look?: TryOn
 }
 
 export default function TryOnStudioClient() {
+  const { isLoaded, userId } = useAuth()
   const fileRef = useRef<HTMLInputElement | null>(null)
   const [avatars, setAvatars] = useState<Avatar[]>([])
   const [looks, setLooks] = useState<TryOnLook[]>([])
@@ -196,7 +223,10 @@ export default function TryOnStudioClient() {
   const [compareSummary, setCompareSummary] = useState<{ summary: string; reasons: string[] } | null>(null)
   const [busy, setBusy] = useState('')
   const [error, setError] = useState('')
-  const [toast, setToast] = useState('')
+  const [toast, setToast] = useState<{ message: string; type?: 'success' | 'error' } | null>(null)
+  const [authMessage, setAuthMessage] = useState('')
+  const [initialLoading, setInitialLoading] = useState(true)
+  const [progress, setProgress] = useState(0)
   const [fullscreen, setFullscreen] = useState(false)
   const [slider, setSlider] = useState(58)
   const [scheduleDate, setScheduleDate] = useState(todayInput())
@@ -212,14 +242,37 @@ export default function TryOnStudioClient() {
 
   const selectedAvatar = useMemo(() => avatars.find((avatar) => avatar._id === selectedAvatarId) || avatars[0], [avatars, selectedAvatarId])
   const selectedLook = useMemo(() => looks.find((look) => look._id === selectedLookId) || looks[0], [looks, selectedLookId])
+  const isGenerating = busy === 'render' || busy === 'photoshoot'
+  const signInHref = '/login?redirect_url=/try-on'
+
+  function reportError(errorValue: unknown, fallback: string) {
+    const raw = errorValue instanceof Error ? errorValue.message : typeof errorValue === 'string' ? errorValue : fallback
+    const message = friendlyError(raw || fallback)
+    setError(message)
+    setToast({ message, type: 'error' })
+    return message
+  }
+
+  function canUseStudio() {
+    if (!isLoaded) return false
+    if (!userId) {
+      const message = 'Please sign in to use Virtual Try-On.'
+      setAuthMessage(message)
+      setError('')
+      setToast({ message, type: 'error' })
+      return false
+    }
+    setAuthMessage('')
+    return true
+  }
 
   async function loadAll() {
     const [avatarRes, lookRes] = await Promise.all([
       fetch('/api/tryon/avatar'),
       fetch('/api/tryon/looks')
     ])
-    const avatarData = await avatarRes.json().catch(() => [])
-    const lookData = await lookRes.json().catch(() => [])
+    const avatarData = await readApi<Avatar[]>(avatarRes)
+    const lookData = await readApi<TryOnLook[]>(lookRes)
     const nextAvatars = Array.isArray(avatarData) ? avatarData : []
     const nextLooks = Array.isArray(lookData) ? lookData : []
     setAvatars(nextAvatars)
@@ -229,15 +282,46 @@ export default function TryOnStudioClient() {
   }
 
   useEffect(() => {
-    loadAll().catch(() => undefined)
+    if (!isLoaded) return
+    if (!userId) {
+      setAuthMessage('Please sign in to use Virtual Try-On.')
+      setInitialLoading(false)
+      return
+    }
+
+    setAuthMessage('')
+    setInitialLoading(true)
+    loadAll().catch((loadError) => {
+      const message = friendlyError(loadError?.message)
+      if (message.includes('sign in')) setAuthMessage(message)
+      else {
+        setError(message)
+        setToast({ message, type: 'error' })
+      }
+      logTryOnError(loadError)
+    }).finally(() => setInitialLoading(false))
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [isLoaded, userId])
+
+  useEffect(() => {
+    if (!['render', 'photoshoot'].includes(busy)) {
+      setProgress(0)
+      return
+    }
+
+    setProgress(12)
+    const timer = window.setInterval(() => {
+      setProgress((current) => Math.min(92, current + (current < 50 ? 12 : 6)))
+    }, 380)
+    return () => window.clearInterval(timer)
+  }, [busy])
 
   function update(key: keyof typeof settings, value: string) {
     setSettings((current) => ({ ...current, [key]: value }))
   }
 
   async function createAiAvatar() {
+    if (!canUseStudio()) return
     setBusy('avatar-ai')
     setError('')
     try {
@@ -246,19 +330,20 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'AI Studio Avatar', style: settings.styleVariation })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not create avatar')
-      setToast('AI avatar created.')
+      const data = await readApi<Avatar>(res)
+      setToast({ message: 'AI avatar created.', type: 'success' })
       await loadAll()
       setSelectedAvatarId(data._id)
     } catch (e: any) {
-      setError(e.message || 'Could not create avatar')
+      reportError(e, 'Could not create avatar')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
   }
 
   async function uploadAvatar(file?: File) {
+    if (!canUseStudio()) return
     if (!file) return
     setBusy('avatar-upload')
     setError('')
@@ -268,13 +353,13 @@ export default function TryOnStudioClient() {
       form.append('name', file.name.replace(/\.[^.]+$/, '') || 'Uploaded avatar')
       form.append('sourceType', 'full-body')
       const res = await fetch('/api/tryon/avatar', { method: 'POST', body: form })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not upload avatar')
-      setToast('Avatar uploaded securely.')
+      const data = await readApi<Avatar>(res)
+      setToast({ message: 'Avatar uploaded securely.', type: 'success' })
       await loadAll()
       setSelectedAvatarId(data._id)
     } catch (e: any) {
-      setError(e.message || 'Could not upload avatar')
+      reportError(e, 'Could not upload avatar')
+      logTryOnError(e)
     } finally {
       setBusy('')
       if (fileRef.current) fileRef.current.value = ''
@@ -282,8 +367,11 @@ export default function TryOnStudioClient() {
   }
 
   async function renderLooks(photoMode = false) {
+    if (!canUseStudio()) return
     if (!selectedAvatar?._id) {
-      setError('Create or upload an avatar first.')
+      const message = 'Create or upload an avatar first.'
+      setError(message)
+      setToast({ message, type: 'error' })
       return
     }
     setBusy(photoMode ? 'photoshoot' : 'render')
@@ -295,8 +383,7 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ avatarId: selectedAvatar._id, settings: { ...settings, photoTheme: photoMode ? settings.photoTheme : '' }, limit: photoMode ? 4 : 8 })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not render looks')
+      const data = await readApi<TryOnLook[]>(res)
       const next = Array.isArray(data) ? data : []
       setLooks((current) => {
         const byId = new Map(current.map((look) => [look._id, look]))
@@ -304,15 +391,18 @@ export default function TryOnStudioClient() {
         return [...byId.values()].sort((a, b) => Number(b.scores?.overallStyleScore || 0) - Number(a.scores?.overallStyleScore || 0))
       })
       if (next[0]?._id) setSelectedLookId(next[0]._id)
-      setToast(photoMode ? 'Photoshoot looks queued.' : 'Try-on previews ready.')
+      setProgress(100)
+      setToast({ message: photoMode ? 'Photoshoot looks queued.' : 'Try-on previews ready.', type: 'success' })
     } catch (e: any) {
-      setError(e.message || 'Could not render looks')
+      reportError(e, 'Could not render looks')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
   }
 
   async function patchLook(id: string, body: Record<string, unknown>, message: string) {
+    if (!canUseStudio()) return
     setBusy(String(body.action || body.appliedSuggestion || 'patch'))
     setError('')
     try {
@@ -321,18 +411,19 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id, ...body })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Update failed')
+      const data = await readApi<TryOnLook>(res)
       setLooks((current) => current.map((look) => look._id === id ? data : look))
-      setToast(message)
+      setToast({ message, type: 'success' })
     } catch (e: any) {
-      setError(e.message || 'Update failed')
+      reportError(e, 'Update failed')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
   }
 
   async function saveLook() {
+    if (!canUseStudio()) return
     if (!selectedLook) return
     setBusy('save')
     setError('')
@@ -342,17 +433,18 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'save', id: selectedLook._id })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not save look')
+      await readApi<{ look: TryOnLook }>(res)
       await patchLook(selectedLook._id, { favorite: true }, 'Look saved for reuse.')
     } catch (e: any) {
-      setError(e.message || 'Could not save look')
+      reportError(e, 'Could not save look')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
   }
 
   async function scheduleLook() {
+    if (!canUseStudio()) return
     if (!selectedLook) return
     setBusy('schedule')
     setError('')
@@ -362,17 +454,18 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'schedule', id: selectedLook._id, date: scheduleDate })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not schedule look')
-      setToast('Look scheduled on calendar.')
+      await readApi<{ outfit: unknown; plan: unknown }>(res)
+      setToast({ message: 'Look scheduled on calendar.', type: 'success' })
     } catch (e: any) {
-      setError(e.message || 'Could not schedule look')
+      reportError(e, 'Could not schedule look')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
   }
 
   async function compareLooks() {
+    if (!canUseStudio()) return
     const ids = selectedCompare.length ? selectedCompare : looks.slice(0, 4).map((look) => look._id)
     setBusy('compare')
     setError('')
@@ -382,11 +475,11 @@ export default function TryOnStudioClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ action: 'compare', ids })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Compare failed')
+      const data = await readApi<{ summary: string; reasons: string[] }>(res)
       setCompareSummary(data)
     } catch (e: any) {
-      setError(e.message || 'Compare failed')
+      reportError(e, 'Compare failed')
+      logTryOnError(e)
     } finally {
       setBusy('')
     }
@@ -400,7 +493,7 @@ export default function TryOnStudioClient() {
       return
     }
     await navigator.clipboard?.writeText(text).catch(() => undefined)
-    setToast('Share text copied.')
+    setToast({ message: 'Share text copied.', type: 'success' })
   }
 
   function downloadLook() {
@@ -420,6 +513,21 @@ export default function TryOnStudioClient() {
 
   return (
     <AppFrame title="Virtual Try-On Studio" eyebrow="AI fashion preview">
+      {authMessage ? (
+        <section className="glass mb-5 rounded-[8px] border border-[#d7ff55]/25 bg-[#d7ff55]/10 p-5">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs uppercase tracking-[0.22em] text-[#e8ff91]">Private studio</p>
+              <h2 className="mt-2 text-xl font-semibold">{authMessage}</h2>
+              <p className="mt-2 text-sm leading-6 text-white/55">Your avatar photos and generated looks stay isolated to your account.</p>
+            </div>
+            <Link href={signInHref} className="inline-flex h-11 items-center justify-center rounded-[8px] bg-white px-5 text-sm font-semibold text-black">
+              Sign in
+            </Link>
+          </div>
+        </section>
+      ) : null}
+
       <div className="grid gap-5 2xl:grid-cols-[minmax(0,1fr)_390px]">
         <main className="grid gap-5">
           <section className="glass overflow-hidden rounded-[8px] p-3 sm:p-5">
@@ -434,7 +542,37 @@ export default function TryOnStudioClient() {
                 <button type="button" onClick={() => setFullscreen(true)} className="icon-button h-10 w-10" title="Open fullscreen"><Maximize2 className="h-4 w-4" /></button>
               </div>
             </div>
-            <AvatarComposite look={selectedLook} slider={slider} />
+            {initialLoading ? (
+              <div className="grid min-h-[620px] place-items-center rounded-[8px] border border-white/10 bg-black/24">
+                <div className="grid gap-4 text-center">
+                  <Loader2 className="mx-auto h-8 w-8 animate-spin text-[#d7ff55]" />
+                  <p className="text-sm text-white/50">Loading your private Try-On Studio...</p>
+                </div>
+              </div>
+            ) : (
+              <div className="relative">
+                <AvatarComposite look={selectedLook} slider={slider} />
+                {isGenerating ? (
+                  <div className="absolute inset-0 grid place-items-center rounded-[8px] bg-black/64 p-5 backdrop-blur-sm">
+                    <div className="w-full max-w-md rounded-[8px] border border-white/12 bg-black/72 p-5 shadow-2xl">
+                      <div className="flex items-center gap-3">
+                        <Loader2 className="h-5 w-5 animate-spin text-[#d7ff55]" />
+                        <div>
+                          <p className="font-semibold">Generating your preview...</p>
+                          <p className="mt-1 text-xs text-white/45">Rendering wardrobe items onto your avatar.</p>
+                        </div>
+                      </div>
+                      <div className="mt-4 h-2 overflow-hidden rounded-full bg-white/10">
+                        <div className="h-full rounded-full bg-[#d7ff55] transition-all duration-300" style={{ width: `${progress}%` }} />
+                      </div>
+                      <div className="mt-4 grid grid-cols-3 gap-2">
+                        {Array.from({ length: 3 }).map((_, index) => <div key={index} className="h-20 animate-pulse rounded-[8px] bg-white/8" />)}
+                      </div>
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            )}
             <div className="mt-4 grid gap-3 lg:grid-cols-[1fr_auto] lg:items-center">
               <label htmlFor="before-after-slider" className="block">
                 <span className="mb-2 block text-xs uppercase tracking-[0.2em] text-white/35">Before / after</span>
@@ -463,7 +601,7 @@ export default function TryOnStudioClient() {
                 <h2 className="font-semibold">Outfit carousel</h2>
               </div>
               <div className="mt-4 flex gap-3 overflow-x-auto pb-2 hide-scrollbar">
-                {busy === 'render' ? Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-72 w-56 shrink-0 animate-pulse rounded-[8px] bg-white/7" />) : null}
+                {isGenerating ? Array.from({ length: 4 }).map((_, index) => <div key={index} className="h-72 w-56 shrink-0 animate-pulse rounded-[8px] bg-white/7" />) : null}
                 {looks.map((look) => (
                   <button key={look._id} type="button" onClick={() => setSelectedLookId(look._id)} className={`w-60 shrink-0 rounded-[8px] border p-2 text-left transition ${selectedLook?._id === look._id ? 'border-[#d7ff55]/60 bg-[#d7ff55]/10' : 'border-white/10 bg-black/22 hover:bg-white/8'}`}>
                     <AvatarComposite look={look} compact />
@@ -480,7 +618,7 @@ export default function TryOnStudioClient() {
                     </div>
                   </button>
                 ))}
-                {!looks.length && busy !== 'render' ? <p className="text-sm text-white/45">No rendered looks yet.</p> : null}
+                {!looks.length && !isGenerating ? <p className="text-sm text-white/45">No rendered looks yet.</p> : null}
               </div>
             </div>
 
@@ -560,10 +698,29 @@ export default function TryOnStudioClient() {
                 <Camera className="h-5 w-5 text-[#d7ff55]" />
                 <h2 className="font-semibold">AI avatar</h2>
               </div>
-              <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(event) => uploadAvatar(event.target.files?.[0])} />
+              <input id="try-on-avatar-upload" name="avatarImage" ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(event) => uploadAvatar(event.target.files?.[0])} />
               <button type="button" onClick={() => fileRef.current?.click()} className="icon-button h-10 w-10" title="Upload avatar"><Upload className="h-4 w-4" /></button>
             </div>
             <div className="mt-4 grid gap-3">
+              {!avatars.length && !initialLoading ? (
+                <div className="rounded-[8px] border border-dashed border-[#d7ff55]/28 bg-[#d7ff55]/8 p-4 text-center">
+                  <div className="mx-auto grid h-12 w-12 place-items-center rounded-[8px] bg-white text-black">
+                    <Camera className="h-5 w-5" />
+                  </div>
+                  <h3 className="mt-4 font-semibold">No avatar yet</h3>
+                  <p className="mt-2 text-sm leading-6 text-white/50">Upload a full-body photo or create an AI avatar before rendering outfits.</p>
+                  <div className="mt-4 grid gap-2 sm:grid-cols-2">
+                    <button type="button" onClick={() => fileRef.current?.click()} disabled={!userId || busy === 'avatar-upload'} className="flex h-10 items-center justify-center gap-2 rounded-[8px] bg-white text-sm font-semibold text-black disabled:opacity-50">
+                      <Upload className="h-4 w-4" />
+                      Upload Photo
+                    </button>
+                    <button type="button" onClick={createAiAvatar} disabled={!userId || busy === 'avatar-ai'} className="flex h-10 items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white/8 text-sm text-white/75 disabled:opacity-50">
+                      {busy === 'avatar-ai' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
+                      Create AI Avatar
+                    </button>
+                  </div>
+                </div>
+              ) : null}
               {avatars.map((avatar) => (
                 <button key={avatar._id} type="button" onClick={() => setSelectedAvatarId(avatar._id)} className={`flex items-center gap-3 rounded-[8px] border p-2 text-left ${selectedAvatar?._id === avatar._id ? 'border-[#d7ff55]/60 bg-[#d7ff55]/10' : 'border-white/10 bg-black/22'}`}>
                   <div className="relative h-14 w-11 shrink-0 overflow-hidden rounded-[8px] bg-black/35">
@@ -575,7 +732,7 @@ export default function TryOnStudioClient() {
                   </div>
                 </button>
               ))}
-              <button type="button" onClick={createAiAvatar} disabled={busy === 'avatar-ai'} className="flex h-10 items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white/8 text-sm text-white/75 transition hover:bg-white/12 disabled:opacity-50">
+              <button type="button" onClick={createAiAvatar} disabled={!userId || busy === 'avatar-ai'} className="flex h-10 items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white/8 text-sm text-white/75 transition hover:bg-white/12 disabled:opacity-50">
                 {busy === 'avatar-ai' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                 Create AI Avatar
               </button>
@@ -598,15 +755,16 @@ export default function TryOnStudioClient() {
               ].map(([label, key, options]) => (
                 <label key={String(key)} className="block">
                   <span className="mb-1 block text-xs text-white/40">{String(label)}</span>
-                  <select value={settings[key as keyof typeof settings]} onChange={(event) => update(key as keyof typeof settings, event.target.value)} className="field h-10 py-0 capitalize">
+                  <select id={`try-on-${String(key)}`} name={String(key)} value={settings[key as keyof typeof settings]} onChange={(event) => update(key as keyof typeof settings, event.target.value)} className="field h-10 py-0 capitalize">
                     {(options as string[]).map((option) => <option key={option} value={option}>{option}</option>)}
                   </select>
                 </label>
               ))}
-              <button type="button" onClick={() => renderLooks(false)} disabled={busy === 'render'} className="flex h-11 items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] text-sm font-semibold text-black disabled:opacity-50">
+              <button type="button" onClick={() => renderLooks(false)} disabled={!userId || !selectedAvatar || busy === 'render'} className="flex h-11 items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] text-sm font-semibold text-black disabled:opacity-50">
                 {busy === 'render' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Wand2 className="h-4 w-4" />}
-                Render Try-On
+                {selectedAvatar ? 'Render Try-On' : 'Add Avatar First'}
               </button>
+              {!selectedAvatar ? <p className="text-xs leading-5 text-white/42">Rendering unlocks after an avatar is available.</p> : null}
             </div>
           </section>
 
@@ -617,11 +775,11 @@ export default function TryOnStudioClient() {
             </div>
             <label className="mt-4 block">
               <span className="mb-1 block text-xs text-white/40">Editorial theme</span>
-              <select value={settings.photoTheme} onChange={(event) => update('photoTheme', event.target.value)} className="field h-10 py-0 capitalize">
+              <select id="try-on-photo-theme" name="photoTheme" value={settings.photoTheme} onChange={(event) => update('photoTheme', event.target.value)} className="field h-10 py-0 capitalize">
                 {themes.map((theme) => <option key={theme} value={theme}>{theme}</option>)}
               </select>
             </label>
-            <button type="button" onClick={() => renderLooks(true)} disabled={busy === 'photoshoot'} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white text-sm font-semibold text-black disabled:opacity-50">
+            <button type="button" onClick={() => renderLooks(true)} disabled={!userId || !selectedAvatar || busy === 'photoshoot'} className="mt-3 flex h-10 w-full items-center justify-center gap-2 rounded-[8px] border border-white/10 bg-white text-sm font-semibold text-black disabled:opacity-50">
               {busy === 'photoshoot' ? <Loader2 className="h-4 w-4 animate-spin" /> : <Camera className="h-4 w-4" />}
               Generate Editorial Set
             </button>
@@ -654,7 +812,7 @@ export default function TryOnStudioClient() {
               </button>
             </div>
             <div className="mt-3 grid gap-2 sm:grid-cols-[1fr_auto]">
-              <input type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="field h-10 py-0" aria-label="Schedule date" />
+              <input id="try-on-schedule-date" name="scheduleDate" type="date" value={scheduleDate} onChange={(event) => setScheduleDate(event.target.value)} className="field h-10 py-0" aria-label="Schedule date" />
               <button type="button" onClick={scheduleLook} disabled={!selectedLook || busy === 'schedule'} className="flex h-10 items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] px-3 text-sm font-semibold text-black disabled:opacity-50">
                 {busy === 'schedule' ? <Loader2 className="h-4 w-4 animate-spin" /> : <CalendarDays className="h-4 w-4" />}
                 Schedule
@@ -692,7 +850,7 @@ export default function TryOnStudioClient() {
         </div>
       ) : null}
 
-      {toast && <Toast message={toast} type="success" onClose={() => setToast('')} />}
+      {toast && <Toast message={toast.message} type={toast.type === 'error' ? 'error' : 'success'} onClose={() => setToast(null)} />}
     </AppFrame>
   )
 }

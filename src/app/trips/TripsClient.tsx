@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 import Toast from '../../components/Toast'
+import { readApiJson } from '../../lib/api'
 
 type ChecklistItem = { id: string; label: string; category: string; packed: boolean; quantity?: number; reason?: string }
 type PackingItem = { id: string; label: string; category: string; quantity: number; reason: string; wardrobeItemId?: string; image?: string; owned: boolean }
@@ -178,7 +179,7 @@ export default function TripsClient() {
     setLoading(true)
     try {
       const res = await fetch('/api/trips')
-      const data = await res.json()
+      const data = await readApiJson<Trip[]>(res, 'Could not load trips')
       const next = Array.isArray(data) ? data : []
       setTrips(next)
       if (nextSelectedId && next.some((trip: Trip) => trip._id === nextSelectedId)) setSelectedId(nextSelectedId)
@@ -224,8 +225,7 @@ export default function TripsClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(editing && selected ? { id: selected._id, ...form } : form)
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not create trip')
+      const data = await readApiJson<Trip>(res, 'Could not create trip')
       setToast(editing ? 'Trip updated and outfits regenerated.' : 'Trip plan generated and linked to calendar.')
       setEditing(false)
       setSelectedId(data._id)
@@ -247,8 +247,7 @@ export default function TripsClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: selected._id, ...body })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Update failed')
+      const data = await readApiJson<Trip>(res, 'Update failed')
       setToast(message)
       setTrips((current) => current.map((trip) => trip._id === selected._id ? data : trip))
     } catch (e: any) {
@@ -268,8 +267,7 @@ export default function TripsClient() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ duplicateId: selected._id })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Duplicate failed')
+      const data = await readApiJson<Trip>(res, 'Duplicate failed')
       setToast('Trip duplicated.')
       setSelectedId(data._id)
       await loadTrips(data._id)
@@ -286,8 +284,7 @@ export default function TripsClient() {
     setError('')
     try {
       const res = await fetch(`/api/trips?id=${selected._id}`, { method: 'DELETE' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Delete failed')
+      await readApiJson<unknown>(res, 'Delete failed')
       setToast('Trip deleted.')
       setSelectedId('')
       setEditing(false)
@@ -337,15 +334,15 @@ export default function TripsClient() {
               ) : null}
             </div>
             <div className="mt-5 grid gap-3">
-              <input aria-label="Destination" value={form.destination} onChange={(event) => update('destination', event.target.value)} className="field h-11" placeholder="Destination" required />
+              <input id="trip-destination" name="destination" aria-label="Destination" value={form.destination} onChange={(event) => update('destination', event.target.value)} className="field h-11" placeholder="Destination" required />
               <div className="grid grid-cols-2 gap-3">
-                <input aria-label="Start date" type="date" value={form.startDate} onChange={(event) => update('startDate', event.target.value)} className="field h-11 py-0" required />
-                <input aria-label="End date" type="date" value={form.endDate} onChange={(event) => update('endDate', event.target.value)} className="field h-11 py-0" required />
+                <input id="trip-start-date" name="startDate" aria-label="Start date" type="date" value={form.startDate} onChange={(event) => update('startDate', event.target.value)} className="field h-11 py-0" required />
+                <input id="trip-end-date" name="endDate" aria-label="End date" type="date" value={form.endDate} onChange={(event) => update('endDate', event.target.value)} className="field h-11 py-0" required />
               </div>
-              <input aria-label="Trip purpose" value={form.purpose} onChange={(event) => update('purpose', event.target.value)} className="field h-11" placeholder="Business + Sightseeing" />
-              <input aria-label="Expected activities" value={form.activities} onChange={(event) => update('activities', event.target.value)} className="field h-11" placeholder="meetings, dinners, walking" />
-              <input aria-label="Transportation" value={form.transportation} onChange={(event) => update('transportation', event.target.value)} className="field h-11" placeholder="Flight, car, train" />
-              <select aria-label="Travel style" value={form.travelStyle} onChange={(event) => update('travelStyle', event.target.value)} className="field h-11 py-0 capitalize">
+              <input id="trip-purpose" name="purpose" aria-label="Trip purpose" value={form.purpose} onChange={(event) => update('purpose', event.target.value)} className="field h-11" placeholder="Business + Sightseeing" />
+              <input id="trip-activities" name="activities" aria-label="Expected activities" value={form.activities} onChange={(event) => update('activities', event.target.value)} className="field h-11" placeholder="meetings, dinners, walking" />
+              <input id="trip-transportation" name="transportation" aria-label="Transportation" value={form.transportation} onChange={(event) => update('transportation', event.target.value)} className="field h-11" placeholder="Flight, car, train" />
+              <select id="trip-travel-style" name="travelStyle" aria-label="Travel style" value={form.travelStyle} onChange={(event) => update('travelStyle', event.target.value)} className="field h-11 py-0 capitalize">
                 {travelStyles.map((style) => <option key={style} value={style}>{style}</option>)}
               </select>
               <button disabled={busy === 'create' || busy === 'edit'} className="flex h-11 items-center justify-center gap-2 rounded-[8px] bg-[#d7ff55] px-4 text-sm font-semibold text-black disabled:opacity-60">

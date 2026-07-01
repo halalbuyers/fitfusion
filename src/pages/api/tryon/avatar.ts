@@ -3,6 +3,7 @@ import { getAuth } from '@clerk/nextjs/server'
 import formidable from 'formidable'
 import fs from 'fs'
 import cloudinary from '../../../lib/cloudinary'
+import { apiFail, apiOk } from '../../../lib/api'
 import { connectToDatabase } from '../../../lib/mongodb'
 import TryOnAvatar from '../../../models/TryOnAvatar'
 import { createSyntheticAvatar, createUploadedAvatar } from '../../../lib/tryon/avatarEngine'
@@ -49,23 +50,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   setPrivateNoStore(res)
   if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method || '')) {
     res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE'])
-    return res.status(405).end(`Method ${req.method} Not Allowed`)
+    return apiFail(res, `Method ${req.method} Not Allowed`, 405)
   }
 
   const { userId } = getAuth(req)
-  if (!userId) return res.status(401).json({ error: 'Unauthorized' })
+  if (!userId) return apiFail(res, 'Unauthorized', 401)
 
   try {
     await connectToDatabase()
   } catch {
-    if (req.method === 'GET') return res.status(200).json([])
-    return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
+    if (req.method === 'GET') return apiOk(res, [])
+    return apiFail(res, 'Database unavailable. Please try again shortly.', 503)
   }
 
   try {
     if (req.method === 'GET') {
       const avatars = await TryOnAvatar.find({ userId }).sort({ active: -1, updatedAt: -1 }).lean()
-      return res.status(200).json(avatars)
+      return apiOk(res, avatars)
     }
 
     if (req.method === 'POST') {
@@ -75,7 +76,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (contentType.includes('multipart/form-data')) {
         const { fields, files } = await parseMultipart(req)
         const file = Array.isArray(files.file) ? files.file[0] : files.file
-        if (!file) return res.status(400).json({ error: 'Avatar photo is required' })
+        if (!file) return apiFail(res, 'Avatar photo is required', 400)
         const result = await uploadToCloudinary(file.filepath, userId)
         try { fs.unlinkSync(file.filepath) } catch {}
         payload = createUploadedAvatar({
@@ -95,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       await TryOnAvatar.updateMany({ userId }, { $set: { active: false } })
       const avatar = await TryOnAvatar.create({ userId, ...payload, active: true })
-      return res.status(201).json(avatar)
+      return apiOk(res, avatar, 201)
     }
 
     if (req.method === 'PATCH') {
@@ -103,21 +104,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       for await (const chunk of req) buffers.push(Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk))
       const body = buffers.length ? JSON.parse(Buffer.concat(buffers).toString('utf8')) : {}
       const avatar = await TryOnAvatar.findOne({ _id: String(body.id || ''), userId })
-      if (!avatar) return res.status(404).json({ error: 'Avatar not found' })
+      if (!avatar) return apiFail(res, 'Avatar not found', 404)
       if (typeof body.name === 'string') avatar.name = body.name.slice(0, 80)
       if (body.active) {
         await TryOnAvatar.updateMany({ userId }, { $set: { active: false } })
         avatar.active = true
       }
       await avatar.save()
-      return res.status(200).json(avatar)
+      return apiOk(res, avatar)
     }
 
     const id = String(req.query.id || '')
     const deleted = await TryOnAvatar.findOneAndDelete({ _id: id, userId })
-    if (!deleted) return res.status(404).json({ error: 'Avatar not found' })
-    return res.status(200).json({ ok: true })
+    if (!deleted) return apiFail(res, 'Avatar not found', 404)
+    return apiOk(res, { ok: true })
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message || 'Could not process avatar' })
+    if (process.env.NODE_ENV !== 'production') console.error('[Virtual Try-On]', error)
+    return apiFail(res, 'Something went wrong. Please try again.', 500)
   }
 }

@@ -4,6 +4,7 @@ import Image from 'next/image'
 import { useMemo, useState } from 'react'
 import { Bot, Footprints, Loader2, Send, Shirt, Sparkles, ThumbsDown, ThumbsUp, UserRound } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+import { readApiJson } from '../../lib/api'
 
 type OutfitCardItem = {
   id?: string
@@ -102,8 +103,7 @@ export default function StylistPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: prompt, messages: apiMessages.concat({ role: 'user', content: prompt }) })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Stylist failed')
+      const data = await readApiJson<any>(res, 'Stylist failed')
       revealAssistantMessage({
         role: 'assistant',
         content: cleanAssistantText(data.reply),

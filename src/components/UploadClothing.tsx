@@ -4,6 +4,7 @@ import React, { useMemo, useState } from 'react'
 import Image from 'next/image'
 import { AlertTriangle, Check, Cloud, Loader2, RotateCcw, Sparkles, Upload, X } from 'lucide-react'
 import Toast from './Toast'
+import { readApiJson } from '../lib/api'
 import { displayReviewValue, reviewCategories, reviewColors, reviewSeasons, reviewStyles } from '../lib/review-options'
 import { getAllowedCategoriesForFashionType } from '../lib/fashion-profile-categories'
 
@@ -218,8 +219,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
         })
         setBatchProgress({ total: uploadFiles.length, done: index, phase: 'Analyzing' })
         const res = await fetch('/api/upload', { method: 'POST', body })
-        const data = await res.json()
-        if (!res.ok) throw new Error(data.error || 'Upload failed')
+        const data = await readApiJson<any>(res, 'Upload failed')
         if (data.autoSaved) {
           onUploaded?.(data)
         } else {
@@ -299,8 +299,7 @@ export default function UploadClothing({ onUploaded }: { onUploaded?: (data: any
           correctedByUser
         })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Save failed')
+      const data = await readApiJson<any>(res, 'Save failed')
       onUploaded?.(data)
       setToast({ message: correctedByUser ? 'Saved with your corrections' : 'Saved to wardrobe', type: 'success' })
       resetUpload()

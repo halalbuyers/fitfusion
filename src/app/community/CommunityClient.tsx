@@ -17,6 +17,7 @@ import {
   Users
 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+import { readApiJson } from '../../lib/api'
 
 type Post = {
   _id: string
@@ -94,7 +95,7 @@ export default function CommunityPage() {
       query.set('feed', activeFeed)
       if (search.trim()) query.set('search', search.trim())
       const res = await fetch(`/api/posts?${query.toString()}`)
-      const data = await res.json()
+      const data = await readApiJson<Post[]>(res, 'Could not load posts')
       setPosts(Array.isArray(data) ? data : [])
     } catch (err) {
       setError('Could not load the community feed right now.')
@@ -118,8 +119,7 @@ export default function CommunityPage() {
     setError('')
     try {
       const res = await fetch(`/api/posts/${post._id}/${action}`, { method: 'POST' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || `${action} failed`)
+      const data = await readApiJson<Post>(res, `${action} failed`)
       setPosts((current) => current.map((item) => item._id === post._id ? data : item))
     } catch (e: any) {
       setError(e.message || `${action} failed`)

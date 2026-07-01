@@ -22,6 +22,7 @@ const clerkRoutePrefixes = [
   '/register',
   '/settings',
   '/stylist',
+  '/try-on',
   '/wardrobe',
   '/weather'
 ]

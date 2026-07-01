@@ -5,6 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { CalendarPlus, CheckCircle2, Heart, Loader2, Send, Sparkles, Trash2, X } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
+import { readApiJson } from '../../lib/api'
 
 type Clothing = { _id: string; image: string; category: string }
 type Outfit = {
@@ -34,7 +35,7 @@ export default function OutfitsPage() {
 
   useEffect(() => {
     fetch('/api/outfits')
-      .then((res) => res.json())
+      .then((res) => readApiJson<Outfit[]>(res, 'Could not load outfits'))
       .then((data) => {
         const next = Array.isArray(data) ? data : []
         setOutfits(next)
@@ -65,8 +66,7 @@ export default function OutfitsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Update failed')
+      await readApiJson<unknown>(res, 'Update failed')
       setNotice(message)
     } catch (e: any) {
       setOutfits(previous)
@@ -84,8 +84,7 @@ export default function OutfitsPage() {
     setOutfits((current) => current.filter((item) => item._id !== outfit._id))
     try {
       const res = await fetch(`/api/outfits/${outfit._id}`, { method: 'DELETE' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Remove failed')
+      await readApiJson<unknown>(res, 'Remove failed')
       setNotice('Outfit removed.')
     } catch (e: any) {
       setOutfits(previous)
@@ -137,8 +136,7 @@ export default function OutfitsPage() {
           season: ''
         })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Share failed')
+      await readApiJson<unknown>(res, 'Share failed')
       setNotice('Shared to community.')
     } catch (e: any) {
       setError(e.message || 'Share failed')

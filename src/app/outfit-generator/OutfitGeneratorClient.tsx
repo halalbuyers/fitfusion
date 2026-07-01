@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { AlertCircle, AlertTriangle, Ban, Brain, Check, CloudSun, Flame, Heart, Lightbulb, Loader2, RefreshCw, Save, Share2, Shirt, SlidersHorizontal, Sparkles, Star, Target, Thermometer, ThumbsDown, Wand2 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 import Toast from '../../components/Toast'
+import { readApiJson } from '../../lib/api'
 
 type Clothing = { _id: string; image: string; category: string; colors?: string[]; primaryColor?: string; style?: string; season?: string }
 type Outfit = {
@@ -73,17 +74,17 @@ export default function OutfitGeneratorPage() {
   const [feedbackBusy, setFeedbackBusy] = useState('')
 
   useEffect(() => {
-    fetch('/api/wardrobe').then((res) => res.json()).then((data) => {
+    fetch('/api/wardrobe').then((res) => readApiJson<Clothing[]>(res, 'Could not load wardrobe')).then((data) => {
       if (Array.isArray(data)) setWardrobe(data)
     }).catch(() => setWardrobe([]))
 
-    fetch('/api/weather').then((res) => res.json()).then((data: WeatherData) => {
+    fetch('/api/weather').then((res) => readApiJson<WeatherData>(res, 'Could not load weather')).then((data) => {
       setWeatherData(data)
       if (data?.condition) setWeather(data.condition)
       if (typeof data?.temperature === 'number') setTemperature(data.temperature)
     }).catch(() => undefined)
 
-    fetch('/api/user/preferences').then((res) => res.json()).then((data) => {
+    fetch('/api/user/preferences').then((res) => readApiJson<any>(res, 'Could not load preferences')).then((data) => {
       if (Array.isArray(data?.preferredStyles)) setPreferences(data.preferredStyles)
     }).catch(() => undefined)
   }, [])
@@ -110,8 +111,7 @@ export default function OutfitGeneratorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ occasion, weather, temperature, season, mode, preferences, limit: 8 })
       })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Could not generate outfits')
+      const data = await readApiJson<{ outfits?: Outfit[] }>(res, 'Could not generate outfits')
       setOutfits(data.outfits || [])
       if (!data.outfits?.length) {
         setError(ready
@@ -135,8 +135,7 @@ export default function OutfitGeneratorPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ outfit: { ...outfit, title: outfit.title || `${occasion} fit ${index + 1}` } })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Save failed')
+      await readApiJson<unknown>(res, 'Save failed')
       setNotice('Outfit saved.')
     } catch (e: any) {
       setError(e.message || 'Save failed')
@@ -162,8 +161,7 @@ export default function OutfitGeneratorPage() {
           outfit
         })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not save feedback')
+      await readApiJson<unknown>(res, 'Could not save feedback')
       setFeedbackToast(action?.success || 'Feedback saved. Future outfits will adapt.')
       if (reaction === 'never_suggest_again') {
         setOutfits((current) => current.filter((item) => item.outfitKey !== outfit.outfitKey))

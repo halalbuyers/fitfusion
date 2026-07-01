@@ -24,6 +24,7 @@ import {
 } from 'lucide-react'
 import { AppFrame } from '../../components/AppFrame'
 import Toast from '../../components/Toast'
+import { readApiJson } from '../../lib/api'
 
 type CalendarView = 'month' | 'week' | 'day'
 type CalendarStatus = 'planned' | 'worn' | 'skipped'
@@ -282,7 +283,7 @@ export default function CalendarPage() {
     const to = inputDate(days[days.length - 1])
     try {
       const res = await fetch(`/api/calendar/outfits?from=${from}&to=${to}`)
-      const data = await res.json()
+      const data = await readApiJson<CalendarPlan[]>(res, 'Could not load calendar')
       const next = Array.isArray(data) ? data : []
       setPlans(next)
       setDraftNotes(next.reduce<Record<string, string>>((acc, plan: CalendarPlan) => {
@@ -304,7 +305,7 @@ export default function CalendarPage() {
     setHistoryLoading(true)
     try {
       const res = await fetch('/api/calendar/history')
-      const data = await res.json()
+      const data = await readApiJson<HistoryResponse>(res, 'Could not load history')
       setHistory({
         mostWorn: Array.isArray(data?.mostWorn) ? data.mostWorn : [],
         leastWorn: Array.isArray(data?.leastWorn) ? data.leastWorn : [],
@@ -357,8 +358,7 @@ export default function CalendarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ date: selectedDate, occasion, notes, mode, replaceId })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not plan outfit')
+      await readApiJson<unknown>(res, 'Could not plan outfit')
       setNotice(replaceId ? 'Outfit regenerated for this day.' : 'Outfit planned.')
       setToast(replaceId ? 'Calendar outfit regenerated.' : 'Calendar outfit ready.')
       await loadCalendar()
@@ -380,8 +380,7 @@ export default function CalendarPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: plan._id, ...body })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Update failed')
+      await readApiJson<unknown>(res, 'Update failed')
       setNotice(message)
       await loadCalendar()
       if (body.status === 'worn') await loadHistory()
@@ -398,8 +397,7 @@ export default function CalendarPage() {
     setNotice('')
     try {
       const res = await fetch(`/api/calendar/outfits?id=${plan._id}`, { method: 'DELETE' })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Remove failed')
+      await readApiJson<unknown>(res, 'Remove failed')
       setNotice('Removed from calendar.')
       await loadCalendar()
     } catch (e: any) {
@@ -425,8 +423,7 @@ export default function CalendarPage() {
           occasions: vacationOccasions
         })
       })
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok) throw new Error(data.error || 'Could not create packing list')
+      const data = await readApiJson<VacationResult>(res, 'Could not create packing list')
       setVacationResult(data)
       setToast('Packing list generated.')
     } catch (e: any) {

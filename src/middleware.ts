@@ -13,6 +13,7 @@ const isProtectedRoute = createRouteMatcher([
   '/profile(.*)',
   '/settings(.*)',
   '/stylist(.*)',
+  '/try-on(.*)',
   '/wardrobe(.*)',
   '/weather(.*)',
   '/api(.*)'
@@ -36,14 +37,14 @@ export default clerkMiddleware(async (auth, req) => {
 
     if (!session.userId) {
       if (isApiRoute(req)) {
-        return new Response('Unauthorized', { status: 401 })
+        return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
       }
       return loginRedirect(req)
     }
 
     if (isAdminRoute(req) && !(await isAdmin({ userId: session.userId, sessionClaims: session.sessionClaims }))) {
       if (req.nextUrl.pathname.startsWith('/api/admin')) {
-        return new Response('Access Denied', { status: 403 })
+        return NextResponse.json({ success: false, error: 'Access Denied' }, { status: 403 })
       }
       return NextResponse.redirect(new URL('/', req.url))
     }
@@ -64,6 +65,7 @@ export const config = {
     '/profile/:path*',
     '/settings/:path*',
     '/stylist/:path*',
+    '/try-on/:path*',
     '/wardrobe/:path*',
     '/weather/:path*',
     '/api/:path*'

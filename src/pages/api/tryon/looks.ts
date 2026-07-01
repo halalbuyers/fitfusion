@@ -2,6 +2,7 @@ import type { NextApiRequest, NextApiResponse } from 'next'
 import mongoose from 'mongoose'
 import { getAuth } from '@clerk/nextjs/server'
 import { generateOutfitsForUser } from '../../../ai/outfit'
+import { apiFail, apiOk } from '../../../lib/api'
 import { connectToDatabase } from '../../../lib/mongodb'
 import { compareTryOnLooks } from '../../../lib/tryon/comparisonEngine'
 import { buildRenderSettings, buildTryOnRender } from '../../../lib/tryon/renderEngine'
@@ -96,23 +97,23 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   setPrivateNoStore(res)
   if (!['GET', 'POST', 'PATCH', 'DELETE'].includes(req.method || '')) {
     res.setHeader('Allow', ['GET', 'POST', 'PATCH', 'DELETE'])
-    return res.status(405).end(`Method ${req.method} Not Allowed`)
+    return apiFail(res, `Method ${req.method} Not Allowed`, 405)
   }
 
   const { userId } = getAuth(req)
-  if (!userId) return res.status(401).json({ error: 'Unauthorized' })
+  if (!userId) return apiFail(res, 'Unauthorized', 401)
 
   try {
     await connectToDatabase()
   } catch {
-    if (req.method === 'GET') return res.status(200).json([])
-    return res.status(503).json({ error: 'Database unavailable. Please try again shortly.' })
+    if (req.method === 'GET') return apiOk(res, [])
+    return apiFail(res, 'Database unavailable. Please try again shortly.', 503)
   }
 
   try {
     if (req.method === 'GET') {
       const looks = await TryOnLook.find({ userId }).sort({ updatedAt: -1 }).limit(80).lean()
-      return res.status(200).json(looks)
+      return apiOk(res, looks)
     }
 
     if (req.method === 'POST') {
@@ -120,13 +121,13 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       if (action === 'compare') {
         const ids = Array.isArray(req.body?.ids) ? req.body.ids.map(String) : []
         const looks = await TryOnLook.find({ userId, _id: { $in: ids } }).lean()
-        return res.status(200).json(compareTryOnLooks(looks as any[]))
+        return apiOk(res, compareTryOnLooks(looks as any[]))
       }
       if (action === 'schedule') {
         const look = await TryOnLook.findOne({ _id: String(req.body?.id || ''), userId }).lean()
-        if (!look) return res.status(404).json({ error: 'Try-on look not found' })
+        if (!look) return apiFail(res, 'Try-on look not found', 404)
         const date = parseDate(req.body?.date)
-        if (!date) return res.status(400).json({ error: 'A valid schedule date is required' })
+        if (!date) return apiFail(res, 'A valid schedule date is required', 400)
         const outfit = await createSavedOutfit(userId, look.outfitSnapshot, date)
         const plan = await CalendarOutfit.create({
           userId,
@@ -136,24 +137,24 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           notes: `Scheduled from Virtual Try-On Studio: ${look.title}`,
           status: 'planned'
         })
-        return res.status(201).json({ outfit, plan })
+        return apiOk(res, { outfit, plan }, 201)
       }
       if (action === 'save') {
         const look = await TryOnLook.findOne({ _id: String(req.body?.id || ''), userId })
-        if (!look) return res.status(404).json({ error: 'Try-on look not found' })
+        if (!look) return apiFail(res, 'Try-on look not found', 404)
         look.favorite = true
         await look.save()
         const outfit = await createSavedOutfit(userId, look.outfitSnapshot)
-        return res.status(201).json({ look, outfit })
+        return apiOk(res, { look, outfit }, 201)
       }
 
       const looks = await renderLooks(userId, req.body || {})
-      return res.status(201).json(looks)
+      return apiOk(res, looks, 201)
     }
 
     if (req.method === 'PATCH') {
       const look = await TryOnLook.findOne({ _id: String(req.body?.id || ''), userId })
-      if (!look) return res.status(404).json({ error: 'Try-on look not found' })
+      if (!look) return apiFail(res, 'Try-on look not found', 404)
       if (typeof req.body.favorite === 'boolean') look.favorite = req.body.favorite
       if (req.body.action === 'retry') {
         look.status = 'complete'
@@ -164,13 +165,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         look.suggestions = (look.suggestions || []).map((item: any) => ({ ...item, active: item.id === req.body.appliedSuggestion }))
       }
       await look.save()
-      return res.status(200).json(look)
+      return apiOk(res, look)
     }
 
     const deleted = await TryOnLook.findOneAndDelete({ _id: String(req.query.id || ''), userId })
-    if (!deleted) return res.status(404).json({ error: 'Try-on look not found' })
-    return res.status(200).json({ ok: true })
+    if (!deleted) return apiFail(res, 'Try-on look not found', 404)
+    return apiOk(res, { ok: true })
   } catch (error: any) {
-    return res.status(500).json({ error: error?.message || 'Could not process try-on looks' })
+    if (process.env.NODE_ENV !== 'production') console.error('[Virtual Try-On]', error)
+    const message = error?.message === 'Create or select an avatar before rendering looks.'
+      ? error.message
+      : error?.message === 'Add enough wardrobe items to generate a try-on look.'
+        ? error.message
+        : 'Unable to render outfit. Please try again.'
+    return apiFail(res, message, 500)
   }
 }

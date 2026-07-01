@@ -5,6 +5,7 @@ import { Edit3, Search, SlidersHorizontal, Trash2, Undo2 } from 'lucide-react'
 import ClothingCard from './ClothingCard'
 import EditClothingModal from './EditClothingModal'
 import { useUser } from '@clerk/nextjs'
+import { readApiJson } from '../lib/api'
 import { displayReviewValue, reviewCategories } from '../lib/review-options'
 
 type Clothing = {
@@ -50,8 +51,7 @@ export default function WardrobeList({ refreshKey }: { refreshKey?: number }) {
       if (query) params.set('q', query)
       if (category !== 'all') params.set('category', category)
       const res = await fetch(`/api/wardrobe?${params.toString()}`)
-      if (!res.ok) throw new Error('Failed to fetch wardrobe')
-      setItems(await res.json())
+      setItems(await readApiJson<Clothing[]>(res, 'Failed to fetch wardrobe'))
     } catch (e: any) {
       setError(e.message || 'Error')
     } finally {
