@@ -10,20 +10,31 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
   const pathname = usePathname() || '/'
   const { userId, isLoaded } = useAuth()
 
-  const skipOnboardingRoutes = [
-    '/login',
-    '/register',
-    '/onboarding',
-    '/api'
+  const onboardingRoutePrefixes = [
+    '/admin',
+    '/calendar',
+    '/community',
+    '/dashboard',
+    '/my-wardrobe',
+    '/outfit-generator',
+    '/outfits',
+    '/profile',
+    '/settings',
+    '/shopping',
+    '/stylist',
+    '/trips',
+    '/try-on',
+    '/wardrobe',
+    '/weather'
   ]
 
-  const shouldSkipCheck = pathname === '/' || skipOnboardingRoutes.some(route =>
+  const shouldCheckOnboarding = onboardingRoutePrefixes.some(route =>
     pathname === route || pathname.startsWith(`${route}/`)
   )
 
   useEffect(() => {
     const checkOnboarding = async () => {
-      if (!isLoaded || !userId || shouldSkipCheck) return
+      if (!isLoaded || !userId || !shouldCheckOnboarding) return
 
       try {
         const response = await fetch('/api/fashion-profile')
@@ -38,9 +49,9 @@ export function OnboardingGuard({ children }: { children: ReactNode }) {
     }
 
     checkOnboarding()
-  }, [isLoaded, userId, pathname, shouldSkipCheck, router])
+  }, [isLoaded, userId, pathname, shouldCheckOnboarding, router])
 
-  if (shouldSkipCheck) return children
+  if (!shouldCheckOnboarding) return children
 
   if (!isLoaded) {
     return (

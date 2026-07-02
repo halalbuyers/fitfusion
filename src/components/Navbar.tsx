@@ -5,6 +5,7 @@ import dynamic from 'next/dynamic'
 import { usePathname } from 'next/navigation'
 import React, { useEffect, useState } from 'react'
 import { Moon, Sun } from 'lucide-react'
+import { ClerkLoaded, ClerkLoading, SignedIn } from '@clerk/nextjs'
 
 const NavbarAccount = dynamic(() => import('./NavbarAccount'), {
   loading: () => <div className="h-10 w-32 rounded-full bg-white/5" />
@@ -14,19 +15,20 @@ const navItems = [
   ['Dashboard', '/dashboard'],
   ['Wardrobe', '/wardrobe'],
   ['Shopping', '/shopping'],
+  ['Try-On', '/try-on'],
   ['Outfits', '/outfits'],
   ['Calendar', '/calendar'],
   ['AI Stylist', '/stylist'],
   ['Community', '/community']
 ]
 
-const protectedNavHrefs = new Set(['/dashboard', '/wardrobe', '/shopping', '/outfits', '/calendar', '/stylist', '/community'])
+const protectedNavHrefs = new Set(navItems.map(([, href]) => href))
 
 export default function Navbar() {
   const pathname = usePathname() || ''
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
-  const appRoutes = ['/dashboard', '/wardrobe', '/shopping', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
+  const appRoutes = ['/dashboard', '/wardrobe', '/shopping', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar', '/try-on', '/trips']
   const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
 
   useEffect(() => {
@@ -51,17 +53,24 @@ export default function Navbar() {
           <span className="truncate">Noir Closet</span>
         </Link>
         <div className="hidden items-center gap-2 text-sm text-white/68 md:flex">
-          {navItems.map(([label, href]) => (
-            <Link
-              key={href}
-              href={href}
-              prefetch={protectedNavHrefs.has(href) ? false : undefined}
-              aria-current={isActive(href) ? 'page' : undefined}
-              className={`rounded-[8px] px-3 py-2 transition ${isActive(href) ? 'bg-white text-black' : 'hover:bg-white/8 hover:text-white'}`}
-            >
-              {label}
-            </Link>
-          ))}
+          <ClerkLoading>
+            <div className="h-9 w-[520px] rounded-[8px] bg-white/5" aria-hidden="true" />
+          </ClerkLoading>
+          <ClerkLoaded>
+            <SignedIn>
+              {navItems.map(([label, href]) => (
+                <Link
+                  key={href}
+                  href={href}
+                  prefetch={protectedNavHrefs.has(href) ? false : undefined}
+                  aria-current={isActive(href) ? 'page' : undefined}
+                  className={`rounded-[8px] px-3 py-2 transition ${isActive(href) ? 'bg-white text-black' : 'hover:bg-white/8 hover:text-white'}`}
+                >
+                  {label}
+                </Link>
+              ))}
+            </SignedIn>
+          </ClerkLoaded>
         </div>
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
           <button
@@ -72,14 +81,7 @@ export default function Navbar() {
           >
             {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </button>
-          {isAppRoute ? (
-            <NavbarAccount />
-          ) : (
-            <>
-              <Link href="/login" className="hidden rounded-full border border-white/15 px-4 py-2 text-sm text-white/85 transition hover:border-white/35 hover:text-white sm:block">Sign in</Link>
-              <Link href="/register" className="rounded-full bg-white px-3 py-2 text-sm font-semibold text-black transition hover:bg-white/88 sm:px-4">Create Your Noir Closet Account</Link>
-            </>
-          )}
+          <NavbarAccount />
         </div>
       </div>
     </nav>
