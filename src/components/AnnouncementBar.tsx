@@ -96,7 +96,7 @@ export default function AnnouncementBar() {
     <div className="sticky top-[var(--navbar-height)] z-40 h-10 border-t border-white/10 border-b border-white/10 bg-[#090a0e]/92 text-white backdrop-blur-xl">
       <div className="mx-auto flex h-10 max-w-7xl items-center gap-3 px-3 sm:px-6 lg:px-8">
         <div className="flex min-w-0 flex-1 items-center gap-3 whitespace-nowrap text-sm text-white/75">
-          <span className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#d9ff5a]/25 bg-[#d9ff5a]/10 px-2.5 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#d9ff5a]">
+          <span className="inline-flex h-8 shrink-0 items-center justify-center gap-1.5 rounded-full border border-[#d9ff5a]/25 bg-[#d9ff5a]/10 px-2.5 text-[11px] font-semibold uppercase tracking-[0.18em] text-[#d9ff5a] sm:tracking-[0.28em]">
             <Sparkles className="h-3.5 w-3.5" />
             Updates
           </span>
@@ -108,8 +108,8 @@ export default function AnnouncementBar() {
           </div>
         </div>
 
-        <Link href="/updates" className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#d9ff5a] px-3 text-sm font-semibold text-black transition hover:bg-[#e7ff8f]">
-          View updates
+        <Link href="/updates" className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full bg-[#d9ff5a] px-3 text-sm font-semibold text-black transition hover:bg-[#e7ff8f]" aria-label="View updates">
+          <span className="hidden sm:inline">View updates</span>
           <ArrowRight className="h-4 w-4" />
         </Link>
       </div>
