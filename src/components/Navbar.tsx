@@ -13,19 +13,20 @@ const NavbarAccount = dynamic(() => import('./NavbarAccount'), {
 const navItems = [
   ['Dashboard', '/dashboard'],
   ['Wardrobe', '/wardrobe'],
+  ['Shopping', '/shopping'],
   ['Outfits', '/outfits'],
   ['Calendar', '/calendar'],
   ['AI Stylist', '/stylist'],
   ['Community', '/community']
 ]
 
-const protectedNavHrefs = new Set(['/dashboard', '/wardrobe', '/outfits', '/calendar', '/stylist', '/community'])
+const protectedNavHrefs = new Set(['/dashboard', '/wardrobe', '/shopping', '/outfits', '/calendar', '/stylist', '/community'])
 
 export default function Navbar() {
   const pathname = usePathname() || ''
   const [theme, setTheme] = useState<'dark' | 'light'>('dark')
   const isActive = (href: string) => pathname === href || pathname.startsWith(`${href}/`)
-  const appRoutes = ['/dashboard', '/wardrobe', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
+  const appRoutes = ['/dashboard', '/wardrobe', '/shopping', '/my-wardrobe', '/outfit-generator', '/outfits', '/stylist', '/community', '/profile', '/settings', '/admin', '/weather', '/calendar']
   const isAppRoute = appRoutes.some((href) => pathname === href || pathname.startsWith(`${href}/`))
 
   useEffect(() => {

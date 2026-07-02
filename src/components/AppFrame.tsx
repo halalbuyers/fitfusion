@@ -4,12 +4,13 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import React from 'react'
 import type { LucideIcon } from 'lucide-react'
-import { CalendarDays, Camera, LayoutDashboard, MessageCircle, Plane, Shield, Shirt, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
+import { CalendarDays, Camera, LayoutDashboard, MessageCircle, Plane, Shield, Shirt, ShoppingBag, Sparkles, UserRound, Users, Wand2 } from 'lucide-react'
 
 const desktopNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
   ['Outfit Generator', '/outfit-generator', Wand2],
+  ['Shopping', '/shopping', ShoppingBag],
   ['Try-On Studio', '/try-on', Camera],
   ['Calendar', '/calendar', CalendarDays],
   ['Trips', '/trips', Plane],
@@ -23,8 +24,8 @@ const mobileNav: Array<[string, string, LucideIcon]> = [
   ['Dashboard', '/dashboard', LayoutDashboard],
   ['Wardrobe', '/wardrobe', Shirt],
   ['Generate', '/outfit-generator', Wand2],
+  ['Shop', '/shopping', ShoppingBag],
   ['Try-On', '/try-on', Camera],
-  ['Trips', '/trips', Plane],
   ['Stylist', '/stylist', MessageCircle]
 ]
 
